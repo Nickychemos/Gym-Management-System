@@ -1,0 +1,178 @@
+{
+ "actions": [],
+ "creation": "2026-05-27 16:40:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_identity",
+  "gym_legal_name",
+  "gym_display_name",
+  "tagline",
+  "cb1",
+  "primary_color",
+  "secondary_color",
+  "sb_logos",
+  "logo",
+  "favicon",
+  "letterhead_image",
+  "sb_contact",
+  "support_phone",
+  "support_email",
+  "physical_address",
+  "cb2",
+  "social_facebook",
+  "social_instagram",
+  "social_twitter",
+  "sb_receipts",
+  "receipt_footer",
+  "receipt_show_logo"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "gym_legal_name",
+   "fieldtype": "Data",
+   "label": "Gym Legal Name",
+   "reqd": 1
+  },
+  {
+   "description": "What members see",
+   "fieldname": "gym_display_name",
+   "fieldtype": "Data",
+   "label": "Gym Display Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tagline",
+   "fieldtype": "Data",
+   "label": "Tagline"
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "#1F6FEB",
+   "fieldname": "primary_color",
+   "fieldtype": "Color",
+   "label": "Primary Color"
+  },
+  {
+   "fieldname": "secondary_color",
+   "fieldtype": "Color",
+   "label": "Secondary Color"
+  },
+  {
+   "fieldname": "sb_logos",
+   "fieldtype": "Section Break",
+   "label": "Imagery"
+  },
+  {
+   "fieldname": "logo",
+   "fieldtype": "Attach Image",
+   "label": "Logo"
+  },
+  {
+   "fieldname": "favicon",
+   "fieldtype": "Attach Image",
+   "label": "Favicon"
+  },
+  {
+   "fieldname": "letterhead_image",
+   "fieldtype": "Attach Image",
+   "label": "Letterhead"
+  },
+  {
+   "fieldname": "sb_contact",
+   "fieldtype": "Section Break",
+   "label": "Public Contact"
+  },
+  {
+   "fieldname": "support_phone",
+   "fieldtype": "Data",
+   "label": "Support Phone",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "support_email",
+   "fieldtype": "Data",
+   "label": "Support Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "physical_address",
+   "fieldtype": "Small Text",
+   "label": "Physical Address"
+  },
+  {
+   "fieldname": "cb2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "social_facebook",
+   "fieldtype": "Data",
+   "label": "Facebook URL",
+   "options": "URL"
+  },
+  {
+   "fieldname": "social_instagram",
+   "fieldtype": "Data",
+   "label": "Instagram URL",
+   "options": "URL"
+  },
+  {
+   "fieldname": "social_twitter",
+   "fieldtype": "Data",
+   "label": "Twitter / X URL",
+   "options": "URL"
+  },
+  {
+   "fieldname": "sb_receipts",
+   "fieldtype": "Section Break",
+   "label": "Receipts"
+  },
+  {
+   "description": "Shown on POS / member receipts",
+   "fieldname": "receipt_footer",
+   "fieldtype": "Small Text",
+   "label": "Receipt Footer Text"
+  },
+  {
+   "default": "1",
+   "fieldname": "receipt_show_logo",
+   "fieldtype": "Check",
+   "label": "Show Logo on Receipt"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-05-27 16:40:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Brand Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}
