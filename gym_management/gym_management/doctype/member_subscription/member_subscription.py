@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import getdate, today
+from frappe.utils import add_days, getdate, today
 
 
 class MemberSubscription(Document):
@@ -25,6 +25,7 @@ class MemberSubscription(Document):
 		self.db_set("status", "Cancelled")
 		if not self.cancelled_on:
 			self.db_set("cancelled_on", today())
+		self._disable_credentials_if_no_other_active_sub()
 
 	# ---------- validations ----------
 
@@ -64,3 +65,57 @@ class MemberSubscription(Document):
 
 	def _compute_sessions_remaining(self):
 		self.sessions_remaining = (self.sessions_total or 0) - (self.sessions_used or 0)
+
+	# ---------- side effects ----------
+
+	def _disable_credentials_if_no_other_active_sub(self):
+		"""On cancel, disable this customer's Active credentials only if they
+		have NO other Active/Frozen subscription. Receptionist can re-enable
+		manually if needed (e.g. on amend)."""
+		other_active = frappe.db.exists(
+			"Member Subscription",
+			{
+				"customer": self.customer,
+				"docstatus": 1,
+				"status": ["in", ["Active", "Frozen"]],
+				"name": ["!=", self.name],
+			},
+		)
+		if other_active:
+			return
+
+		creds = frappe.get_all(
+			"Member Credential",
+			filters={"customer": self.customer, "status": "Active"},
+			pluck="name",
+		)
+		for cred in creds:
+			frappe.db.set_value("Member Credential", cred, "status", "Disabled")
+
+
+# ============================================================================
+# Scheduled tasks (registered in hooks.py)
+# ============================================================================
+
+
+def auto_lapse_expired():
+	"""Daily task: flip submitted Active subscriptions to Lapsed once
+	end_date + Gym Settings.default_grace_period_days has passed."""
+	grace = frappe.db.get_single_value("Gym Settings", "default_grace_period_days") or 0
+	cutoff = add_days(today(), -int(grace))
+
+	expired = frappe.get_all(
+		"Member Subscription",
+		filters={
+			"docstatus": 1,
+			"status": "Active",
+			"end_date": ["<", cutoff],
+		},
+		pluck="name",
+	)
+	for name in expired:
+		try:
+			frappe.db.set_value("Member Subscription", name, "status", "Lapsed")
+			frappe.db.commit()
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), f"auto_lapse_expired: {name}")

@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import date_diff, getdate
+from frappe.utils import date_diff, getdate, today
 
 
 class SubscriptionFreeze(Document):
@@ -16,15 +16,12 @@ class SubscriptionFreeze(Document):
 		self._check_year_cap()
 
 	def on_submit(self):
-		# Flip parent Member Subscription to Frozen on freeze submit.
 		frappe.db.set_value(
 			"Member Subscription", self.member_subscription, "status", "Frozen"
 		)
 
 	def on_cancel(self):
 		self.db_set("status", "Cancelled")
-		# If the parent is currently Frozen because of this freeze, flip it back.
-		# (v1 keeps this simple — only handles the single-active-freeze case.)
 		parent_status = frappe.db.get_value(
 			"Member Subscription", self.member_subscription, "status"
 		)
@@ -88,7 +85,7 @@ class SubscriptionFreeze(Document):
 			frappe.db.get_single_value("Gym Settings", "default_max_freeze_days_per_year") or 0
 		)
 		if not max_per_year:
-			return  # cap not configured → no enforcement
+			return
 
 		year = getdate(self.freeze_start_date).year
 		year_start = f"{year}-01-01"
@@ -114,3 +111,36 @@ class SubscriptionFreeze(Document):
 					"requested {2} more, cap is {3} days/year (Gym Settings)."
 				).format(used, year, self.freeze_days, max_per_year)
 			)
+
+
+# ============================================================================
+# Scheduled tasks (registered in hooks.py)
+# ============================================================================
+
+
+def auto_resume_expired():
+	"""Daily task: flip Active freezes whose freeze_end_date has passed to
+	Completed, and flip the parent Member Subscription back to Active if it
+	is currently Frozen."""
+	expired = frappe.get_all(
+		"Subscription Freeze",
+		filters={
+			"docstatus": 1,
+			"status": "Active",
+			"freeze_end_date": ["<", today()],
+		},
+		fields=["name", "member_subscription"],
+	)
+	for freeze in expired:
+		try:
+			frappe.db.set_value("Subscription Freeze", freeze.name, "status", "Completed")
+			parent_status = frappe.db.get_value(
+				"Member Subscription", freeze.member_subscription, "status"
+			)
+			if parent_status == "Frozen":
+				frappe.db.set_value(
+					"Member Subscription", freeze.member_subscription, "status", "Active"
+				)
+			frappe.db.commit()
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), f"auto_resume_expired: {freeze.name}")

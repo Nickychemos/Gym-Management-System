@@ -148,23 +148,16 @@ app_license = "mit"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"gym_management.tasks.all"
-# 	],
-# 	"daily": [
-# 		"gym_management.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"gym_management.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"gym_management.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"gym_management.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"daily": [
+		# Flip Active freezes whose freeze_end_date has passed to Completed,
+		# and unfreeze the parent Member Subscription back to Active.
+		"gym_management.gym_management.doctype.subscription_freeze.subscription_freeze.auto_resume_expired",
+		# Flip Active subscriptions whose end_date + grace_period has passed
+		# to Lapsed.
+		"gym_management.gym_management.doctype.member_subscription.member_subscription.auto_lapse_expired",
+	],
+}
 
 # Testing
 # -------
