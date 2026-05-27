@@ -1,0 +1,128 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:class_type_name",
+ "creation": "2026-05-27 16:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "class_type_name",
+  "short_code",
+  "default_duration_minutes",
+  "default_capacity",
+  "cb1",
+  "is_active",
+  "display_color",
+  "icon",
+  "sb1",
+  "equipment_required",
+  "description",
+  "intensity_level"
+ ],
+ "fields": [
+  {
+   "fieldname": "class_type_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Class Type Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "description": "3-letter code, e.g. YOG, SPN, HIT",
+   "fieldname": "short_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Short Code"
+  },
+  {
+   "default": "60",
+   "fieldname": "default_duration_minutes",
+   "fieldtype": "Int",
+   "label": "Default Duration (mins)",
+   "reqd": 1
+  },
+  {
+   "default": "20",
+   "fieldname": "default_capacity",
+   "fieldtype": "Int",
+   "label": "Default Capacity"
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Active"
+  },
+  {
+   "description": "Calendar color",
+   "fieldname": "display_color",
+   "fieldtype": "Color",
+   "label": "Display Color"
+  },
+  {
+   "description": "Optional emoji or icon class",
+   "fieldname": "icon",
+   "fieldtype": "Data",
+   "label": "Icon"
+  },
+  {
+   "fieldname": "sb1",
+   "fieldtype": "Section Break",
+   "label": "Details"
+  },
+  {
+   "description": "e.g. mats, bikes, kettlebells",
+   "fieldname": "equipment_required",
+   "fieldtype": "Small Text",
+   "label": "Equipment Required"
+  },
+  {
+   "description": "Member-facing description",
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "intensity_level",
+   "fieldtype": "Select",
+   "label": "Intensity Level",
+   "options": "\nLow\nModerate\nHigh\nVariable"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-27 16:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Class Type",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "class_type_name,short_code",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "class_type_name",
+ "track_changes": 1
+}
