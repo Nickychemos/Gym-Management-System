@@ -1,0 +1,356 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-05-27 17:10:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_id",
+  "naming_series",
+  "customer",
+  "member_full_name",
+  "date_of_birth",
+  "gender",
+  "cb1",
+  "national_id_type",
+  "national_id_number",
+  "nationality",
+  "profile_photo",
+  "sb_contact",
+  "phone",
+  "alternate_phone",
+  "email",
+  "cb2",
+  "physical_address",
+  "city",
+  "sb_emergency",
+  "emergency_contact_name",
+  "emergency_contact_phone",
+  "emergency_contact_relationship",
+  "sb_health",
+  "has_chronic_condition",
+  "chronic_condition_notes",
+  "doctor_clearance_attached",
+  "doctor_note",
+  "cb3",
+  "fitness_goals",
+  "preferred_workout_time",
+  "sb_waiver",
+  "waiver_signed",
+  "waiver_signed_at",
+  "waiver_pdf",
+  "is_minor",
+  "parental_consent_attached",
+  "parental_consent_pdf",
+  "sb_marketing",
+  "referred_by",
+  "source",
+  "sb_status",
+  "member_status",
+  "joined_on",
+  "last_visit",
+  "total_visits"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_id",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "default": "MEM-.YYYY.-.######",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "MEM-.YYYY.-.######",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fetch_from": "customer.customer_name",
+   "fieldname": "member_full_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Full Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "label": "Date of Birth"
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Select",
+   "label": "Gender",
+   "options": "\nMale\nFemale\nOther\nPrefer not to say"
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "national_id_type",
+   "fieldtype": "Select",
+   "label": "ID Type",
+   "options": "\nNational ID\nPassport\nBirth Certificate\nAlien ID\nOther"
+  },
+  {
+   "description": "Sensitive PII — encrypt before production",
+   "fieldname": "national_id_number",
+   "fieldtype": "Data",
+   "label": "ID Number"
+  },
+  {
+   "default": "Kenyan",
+   "fieldname": "nationality",
+   "fieldtype": "Data",
+   "label": "Nationality"
+  },
+  {
+   "fieldname": "profile_photo",
+   "fieldtype": "Attach Image",
+   "label": "Profile Photo"
+  },
+  {
+   "fieldname": "sb_contact",
+   "fieldtype": "Section Break",
+   "label": "Contact"
+  },
+  {
+   "description": "MSISDN format e.g. 2547XXXXXXXX",
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Phone",
+   "options": "Phone",
+   "reqd": 1
+  },
+  {
+   "fieldname": "alternate_phone",
+   "fieldtype": "Data",
+   "label": "Alternate Phone",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "cb2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "physical_address",
+   "fieldtype": "Small Text",
+   "label": "Physical Address"
+  },
+  {
+   "fieldname": "city",
+   "fieldtype": "Data",
+   "label": "City"
+  },
+  {
+   "fieldname": "sb_emergency",
+   "fieldtype": "Section Break",
+   "label": "Emergency Contact"
+  },
+  {
+   "fieldname": "emergency_contact_name",
+   "fieldtype": "Data",
+   "label": "Emergency Contact Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "emergency_contact_phone",
+   "fieldtype": "Data",
+   "label": "Emergency Contact Phone",
+   "options": "Phone",
+   "reqd": 1
+  },
+  {
+   "fieldname": "emergency_contact_relationship",
+   "fieldtype": "Data",
+   "label": "Relationship"
+  },
+  {
+   "fieldname": "sb_health",
+   "fieldtype": "Section Break",
+   "label": "Health & Fitness"
+  },
+  {
+   "default": "0",
+   "fieldname": "has_chronic_condition",
+   "fieldtype": "Check",
+   "label": "Has Chronic Condition"
+  },
+  {
+   "depends_on": "has_chronic_condition",
+   "description": "Sensitive PII — encrypt before production",
+   "fieldname": "chronic_condition_notes",
+   "fieldtype": "Small Text",
+   "label": "Chronic Condition Notes"
+  },
+  {
+   "depends_on": "has_chronic_condition",
+   "fieldname": "doctor_clearance_attached",
+   "fieldtype": "Check",
+   "label": "Doctor Clearance Attached"
+  },
+  {
+   "depends_on": "doctor_clearance_attached",
+   "fieldname": "doctor_note",
+   "fieldtype": "Attach",
+   "label": "Doctor Note"
+  },
+  {
+   "fieldname": "cb3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "fitness_goals",
+   "fieldtype": "Small Text",
+   "label": "Fitness Goals"
+  },
+  {
+   "fieldname": "preferred_workout_time",
+   "fieldtype": "Select",
+   "label": "Preferred Workout Time",
+   "options": "\nMorning\nMidday\nEvening\nLate Night\nNo preference"
+  },
+  {
+   "fieldname": "sb_waiver",
+   "fieldtype": "Section Break",
+   "label": "Waiver & Consent"
+  },
+  {
+   "default": "0",
+   "fieldname": "waiver_signed",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Waiver Signed"
+  },
+  {
+   "depends_on": "waiver_signed",
+   "fieldname": "waiver_signed_at",
+   "fieldtype": "Datetime",
+   "label": "Waiver Signed At"
+  },
+  {
+   "depends_on": "waiver_signed",
+   "fieldname": "waiver_pdf",
+   "fieldtype": "Attach",
+   "label": "Waiver PDF"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_minor",
+   "fieldtype": "Check",
+   "label": "Is Minor"
+  },
+  {
+   "depends_on": "is_minor",
+   "fieldname": "parental_consent_attached",
+   "fieldtype": "Check",
+   "label": "Parental Consent Attached"
+  },
+  {
+   "depends_on": "parental_consent_attached",
+   "fieldname": "parental_consent_pdf",
+   "fieldtype": "Attach",
+   "label": "Parental Consent PDF"
+  },
+  {
+   "fieldname": "sb_marketing",
+   "fieldtype": "Section Break",
+   "label": "Marketing"
+  },
+  {
+   "fieldname": "referred_by",
+   "fieldtype": "Link",
+   "label": "Referred By",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "label": "Source",
+   "options": "\nWalk-in\nWebsite\nReferral\nSocial Media\nCampaign\nCorporate\nOther"
+  },
+  {
+   "fieldname": "sb_status",
+   "fieldtype": "Section Break",
+   "label": "Status"
+  },
+  {
+   "default": "Active",
+   "fieldname": "member_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Member Status",
+   "options": "Active\nInactive\nAnonymised\nDeceased"
+  },
+  {
+   "default": "Today",
+   "fieldname": "joined_on",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Joined On"
+  },
+  {
+   "fieldname": "last_visit",
+   "fieldtype": "Datetime",
+   "label": "Last Visit",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_visits",
+   "fieldtype": "Int",
+   "label": "Total Visits",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-27 17:10:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Member Profile",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "member_full_name,phone,national_id_number",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "member_full_name",
+ "track_changes": 1
+}
