@@ -1,0 +1,141 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:plan_name",
+ "creation": "2026-05-27 16:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "plan_name",
+  "plan_type",
+  "billing_frequency",
+  "is_active",
+  "cb_pricing",
+  "price",
+  "duration_days",
+  "session_count",
+  "sb_rules",
+  "auto_renew",
+  "max_freeze_days_per_year",
+  "proration_on_upgrade",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "plan_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Plan Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "plan_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Plan Type",
+   "options": "Day Pass\nWeekly\nMonthly\nQuarterly\nHalf-Yearly\nAnnual\nFamily\nCorporate\nClass Pack\nPT Package\nFreeze",
+   "reqd": 1
+  },
+  {
+   "default": "Pre-Pay",
+   "fieldname": "billing_frequency",
+   "fieldtype": "Select",
+   "label": "Billing Frequency",
+   "options": "One-Off\nPre-Pay\nRecurring\nInvoiced"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Active"
+  },
+  {
+   "fieldname": "cb_pricing",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Tenant's base currency",
+   "fieldname": "price",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Price",
+   "reqd": 1
+  },
+  {
+   "default": "30",
+   "description": "Monthly=30, Annual=365, etc.",
+   "fieldname": "duration_days",
+   "fieldtype": "Int",
+   "label": "Duration (Days)"
+  },
+  {
+   "default": "0",
+   "description": "For Class Pack / PT Package only",
+   "fieldname": "session_count",
+   "fieldtype": "Int",
+   "label": "Session Count"
+  },
+  {
+   "fieldname": "sb_rules",
+   "fieldtype": "Section Break",
+   "label": "Rules"
+  },
+  {
+   "default": "0",
+   "fieldname": "auto_renew",
+   "fieldtype": "Check",
+   "label": "Auto-Renew"
+  },
+  {
+   "default": "0",
+   "fieldname": "max_freeze_days_per_year",
+   "fieldtype": "Int",
+   "label": "Max Freeze Days / Year"
+  },
+  {
+   "default": "1",
+   "fieldname": "proration_on_upgrade",
+   "fieldtype": "Check",
+   "label": "Pro-Rate on Upgrade"
+  },
+  {
+   "description": "Member-facing summary",
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-27 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Membership Plan",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "plan_name,plan_type",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "plan_name",
+ "track_changes": 1
+}
