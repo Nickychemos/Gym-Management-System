@@ -19,7 +19,11 @@
   "auto_renew",
   "max_freeze_days_per_year",
   "proration_on_upgrade",
-  "description"
+  "description",
+  "sb_accounting",
+  "linked_item",
+  "income_account",
+  "tax_template"
  ],
  "fields": [
   {
@@ -108,6 +112,32 @@
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description"
+  },
+  {
+   "fieldname": "sb_accounting",
+   "fieldtype": "Section Break",
+   "label": "Accounting"
+  },
+  {
+   "description": "ERPNext Item this plan sells as on invoices",
+   "fieldname": "linked_item",
+   "fieldtype": "Link",
+   "label": "Linked Item",
+   "options": "Item"
+  },
+  {
+   "description": "Revenue GL account this plan posts to",
+   "fieldname": "income_account",
+   "fieldtype": "Link",
+   "label": "Income Account",
+   "options": "Account"
+  },
+  {
+   "description": "Default tax treatment for invoices selling this plan",
+   "fieldname": "tax_template",
+   "fieldtype": "Link",
+   "label": "Tax Template",
+   "options": "Sales Taxes and Charges Template"
   }
  ],
  "index_web_pages_for_search": 1,
