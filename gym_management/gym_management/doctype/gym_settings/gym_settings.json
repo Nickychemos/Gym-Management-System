@@ -1,0 +1,225 @@
+{
+ "actions": [],
+ "creation": "2026-05-27 16:50:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_subs",
+  "default_grace_period_days",
+  "default_max_freeze_days_per_year",
+  "allow_member_self_freeze",
+  "cb1",
+  "subscription_reminder_days_before",
+  "auto_lapse_after_grace",
+  "sb_access",
+  "enable_anti_passback",
+  "anti_passback_minutes",
+  "enable_offline_mode",
+  "cb2",
+  "max_credentials_per_member",
+  "whitelist_sync_minutes",
+  "sb_class",
+  "class_cancel_window_hours",
+  "class_no_show_fee",
+  "class_no_show_blocks_after_n",
+  "cb3",
+  "waitlist_auto_promote",
+  "waitlist_response_window_minutes",
+  "sb_pt",
+  "pt_session_default_duration_minutes",
+  "pt_package_default_validity_days",
+  "pt_default_trainer_commission_percent",
+  "sb_pos",
+  "cash_variance_threshold",
+  "require_dual_control_for_refunds"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_subs",
+   "fieldtype": "Section Break",
+   "label": "Subscriptions & Renewals"
+  },
+  {
+   "default": "3",
+   "fieldname": "default_grace_period_days",
+   "fieldtype": "Int",
+   "label": "Default Grace Period (Days)"
+  },
+  {
+   "default": "30",
+   "fieldname": "default_max_freeze_days_per_year",
+   "fieldtype": "Int",
+   "label": "Default Max Freeze Days/Year"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_member_self_freeze",
+   "fieldtype": "Check",
+   "label": "Allow Member Self-Freeze"
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "7,3,0,-1",
+   "description": "Comma list, e.g. 7,3,0,-1",
+   "fieldname": "subscription_reminder_days_before",
+   "fieldtype": "Data",
+   "label": "Reminder Days Before"
+  },
+  {
+   "default": "1",
+   "fieldname": "auto_lapse_after_grace",
+   "fieldtype": "Check",
+   "label": "Auto-Lapse on Day After Grace"
+  },
+  {
+   "fieldname": "sb_access",
+   "fieldtype": "Section Break",
+   "label": "Access Control"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_anti_passback",
+   "fieldtype": "Check",
+   "label": "Enable Anti-Passback"
+  },
+  {
+   "default": "1",
+   "fieldname": "anti_passback_minutes",
+   "fieldtype": "Int",
+   "label": "Anti-Passback Min Gap (mins)"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_offline_mode",
+   "fieldtype": "Check",
+   "label": "Enable Offline Mode"
+  },
+  {
+   "fieldname": "cb2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "2",
+   "fieldname": "max_credentials_per_member",
+   "fieldtype": "Int",
+   "label": "Max Credentials per Member"
+  },
+  {
+   "default": "5",
+   "fieldname": "whitelist_sync_minutes",
+   "fieldtype": "Int",
+   "label": "Whitelist Sync Interval (mins)"
+  },
+  {
+   "fieldname": "sb_class",
+   "fieldtype": "Section Break",
+   "label": "Classes"
+  },
+  {
+   "default": "4",
+   "description": "Member must cancel >= N hours before",
+   "fieldname": "class_cancel_window_hours",
+   "fieldtype": "Int",
+   "label": "Cancellation Window (hours)"
+  },
+  {
+   "default": "0",
+   "fieldname": "class_no_show_fee",
+   "fieldtype": "Currency",
+   "label": "No-Show Fee"
+  },
+  {
+   "default": "3",
+   "fieldname": "class_no_show_blocks_after_n",
+   "fieldtype": "Int",
+   "label": "Block After N No-Shows"
+  },
+  {
+   "fieldname": "cb3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "waitlist_auto_promote",
+   "fieldtype": "Check",
+   "label": "Auto-Promote Waitlist"
+  },
+  {
+   "default": "30",
+   "fieldname": "waitlist_response_window_minutes",
+   "fieldtype": "Int",
+   "label": "Waitlist Response Window (mins)"
+  },
+  {
+   "fieldname": "sb_pt",
+   "fieldtype": "Section Break",
+   "label": "Personal Training"
+  },
+  {
+   "default": "60",
+   "fieldname": "pt_session_default_duration_minutes",
+   "fieldtype": "Int",
+   "label": "Default PT Session (mins)"
+  },
+  {
+   "default": "90",
+   "fieldname": "pt_package_default_validity_days",
+   "fieldtype": "Int",
+   "label": "Default PT Package Validity (days)"
+  },
+  {
+   "default": "50",
+   "fieldname": "pt_default_trainer_commission_percent",
+   "fieldtype": "Percent",
+   "label": "Default PT Commission (%)"
+  },
+  {
+   "fieldname": "sb_pos",
+   "fieldtype": "Section Break",
+   "label": "POS / Cash"
+  },
+  {
+   "default": "100",
+   "description": "Above this, must be reconciled",
+   "fieldname": "cash_variance_threshold",
+   "fieldtype": "Currency",
+   "label": "Cash Variance Threshold"
+  },
+  {
+   "default": "1",
+   "fieldname": "require_dual_control_for_refunds",
+   "fieldtype": "Check",
+   "label": "Require Dual Control on Refund"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-05-27 16:50:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Gym Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
