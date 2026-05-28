@@ -163,6 +163,8 @@ scheduler_events = {
 		"gym_management.gym_management.doctype.class_session.class_session.generate_sessions",
 		# Flip Active PT Packages past their expiry_date to Expired.
 		"gym_management.gym_management.doctype.pt_package.pt_package.auto_expire",
+		# Refresh days_to_expiry and status on Certification Register rows.
+		"gym_management.gym_management.doctype.certification_register.certification_register.refresh_statuses",
 	],
 }
 

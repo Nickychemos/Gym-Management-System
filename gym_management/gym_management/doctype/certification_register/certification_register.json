@@ -1,0 +1,193 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-05-28 18:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "certification_name",
+  "issuing_body",
+  "cb1",
+  "certification_number",
+  "issued_on",
+  "expires_on",
+  "days_to_expiry",
+  "sb_document",
+  "certificate_attachment",
+  "verified_by_hr",
+  "sb_reminders",
+  "send_reminders",
+  "reminder_days_before",
+  "cb_reminders",
+  "status",
+  "sb_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "default": "CERT-.######",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "CERT-.######",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "description": "e.g. First Aid Level 2, CPR/AED, ACE Group Fitness, NSCA-CPT",
+   "fieldname": "certification_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Certification Name",
+   "reqd": 1
+  },
+  {
+   "description": "Issuing organisation e.g. Kenya Red Cross, ACE, NSCA, Les Mills",
+   "fieldname": "issuing_body",
+   "fieldtype": "Data",
+   "label": "Issuing Body",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "certification_number",
+   "fieldtype": "Data",
+   "label": "Certification Number"
+  },
+  {
+   "fieldname": "issued_on",
+   "fieldtype": "Date",
+   "label": "Issued On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "expires_on",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Expires On",
+   "reqd": 1
+  },
+  {
+   "description": "Auto-computed: expires_on - today. Negative = already expired.",
+   "fieldname": "days_to_expiry",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Days to Expiry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_document",
+   "fieldtype": "Section Break",
+   "label": "Document"
+  },
+  {
+   "description": "Scan or photo of the actual certificate",
+   "fieldname": "certificate_attachment",
+   "fieldtype": "Attach",
+   "label": "Certificate Attachment",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "verified_by_hr",
+   "fieldtype": "Check",
+   "label": "Verified by HR"
+  },
+  {
+   "fieldname": "sb_reminders",
+   "fieldtype": "Section Break",
+   "label": "Reminders"
+  },
+  {
+   "default": "1",
+   "fieldname": "send_reminders",
+   "fieldtype": "Check",
+   "label": "Send Reminders"
+  },
+  {
+   "default": "60,30,7",
+   "description": "Comma list of days before expiry to send a reminder. e.g. 60,30,7 sends three notifications.",
+   "fieldname": "reminder_days_before",
+   "fieldtype": "Data",
+   "label": "Reminder Days Before"
+  },
+  {
+   "fieldname": "cb_reminders",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Auto-set based on days_to_expiry (Active / Expiring Soon / Expired). Manual override possible (Revoked).",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Active\nExpiring Soon\nExpired\nRevoked",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-05-28 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Certification Register",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "employee,certification_name,issuing_body,status",
+ "sort_field": "expires_on",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "certification_name",
+ "track_changes": 1
+}
