@@ -1,10 +1,26 @@
 # Copyright (c) 2026, Nicky and contributors
 # For license information, please see license.txt
 
+from datetime import time as time_cls
+from datetime import timedelta
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import add_to_date, get_datetime, now_datetime
+
+
+# Day-of-week index → field name on Membership Plan
+DAY_ACCESS_FIELDS = (
+	"access_mon",
+	"access_tue",
+	"access_wed",
+	"access_thu",
+	"access_fri",
+	"access_sat",
+	"access_sun",
+)
+DAY_NAMES = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 
 
 class AccessEvent(Document):
@@ -153,6 +169,23 @@ def resolve_scan(
 				decision_reason="Frozen",
 				notes=f"Subscription {sub.name} is currently Frozen",
 			)
+		# Time-window restriction on the plan
+		plan_name = frappe.db.get_value(
+			"Member Subscription", sub.name, "membership_plan"
+		)
+		in_window, window_reason = _check_access_window(plan_name, ts)
+		if not in_window:
+			return _log_and_return(
+				reader_device=reader.name,
+				branch=reader.branch,
+				credential_value=credential_value,
+				timestamp=ts,
+				matched_credential=cred.name,
+				matched_customer=customer,
+				decision="Denied",
+				decision_reason="Outside Hours",
+				notes=window_reason,
+			)
 		return _log_and_return(
 			reader_device=reader.name,
 			branch=reader.branch,
@@ -187,6 +220,23 @@ def resolve_scan(
 	# 6. Family group — head's subscription covers family members.
 	family_head_sub = _find_family_head_active_subscription(customer, ts.date())
 	if family_head_sub:
+		# Inherit the head sub's plan window
+		plan_name = frappe.db.get_value(
+			"Member Subscription", family_head_sub, "membership_plan"
+		)
+		in_window, window_reason = _check_access_window(plan_name, ts)
+		if not in_window:
+			return _log_and_return(
+				reader_device=reader.name,
+				branch=reader.branch,
+				credential_value=credential_value,
+				timestamp=ts,
+				matched_credential=cred.name,
+				matched_customer=customer,
+				decision="Denied",
+				decision_reason="Outside Hours",
+				notes=f"Family head's plan: {window_reason}",
+			)
 		return _log_and_return(
 			reader_device=reader.name,
 			branch=reader.branch,
@@ -230,6 +280,75 @@ def resolve_scan(
 # ----------------------------------------------------------------------------
 # Helpers
 # ----------------------------------------------------------------------------
+
+
+def _check_access_window(membership_plan: str | None, ts) -> tuple[bool, str | None]:
+	"""Returns (allowed, reason_if_blocked).
+
+	Checks the Membership Plan's access_hours_start/end and per-weekday flags.
+	An empty plan_name or a plan with no restrictions returns (True, None)."""
+	if not membership_plan:
+		return (True, None)
+	plan = frappe.db.get_value(
+		"Membership Plan",
+		membership_plan,
+		[
+			"access_hours_start",
+			"access_hours_end",
+			"access_mon",
+			"access_tue",
+			"access_wed",
+			"access_thu",
+			"access_fri",
+			"access_sat",
+			"access_sun",
+		],
+		as_dict=True,
+	)
+	if not plan:
+		return (True, None)
+
+	# Day-of-week check (0=Mon … 6=Sun)
+	weekday = ts.weekday()
+	day_field = DAY_ACCESS_FIELDS[weekday]
+	if not plan.get(day_field):
+		return (False, f"Plan '{membership_plan}' does not allow {DAY_NAMES[weekday]} access")
+
+	# Time-window check (only if BOTH start and end are set)
+	start = plan.get("access_hours_start")
+	end = plan.get("access_hours_end")
+	if start and end:
+		scan_time = _to_time(ts)
+		start_t = _to_time(start)
+		end_t = _to_time(end)
+		if not (start_t <= scan_time <= end_t):
+			return (
+				False,
+				f"Plan '{membership_plan}' window is {start_t}-{end_t}, scan at {scan_time}",
+			)
+
+	return (True, None)
+
+
+def _to_time(val):
+	"""Coerce assorted Frappe Time / datetime representations into a datetime.time."""
+	if isinstance(val, time_cls):
+		return val
+	if isinstance(val, timedelta):
+		seconds = int(val.total_seconds())
+		hours, rem = divmod(seconds, 3600)
+		minutes, secs = divmod(rem, 60)
+		return time_cls(hours, minutes, secs)
+	if hasattr(val, "time") and callable(val.time):
+		return val.time()
+	if isinstance(val, str):
+		parts = val.split(":")
+		h = int(parts[0])
+		m = int(parts[1]) if len(parts) > 1 else 0
+		s = int(float(parts[2])) if len(parts) > 2 else 0
+		return time_cls(h, m, s)
+	# Fallback: assume already a time-like
+	return val
 
 
 def _find_active_subscription(customer: str, on_date) -> dict | None:

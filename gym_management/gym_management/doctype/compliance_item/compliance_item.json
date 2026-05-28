@@ -1,0 +1,248 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-05-28 19:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "compliance_name",
+  "compliance_authority",
+  "branch",
+  "cb1",
+  "compliance_category",
+  "description",
+  "sb_validity",
+  "issued_on",
+  "expires_on",
+  "days_to_expiry",
+  "status",
+  "cb_validity",
+  "renewal_period_months",
+  "next_renewal_due",
+  "sb_document",
+  "current_document",
+  "reference_number",
+  "sb_cost",
+  "cost",
+  "owner_employee",
+  "vendor_or_lawyer",
+  "sb_reminders",
+  "reminder_days_before",
+  "send_email_reminder",
+  "send_dashboard_alert",
+  "sb_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "default": "CI-.######",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "CI-.######",
+   "reqd": 1
+  },
+  {
+   "description": "Human-friendly name e.g. 'KRA PIN — Westlands Branch', 'Fire Certificate 2026'",
+   "fieldname": "compliance_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Compliance Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "compliance_authority",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Compliance Authority",
+   "options": "Compliance Authority",
+   "reqd": 1
+  },
+  {
+   "description": "Leave empty for company-wide items (e.g. KRA PIN); set for branch-specific ones (e.g. county licence per location)",
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "compliance_category",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Category",
+   "options": "\nTax\nLicense\nPermit\nCertificate\nInsurance\nInspection\nSubscription\nOther"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "sb_validity",
+   "fieldtype": "Section Break",
+   "label": "Validity"
+  },
+  {
+   "fieldname": "issued_on",
+   "fieldtype": "Date",
+   "label": "Issued On"
+  },
+  {
+   "fieldname": "expires_on",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Expires On",
+   "reqd": 1
+  },
+  {
+   "description": "Auto-computed: expires_on - today. Negative = already expired.",
+   "fieldname": "days_to_expiry",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Days to Expiry",
+   "read_only": 1
+  },
+  {
+   "description": "Auto-set based on days_to_expiry. 'Renewed' is set by Compliance Renewal on submit; 'Cancelled' is a manual override.",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Active\nExpiring Soon\nExpired\nRenewed\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_validity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "12",
+   "description": "Typical renewal cadence in months. Inherits from the linked authority.",
+   "fetch_from": "compliance_authority.typical_renewal_period_months",
+   "fieldname": "renewal_period_months",
+   "fieldtype": "Int",
+   "label": "Renewal Period (months)"
+  },
+  {
+   "description": "Date you should START the renewal process. Auto-computed if blank.",
+   "fieldname": "next_renewal_due",
+   "fieldtype": "Date",
+   "label": "Next Renewal Due"
+  },
+  {
+   "fieldname": "sb_document",
+   "fieldtype": "Section Break",
+   "label": "Document"
+  },
+  {
+   "description": "Scan or PDF of the current valid document",
+   "fieldname": "current_document",
+   "fieldtype": "Attach",
+   "label": "Current Document"
+  },
+  {
+   "fieldname": "reference_number",
+   "fieldtype": "Data",
+   "label": "Reference Number"
+  },
+  {
+   "fieldname": "sb_cost",
+   "fieldtype": "Section Break",
+   "label": "Cost & Owner"
+  },
+  {
+   "description": "Most recent renewal/issuance cost",
+   "fieldname": "cost",
+   "fieldtype": "Currency",
+   "label": "Cost"
+  },
+  {
+   "description": "Internal owner responsible for tracking this compliance",
+   "fieldname": "owner_employee",
+   "fieldtype": "Link",
+   "label": "Internal Owner",
+   "options": "Employee"
+  },
+  {
+   "description": "External vendor / lawyer who handles the renewal",
+   "fieldname": "vendor_or_lawyer",
+   "fieldtype": "Data",
+   "label": "Vendor / Lawyer"
+  },
+  {
+   "fieldname": "sb_reminders",
+   "fieldtype": "Section Break",
+   "label": "Reminders"
+  },
+  {
+   "default": "60,30,7,1",
+   "description": "Comma list of days before expiry to fire a reminder, e.g. 60,30,7,1",
+   "fieldname": "reminder_days_before",
+   "fieldtype": "Data",
+   "label": "Reminder Days Before"
+  },
+  {
+   "default": "1",
+   "fieldname": "send_email_reminder",
+   "fieldtype": "Check",
+   "label": "Send Email Reminder"
+  },
+  {
+   "default": "1",
+   "fieldname": "send_dashboard_alert",
+   "fieldtype": "Check",
+   "label": "Send Dashboard Alert"
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-05-28 19:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Compliance Item",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "compliance_name,compliance_authority,compliance_category,status",
+ "sort_field": "expires_on",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "compliance_name",
+ "track_changes": 1
+}

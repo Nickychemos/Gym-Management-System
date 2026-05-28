@@ -20,6 +20,18 @@
   "max_freeze_days_per_year",
   "proration_on_upgrade",
   "description",
+  "sb_access_window",
+  "access_hours_start",
+  "access_hours_end",
+  "access_restriction_notes",
+  "cb_access_window",
+  "access_mon",
+  "access_tue",
+  "access_wed",
+  "access_thu",
+  "access_fri",
+  "access_sat",
+  "access_sun",
   "sb_accounting",
   "linked_item",
   "income_account",
@@ -112,6 +124,76 @@
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description"
+  },
+  {
+   "description": "Restrict when members on this plan can access the gym. Leave hours empty + all days ticked for full access.",
+   "fieldname": "sb_access_window",
+   "fieldtype": "Section Break",
+   "label": "Access Window"
+  },
+  {
+   "description": "Earliest time of day allowed. Leave empty for no morning restriction.",
+   "fieldname": "access_hours_start",
+   "fieldtype": "Time",
+   "label": "Access Hours Start"
+  },
+  {
+   "description": "Latest time of day allowed. Leave empty for no evening restriction.",
+   "fieldname": "access_hours_end",
+   "fieldtype": "Time",
+   "label": "Access Hours End"
+  },
+  {
+   "description": "Member-facing summary e.g. 'Morning only, Mon-Fri 10am-2pm'",
+   "fieldname": "access_restriction_notes",
+   "fieldtype": "Small Text",
+   "label": "Access Restriction Notes"
+  },
+  {
+   "fieldname": "cb_access_window",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "access_mon",
+   "fieldtype": "Check",
+   "label": "Monday"
+  },
+  {
+   "default": "1",
+   "fieldname": "access_tue",
+   "fieldtype": "Check",
+   "label": "Tuesday"
+  },
+  {
+   "default": "1",
+   "fieldname": "access_wed",
+   "fieldtype": "Check",
+   "label": "Wednesday"
+  },
+  {
+   "default": "1",
+   "fieldname": "access_thu",
+   "fieldtype": "Check",
+   "label": "Thursday"
+  },
+  {
+   "default": "1",
+   "fieldname": "access_fri",
+   "fieldtype": "Check",
+   "label": "Friday"
+  },
+  {
+   "default": "1",
+   "fieldname": "access_sat",
+   "fieldtype": "Check",
+   "label": "Saturday"
+  },
+  {
+   "default": "1",
+   "fieldname": "access_sun",
+   "fieldtype": "Check",
+   "label": "Sunday"
   },
   {
    "fieldname": "sb_accounting",

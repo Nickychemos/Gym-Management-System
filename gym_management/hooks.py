@@ -168,6 +168,8 @@ scheduler_events = {
 		# Auto-create Equipment Maintenance Tickets when schedules come due.
 		# Self-guards: no-op until Equipment Maintenance Ticket DocType exists.
 		"gym_management.gym_management.doctype.equipment_maintenance_schedule.equipment_maintenance_schedule.create_due_tickets",
+		# Refresh days_to_expiry and status on Compliance Item rows.
+		"gym_management.gym_management.doctype.compliance_item.compliance_item.refresh_statuses",
 	],
 }
 

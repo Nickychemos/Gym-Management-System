@@ -1,0 +1,193 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-05-28 20:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "compliance_item",
+  "compliance_authority",
+  "cb_meta",
+  "old_expiry_date",
+  "new_expiry_date",
+  "renewed_on",
+  "sb_document",
+  "new_document",
+  "new_reference_number",
+  "sb_cost",
+  "cost_paid",
+  "payment_method",
+  "linked_payment_entry",
+  "linked_purchase_invoice",
+  "cb_cost",
+  "renewed_by",
+  "vendor_or_lawyer",
+  "sb_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "default": "CR-.YYYY.-.######",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "CR-.YYYY.-.######",
+   "reqd": 1
+  },
+  {
+   "fieldname": "compliance_item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Compliance Item",
+   "options": "Compliance Item",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "compliance_item.compliance_authority",
+   "fieldname": "compliance_authority",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Compliance Authority",
+   "options": "Compliance Authority",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_meta",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Captured snapshot of the Compliance Item's expires_on before this renewal",
+   "fieldname": "old_expiry_date",
+   "fieldtype": "Date",
+   "label": "Old Expiry Date",
+   "reqd": 1
+  },
+  {
+   "description": "What the parent Compliance Item's expires_on becomes when this renewal submits",
+   "fieldname": "new_expiry_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "New Expiry Date",
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "renewed_on",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Renewed On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_document",
+   "fieldtype": "Section Break",
+   "label": "New Document"
+  },
+  {
+   "description": "Scan/PDF of the renewed certificate or licence",
+   "fieldname": "new_document",
+   "fieldtype": "Attach",
+   "label": "New Document",
+   "reqd": 1
+  },
+  {
+   "fieldname": "new_reference_number",
+   "fieldtype": "Data",
+   "label": "New Reference Number"
+  },
+  {
+   "fieldname": "sb_cost",
+   "fieldtype": "Section Break",
+   "label": "Cost"
+  },
+  {
+   "fieldname": "cost_paid",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Cost Paid"
+  },
+  {
+   "fieldname": "payment_method",
+   "fieldtype": "Select",
+   "label": "Payment Method",
+   "options": "\nCash\nM-Pesa\nBank Transfer\nCheque\nCard"
+  },
+  {
+   "description": "If the renewal was paid via ERPNext, link the Payment Entry",
+   "fieldname": "linked_payment_entry",
+   "fieldtype": "Link",
+   "label": "Linked Payment Entry",
+   "options": "Payment Entry"
+  },
+  {
+   "description": "If a supplier invoiced for the renewal, link the Purchase Invoice",
+   "fieldname": "linked_purchase_invoice",
+   "fieldtype": "Link",
+   "label": "Linked Purchase Invoice",
+   "options": "Purchase Invoice"
+  },
+  {
+   "fieldname": "cb_cost",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "renewed_by",
+   "fieldtype": "Link",
+   "label": "Renewed By",
+   "options": "Employee"
+  },
+  {
+   "description": "External agent (e.g. lawyer, county runner) who processed the renewal",
+   "fieldname": "vendor_or_lawyer",
+   "fieldtype": "Data",
+   "label": "Vendor / Lawyer"
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-05-28 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Compliance Renewal",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "compliance_item,renewed_on",
+ "sort_field": "renewed_on",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "compliance_item",
+ "track_changes": 1
+}
