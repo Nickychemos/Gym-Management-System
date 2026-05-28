@@ -1,0 +1,211 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-05-28 16:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "pt_package",
+  "customer",
+  "trainer",
+  "cb_who",
+  "scheduled_at",
+  "actual_start_time",
+  "actual_end_time",
+  "duration_minutes",
+  "sb_status",
+  "status",
+  "branch",
+  "room",
+  "cb_status",
+  "decremented_from_package",
+  "penalty_applied",
+  "sb_outcomes",
+  "workout_focus",
+  "session_notes",
+  "cb_outcomes",
+  "member_feedback",
+  "rating"
+ ],
+ "fields": [
+  {
+   "default": "PTS-.YYYY.-.######",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "PTS-.YYYY.-.######",
+   "reqd": 1
+  },
+  {
+   "fieldname": "pt_package",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "PT Package",
+   "options": "PT Package",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "pt_package.customer",
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "pt_package.trainer",
+   "fieldname": "trainer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Trainer",
+   "options": "Employee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_who",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "scheduled_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Scheduled At",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "actual_start_time",
+   "fieldtype": "Datetime",
+   "label": "Actual Start"
+  },
+  {
+   "fieldname": "actual_end_time",
+   "fieldtype": "Datetime",
+   "label": "Actual End"
+  },
+  {
+   "description": "Auto-computed when actual_start_time and actual_end_time are set",
+   "fieldname": "duration_minutes",
+   "fieldtype": "Int",
+   "label": "Duration (mins)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_status",
+   "fieldtype": "Section Break",
+   "label": "Status"
+  },
+  {
+   "default": "Scheduled",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Scheduled\nCompleted\nNo-Show\nCancelled\nRescheduled",
+   "reqd": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "room",
+   "fieldtype": "Data",
+   "label": "Room"
+  },
+  {
+   "fieldname": "cb_status",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "description": "Should this session count against the PT Package's sessions_used? Default ON for Completed and No-Show; turn OFF only for makeup sessions that the gym is giving free.",
+   "fieldname": "decremented_from_package",
+   "fieldtype": "Check",
+   "label": "Decrement From Package"
+  },
+  {
+   "depends_on": "eval:doc.status=='No-Show'",
+   "description": "Additional cash penalty on top of the session being used (most gyms don't apply one — leave 0).",
+   "fieldname": "penalty_applied",
+   "fieldtype": "Currency",
+   "label": "Penalty Applied"
+  },
+  {
+   "fieldname": "sb_outcomes",
+   "fieldtype": "Section Break",
+   "label": "Outcomes"
+  },
+  {
+   "description": "What body part / movement / goal this session worked on",
+   "fieldname": "workout_focus",
+   "fieldtype": "Small Text",
+   "label": "Workout Focus"
+  },
+  {
+   "description": "Trainer's notes on the session, observations, prescription for next time",
+   "fieldname": "session_notes",
+   "fieldtype": "Text",
+   "label": "Trainer Notes"
+  },
+  {
+   "fieldname": "cb_outcomes",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Optional member feedback captured post-session",
+   "fieldname": "member_feedback",
+   "fieldtype": "Small Text",
+   "label": "Member Feedback"
+  },
+  {
+   "description": "1-5 member rating of the session",
+   "fieldname": "rating",
+   "fieldtype": "Rating",
+   "label": "Rating"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-05-28 16:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "PT Session",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "pt_package,customer,trainer,status",
+ "sort_field": "scheduled_at",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "customer",
+ "track_changes": 1
+}
