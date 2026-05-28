@@ -1,0 +1,209 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:channel_name",
+ "creation": "2026-05-28 23:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "channel_name",
+  "channel_type",
+  "status",
+  "is_default",
+  "cb_meta",
+  "last_sync",
+  "last_error",
+  "credentials_prefix",
+  "sb_quota",
+  "daily_cap",
+  "send_count_today",
+  "last_count_reset_date",
+  "cb_quota",
+  "provider_tier",
+  "monthly_estimated_cost",
+  "sb_provider",
+  "provider_account_id",
+  "provider_phone_id",
+  "cb_provider",
+  "webhook_verify_token",
+  "webhook_callback_url",
+  "sb_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "description": "Display name e.g. 'Main WhatsApp Business' or 'Africa's Talking SMS — Production'",
+   "fieldname": "channel_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Channel Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "channel_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Channel Type",
+   "options": "WhatsApp Cloud API\nMeta Business (FB/IG)\nSMTP Email\nAfrica's Talking SMS\nTwilio SMS\nFCM Push\nOther",
+   "reqd": 1
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Active\nPaused\nError\nDisabled",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "description": "Mark ONE connection per channel_type as the default. Phase 5 senders pick the default if none specified.",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Default for Type"
+  },
+  {
+   "fieldname": "cb_meta",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Last successful provider sync or message send",
+   "fieldname": "last_sync",
+   "fieldtype": "Datetime",
+   "label": "Last Sync / Send",
+   "read_only": 1
+  },
+  {
+   "description": "Most recent error returned by the provider",
+   "fieldname": "last_error",
+   "fieldtype": "Small Text",
+   "label": "Last Error",
+   "read_only": 1
+  },
+  {
+   "description": "Prefix of the site_config.json keys holding the secret credentials for this connection (e.g. 'whatsapp_' → site_config.whatsapp_token, whatsapp_phone_id, etc.). DocType row does NOT store secrets.",
+   "fieldname": "credentials_prefix",
+   "fieldtype": "Data",
+   "label": "Credentials Prefix in site_config"
+  },
+  {
+   "fieldname": "sb_quota",
+   "fieldtype": "Section Break",
+   "label": "Quota & Rate Limits"
+  },
+  {
+   "description": "Soft cap on messages per day on this channel. Senders block once exceeded. 0 = no cap.",
+   "fieldname": "daily_cap",
+   "fieldtype": "Int",
+   "label": "Daily Cap"
+  },
+  {
+   "default": "0",
+   "description": "Auto-reset to 0 every day by scheduler",
+   "fieldname": "send_count_today",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Sent Today",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_count_reset_date",
+   "fieldtype": "Date",
+   "label": "Last Count Reset",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_quota",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Provider plan / tier e.g. 'Free 1000/mo conversations', 'Pay-as-you-go'",
+   "fieldname": "provider_tier",
+   "fieldtype": "Data",
+   "label": "Provider Tier"
+  },
+  {
+   "description": "Rough monthly spend (informational; actual cost lives in Campaign Send Log)",
+   "fieldname": "monthly_estimated_cost",
+   "fieldtype": "Currency",
+   "label": "Monthly Estimated Cost"
+  },
+  {
+   "fieldname": "sb_provider",
+   "fieldtype": "Section Break",
+   "label": "Provider Metadata (non-secret)"
+  },
+  {
+   "description": "e.g. WhatsApp Business Account ID, Meta Page ID, AT username — non-secret identifiers",
+   "fieldname": "provider_account_id",
+   "fieldtype": "Data",
+   "label": "Provider Account ID"
+  },
+  {
+   "description": "e.g. WhatsApp Cloud phone_number_id, sender ID for SMS",
+   "fieldname": "provider_phone_id",
+   "fieldtype": "Data",
+   "label": "Provider Phone / Sender ID"
+  },
+  {
+   "fieldname": "cb_provider",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Non-secret token Meta returns during webhook handshake — safe to store here",
+   "fieldname": "webhook_verify_token",
+   "fieldtype": "Data",
+   "label": "Webhook Verify Token"
+  },
+  {
+   "description": "Public URL the provider should POST callbacks to (e.g. https://yourgym.co.ke/api/method/...)",
+   "fieldname": "webhook_callback_url",
+   "fieldtype": "Data",
+   "label": "Webhook Callback URL"
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-05-28 23:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Channel Connection",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "channel_name,channel_type,status",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "channel_name",
+ "track_changes": 1
+}

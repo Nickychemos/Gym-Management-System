@@ -172,6 +172,8 @@ scheduler_events = {
 		"gym_management.gym_management.doctype.compliance_item.compliance_item.refresh_statuses",
 		# Expire Pending referrals older than REFERRAL_EXPIRY_DAYS days.
 		"gym_management.gym_management.doctype.referral.referral.auto_expire_stale",
+		# Reset send_count_today on all Channel Connections (daily quota cycle).
+		"gym_management.gym_management.doctype.channel_connection.channel_connection.reset_daily_counts",
 	],
 }
 
