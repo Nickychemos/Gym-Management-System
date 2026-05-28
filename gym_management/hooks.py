@@ -176,6 +176,8 @@ scheduler_events = {
 		"gym_management.gym_management.doctype.channel_connection.channel_connection.reset_daily_counts",
 		# Send WhatsApp renewal reminders to members whose sub ends in 3 days.
 		"gym_management.campaigns.run_renewal_reminders",
+		# Pull WhatsApp Template approval status from Meta into local rows.
+		"gym_management.gym_management.doctype.whatsapp_template.whatsapp_template.sync_all_statuses",
 	],
 }
 

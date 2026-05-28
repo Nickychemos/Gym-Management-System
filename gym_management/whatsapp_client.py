@@ -47,11 +47,15 @@ class WhatsAppClient:
 		access_token: str,
 		app_secret: str,
 		verify_token: str,
+		business_account_id: str | None = None,
 	):
 		self.phone_number_id = phone_number_id
 		self.access_token = access_token
 		self.app_secret = app_secret
 		self.verify_token = verify_token
+		# WABA ID is only needed for template management (submit/list/delete);
+		# the message-sending endpoints route via phone_number_id instead.
+		self.business_account_id = business_account_id
 
 	@classmethod
 	def for_current_site(cls) -> "WhatsAppClient":
@@ -74,7 +78,16 @@ class WhatsAppClient:
 			access_token=conf["whatsapp_access_token"],
 			app_secret=conf["whatsapp_app_secret"],
 			verify_token=conf["whatsapp_verify_token"],
+			business_account_id=conf.get("whatsapp_business_account_id"),
 		)
+
+	def _require_waba(self) -> str:
+		if not self.business_account_id:
+			raise WhatsAppConfigError(
+				"site_config.json is missing whatsapp_business_account_id — "
+				"required for template management endpoints"
+			)
+		return self.business_account_id
 
 	# ----- Signature verification (Meta posts X-Hub-Signature-256) -----
 
@@ -154,3 +167,102 @@ class WhatsAppClient:
 			"message_id": message_id,
 		}
 		return self._post(payload)
+
+	# ----- Template management (WABA-scoped) -----
+
+	def submit_template(
+		self,
+		name: str,
+		category: str,
+		language: str,
+		components: list[dict],
+	) -> dict:
+		"""Submit a template to Meta for approval.
+
+		Endpoint: POST /v19.0/{waba_id}/message_templates
+		Returns Meta's response which includes {'id': '<meta_template_id>',
+		'status': 'PENDING', 'category': '...'}.
+
+		`components` is the Meta-shaped list — see WhatsAppTemplate.submit_to_meta()
+		for how we build it from header_text/body_text/footer_text fields.
+		"""
+		waba_id = self._require_waba()
+		url = f"{GRAPH_API_BASE}/{waba_id}/message_templates"
+		headers = {
+			"Authorization": f"Bearer {self.access_token}",
+			"Content-Type": "application/json",
+		}
+		payload = {
+			"name": name,
+			"category": category,
+			"language": language,
+			"components": components,
+		}
+		resp = requests.post(url, json=payload, headers=headers, timeout=15)
+		try:
+			data = resp.json()
+		except Exception:
+			data = {"error": {"message": resp.text}}
+		if not resp.ok:
+			err = data.get("error", {}).get("message", "unknown")
+			raise WhatsAppAPIError(
+				f"Meta template submit {resp.status_code}: {err}"
+			)
+		return data
+
+	def list_templates(self, limit: int = 200) -> list[dict]:
+		"""Fetch all message templates for this WABA.
+
+		Endpoint: GET /v19.0/{waba_id}/message_templates
+		Returns a list of dicts with at minimum: id, name, status, category,
+		language, rejected_reason. Meta paginates with cursors — we walk pages
+		until exhausted or until `limit` is hit.
+		"""
+		waba_id = self._require_waba()
+		url = f"{GRAPH_API_BASE}/{waba_id}/message_templates"
+		params: dict = {
+			"fields": "id,name,status,category,language,rejected_reason",
+			"limit": min(100, limit),
+		}
+		headers = {"Authorization": f"Bearer {self.access_token}"}
+		out: list[dict] = []
+		while url and len(out) < limit:
+			resp = requests.get(url, params=params, headers=headers, timeout=15)
+			try:
+				data = resp.json()
+			except Exception:
+				data = {"error": {"message": resp.text}}
+			if not resp.ok:
+				err = data.get("error", {}).get("message", "unknown")
+				raise WhatsAppAPIError(
+					f"Meta template list {resp.status_code}: {err}"
+				)
+			out.extend(data.get("data") or [])
+			# Cursor pagination — Meta returns paging.next as a full URL with cursors baked in
+			next_url = (data.get("paging") or {}).get("next")
+			url = next_url
+			params = {}  # subsequent pages embed all params in the next URL
+		return out[:limit]
+
+	def delete_template(self, name: str) -> dict:
+		"""Delete a template from Meta by name.
+
+		Endpoint: DELETE /v19.0/{waba_id}/message_templates?name={name}
+		Used when a template is rejected and we want to resubmit with edits, or
+		when retiring an old template.
+		"""
+		waba_id = self._require_waba()
+		url = f"{GRAPH_API_BASE}/{waba_id}/message_templates"
+		params = {"name": name}
+		headers = {"Authorization": f"Bearer {self.access_token}"}
+		resp = requests.delete(url, params=params, headers=headers, timeout=15)
+		try:
+			data = resp.json()
+		except Exception:
+			data = {"error": {"message": resp.text}}
+		if not resp.ok:
+			err = data.get("error", {}).get("message", "unknown")
+			raise WhatsAppAPIError(
+				f"Meta template delete {resp.status_code}: {err}"
+			)
+		return data
