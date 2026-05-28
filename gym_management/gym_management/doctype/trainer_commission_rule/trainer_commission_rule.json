@@ -1,0 +1,160 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:rule_name",
+ "creation": "2026-05-28 17:35:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "rule_name",
+  "trainer",
+  "applies_to",
+  "is_active",
+  "cb1",
+  "commission_type",
+  "commission_percent",
+  "commission_fixed_amount",
+  "sb_tiers",
+  "tier_table",
+  "sb_validity",
+  "valid_from",
+  "valid_to",
+  "sb_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "rule_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Rule Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "description": "Leave empty to apply this rule to ALL trainers",
+   "fieldname": "trainer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Trainer",
+   "options": "Employee"
+  },
+  {
+   "default": "Both",
+   "fieldname": "applies_to",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Applies To",
+   "options": "PT\nClass\nBoth",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Is Active"
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Percent of Revenue",
+   "fieldname": "commission_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Commission Type",
+   "options": "Percent of Revenue\nFixed Per Session\nTiered",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.commission_type=='Percent of Revenue'",
+   "description": "Used when Commission Type = Percent of Revenue",
+   "fieldname": "commission_percent",
+   "fieldtype": "Percent",
+   "label": "Commission %"
+  },
+  {
+   "depends_on": "eval:doc.commission_type=='Fixed Per Session'",
+   "description": "Used when Commission Type = Fixed Per Session",
+   "fieldname": "commission_fixed_amount",
+   "fieldtype": "Currency",
+   "label": "Fixed Amount Per Session"
+  },
+  {
+   "depends_on": "eval:doc.commission_type=='Tiered'",
+   "fieldname": "sb_tiers",
+   "fieldtype": "Section Break",
+   "label": "Tiered Ladder"
+  },
+  {
+   "depends_on": "eval:doc.commission_type=='Tiered'",
+   "description": "Each row defines a session-count band and the % to pay. Order from lowest band upward; leave the top band's Sessions Max empty.",
+   "fieldname": "tier_table",
+   "fieldtype": "Table",
+   "label": "Tiers",
+   "options": "Commission Tier"
+  },
+  {
+   "fieldname": "sb_validity",
+   "fieldtype": "Section Break",
+   "label": "Validity"
+  },
+  {
+   "default": "Today",
+   "fieldname": "valid_from",
+   "fieldtype": "Date",
+   "label": "Valid From",
+   "reqd": 1
+  },
+  {
+   "description": "Leave empty for an indefinite rule",
+   "fieldname": "valid_to",
+   "fieldtype": "Date",
+   "label": "Valid To"
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-28 17:35:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Trainer Commission Rule",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "rule_name,trainer,applies_to",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "rule_name",
+ "track_changes": 1
+}
