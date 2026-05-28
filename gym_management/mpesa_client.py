@@ -310,15 +310,28 @@ class MPesaClient:
 	) -> dict:
 		"""Send money OUT from the gym's paybill to a member's phone.
 
-		TODO (Phase 4 polish): Daraja requires the initiator_password to be
-		RSA-encrypted using Safaricom's environment-specific public certificate
-		before sending. Implementation deferred until we have a real production
-		paybill and Safaricom's cert. For sandbox testing, plain text works.
+		Daraja requires `SecurityCredential` to be the initiator password
+		RSA-encrypted with Safaricom's env-specific public certificate. We
+		call gym_management.mpesa_security.encrypt_security_credential() to
+		produce it. The cert must be present at
+		gym_management/data/safaricom_cert_<env>.cer or referenced via
+		site_config.mpesa_security_cert_path_<env>.
 		"""
+		from gym_management.mpesa_security import (
+			MPesaSecurityCertError,
+			encrypt_security_credential,
+		)
+
 		if not self.initiator_name or not self.initiator_password:
 			raise MPesaConfigError(
 				"B2C requires mpesa_initiator_name + mpesa_initiator_password in site_config"
 			)
+		try:
+			security_credential = encrypt_security_credential(
+				self.initiator_password, self.env
+			)
+		except MPesaSecurityCertError as e:
+			raise MPesaConfigError(str(e))
 
 		# Persist Pending Outbound row first
 		doc = frappe.new_doc("M-Pesa Transaction")
@@ -337,7 +350,7 @@ class MPesaClient:
 		token = self.get_access_token()
 		body = {
 			"InitiatorName": self.initiator_name,
-			"SecurityCredential": self.initiator_password,  # TODO: RSA-encrypt
+			"SecurityCredential": security_credential,
 			"CommandID": command_id,
 			"Amount": int(round(float(amount))),
 			"PartyA": self.shortcode,
