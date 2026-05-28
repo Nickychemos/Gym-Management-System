@@ -156,6 +156,8 @@ scheduler_events = {
 		# Flip Active subscriptions whose end_date + grace_period has passed
 		# to Lapsed.
 		"gym_management.gym_management.doctype.member_subscription.member_subscription.auto_lapse_expired",
+		# Flip Active trial passes whose expiry_date has passed to Expired.
+		"gym_management.gym_management.doctype.trial_pass.trial_pass.auto_expire",
 	],
 }
 

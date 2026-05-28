@@ -19,6 +19,7 @@
   "cb2",
   "max_credentials_per_member",
   "whitelist_sync_minutes",
+  "require_waiver_for_access",
   "sb_class",
   "class_cancel_window_hours",
   "class_no_show_fee",
@@ -113,6 +114,13 @@
    "fieldname": "whitelist_sync_minutes",
    "fieldtype": "Int",
    "label": "Whitelist Sync Interval (mins)"
+  },
+  {
+   "default": "0",
+   "description": "When ON, Class Booking and Access Event refuse entry without an active signed waiver. When OFF (default), no waiver check happens. Toggle ON only if your insurance requires it.",
+   "fieldname": "require_waiver_for_access",
+   "fieldtype": "Check",
+   "label": "Require Signed Waiver for Access"
   },
   {
    "fieldname": "sb_class",

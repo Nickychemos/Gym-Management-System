@@ -1,0 +1,140 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-05-28 10:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "customer",
+  "waiver_template",
+  "cb1",
+  "signed_on",
+  "ip_address",
+  "sb_signature",
+  "signature_image",
+  "requires_guardian",
+  "guardian_name",
+  "sb_record",
+  "pdf_snapshot"
+ ],
+ "fields": [
+  {
+   "default": "WS-.YYYY.-.######",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "WS-.YYYY.-.######",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "waiver_template",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Waiver Template",
+   "options": "Waiver Template",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Now",
+   "fieldname": "signed_on",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Signed On",
+   "reqd": 1
+  },
+  {
+   "description": "Captured by the controller from the signing request",
+   "fieldname": "ip_address",
+   "fieldtype": "Data",
+   "label": "IP Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_signature",
+   "fieldtype": "Section Break",
+   "label": "Signature"
+  },
+  {
+   "description": "Drawn-finger signature captured from the tablet or member portal",
+   "fieldname": "signature_image",
+   "fieldtype": "Attach Image",
+   "label": "Signature Image"
+  },
+  {
+   "default": "0",
+   "description": "Set from the linked Waiver Template",
+   "fetch_from": "waiver_template.requires_minor_guardian",
+   "fieldname": "requires_guardian",
+   "fieldtype": "Check",
+   "label": "Requires Guardian",
+   "read_only": 1
+  },
+  {
+   "depends_on": "requires_guardian",
+   "description": "Parent or legal guardian name (required when the signer is a minor)",
+   "fieldname": "guardian_name",
+   "fieldtype": "Data",
+   "label": "Guardian Name"
+  },
+  {
+   "fieldname": "sb_record",
+   "fieldtype": "Section Break",
+   "label": "Permanent Record"
+  },
+  {
+   "description": "Immutable PDF rendered at signing time. Source of truth for legal/insurance review.",
+   "fieldname": "pdf_snapshot",
+   "fieldtype": "Attach",
+   "label": "PDF Snapshot"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-05-28 10:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Waiver Signature",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 0,
+   "cancel": 1,
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "customer,waiver_template",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "customer",
+ "track_changes": 1
+}

@@ -1,0 +1,111 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:template_name",
+ "creation": "2026-05-28 10:15:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "template_name",
+  "version",
+  "effective_from",
+  "cb1",
+  "is_current",
+  "requires_minor_guardian",
+  "sb_content",
+  "summary",
+  "content"
+ ],
+ "fields": [
+  {
+   "description": "Include a version suffix, e.g. 'Standard Liability Waiver v2'. Each version is its own record.",
+   "fieldname": "template_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Template Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "version",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Effective From",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Only one Waiver Template at a time can be 'current'. The current one is what new members must sign.",
+   "fieldname": "is_current",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Current"
+  },
+  {
+   "default": "0",
+   "description": "When ON, minors require an additional Parent/Guardian name on the signature",
+   "fieldname": "requires_minor_guardian",
+   "fieldtype": "Check",
+   "label": "Requires Guardian for Minors"
+  },
+  {
+   "fieldname": "sb_content",
+   "fieldtype": "Section Break",
+   "label": "Content"
+  },
+  {
+   "description": "Short member-facing summary shown above the full text on the sign page",
+   "fieldname": "summary",
+   "fieldtype": "Small Text",
+   "label": "Summary"
+  },
+  {
+   "description": "The full legal text of the waiver. Members must scroll through this before signing.",
+   "fieldname": "content",
+   "fieldtype": "Text Editor",
+   "label": "Waiver Content",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-28 10:15:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Waiver Template",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "template_name,version",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "template_name",
+ "track_changes": 1
+}

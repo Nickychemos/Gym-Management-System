@@ -34,6 +34,9 @@
   "chronic_condition_notes",
   "doctor_clearance_attached",
   "doctor_note",
+  "allergies",
+  "physician_name",
+  "physician_phone",
   "cb3",
   "fitness_goals",
   "preferred_workout_time",
@@ -216,6 +219,23 @@
    "fieldname": "doctor_note",
    "fieldtype": "Attach",
    "label": "Doctor Note"
+  },
+  {
+   "description": "Comma list e.g. peanuts, latex, sulfa drugs",
+   "fieldname": "allergies",
+   "fieldtype": "Small Text",
+   "label": "Allergies"
+  },
+  {
+   "fieldname": "physician_name",
+   "fieldtype": "Data",
+   "label": "Physician Name"
+  },
+  {
+   "fieldname": "physician_phone",
+   "fieldtype": "Data",
+   "label": "Physician Phone",
+   "options": "Phone"
   },
   {
    "fieldname": "cb3",
