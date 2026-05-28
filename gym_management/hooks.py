@@ -174,6 +174,8 @@ scheduler_events = {
 		"gym_management.gym_management.doctype.referral.referral.auto_expire_stale",
 		# Reset send_count_today on all Channel Connections (daily quota cycle).
 		"gym_management.gym_management.doctype.channel_connection.channel_connection.reset_daily_counts",
+		# Send WhatsApp renewal reminders to members whose sub ends in 3 days.
+		"gym_management.campaigns.run_renewal_reminders",
 	],
 }
 

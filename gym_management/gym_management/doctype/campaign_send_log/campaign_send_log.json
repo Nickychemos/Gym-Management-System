@@ -38,6 +38,8 @@
   "sb_links",
   "linked_whatsapp_template",
   "linked_email_template",
+  "sb_items",
+  "items",
   "sb_notes",
   "notes"
  ],
@@ -251,6 +253,18 @@
    "fieldtype": "Link",
    "label": "Linked Email Template",
    "options": "Email Template"
+  },
+  {
+   "fieldname": "sb_items",
+   "fieldtype": "Section Break",
+   "label": "Per-Recipient Items"
+  },
+  {
+   "description": "One row per recipient. Provider status callbacks find the matching row by provider_message_id and update its status — the aggregate counters above are recomputed from these rows.",
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Campaign Send Item"
   },
   {
    "fieldname": "sb_notes",

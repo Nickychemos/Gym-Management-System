@@ -213,40 +213,56 @@ def _extract_text(message: dict) -> str | None:
 
 
 def _handle_status(status: dict) -> None:
-	"""Update the matching Campaign Send Log when a message status changes.
+	"""Update the matching Campaign Send Item when a message status changes,
+	then recompute parent Campaign Send Log counters.
 
-	Status flow Meta sends: sent → delivered → read (or failed).
-	We only act if there's a Campaign Send Log row keyed by the wamid; otherwise
-	this was a one-off chatbot reply we don't track per-message.
+	Meta promotes status as: sent → delivered → read (or failed). We find the
+	per-recipient row by provider_message_id (wamid). Chatbot replies aren't
+	tracked here — only campaign sends have wamid-mapped rows.
 	"""
+	from gym_management.campaigns import recompute_stats
+
 	wamid = status.get("id")
 	state = status.get("status")  # sent | delivered | read | failed
 	if not (wamid and state):
 		return
 
-	log = frappe.db.get_value(
-		"Campaign Send Log",
+	item_row = frappe.db.get_value(
+		"Campaign Send Item",
 		{"provider_message_id": wamid},
-		"name",
+		["name", "parent"],
+		as_dict=True,
 	)
-	if not log:
+	if not item_row:
 		return
 
+	now = frappe.utils.now_datetime()
 	updates: dict = {}
 	if state == "sent":
 		updates["status"] = "Sent"
+		updates["sent_at"] = now
 	elif state == "delivered":
 		updates["status"] = "Delivered"
+		updates["delivered_at"] = now
 	elif state == "read":
 		updates["status"] = "Read"
+		updates["read_at"] = now
 	elif state == "failed":
 		updates["status"] = "Failed"
+		updates["failed_at"] = now
 		errors = status.get("errors") or []
 		if errors:
-			updates["error_message"] = errors[0].get("title") or str(errors[0])[:140]
-	if updates:
-		frappe.db.set_value("Campaign Send Log", log, updates)
-		frappe.db.commit()
+			updates["error_code"] = str(errors[0].get("code") or "")[:60]
+			updates["error_message"] = (
+				errors[0].get("title") or str(errors[0])
+			)[:140]
+	if not updates:
+		return
+	for field, value in updates.items():
+		frappe.db.set_value("Campaign Send Item", item_row.name, field, value)
+	frappe.db.commit()
+	# Roll up into parent counters
+	recompute_stats(item_row.parent)
 
 
 def _safe_send(client: WhatsAppClient, to_phone: str, body: str) -> None:
