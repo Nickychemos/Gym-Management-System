@@ -1,0 +1,214 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:template_name",
+ "creation": "2026-05-29 09:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "template_name",
+  "category",
+  "language",
+  "status",
+  "cb_meta",
+  "meta_template_id",
+  "channel_connection",
+  "is_active",
+  "sb_content",
+  "header_text",
+  "body_text",
+  "footer_text",
+  "sb_placeholders",
+  "placeholder_count",
+  "example_values",
+  "cb_placeholders",
+  "send_count",
+  "last_used_on",
+  "sb_meta_sync",
+  "meta_status_synced_on",
+  "rejection_reason",
+  "sb_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "description": "Exact name submitted to Meta. Must be lowercase + underscores + digits only, e.g. wp_first_membership_purchased",
+   "fieldname": "template_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Template Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Category",
+   "options": "UTILITY\nMARKETING\nAUTHENTICATION",
+   "reqd": 1
+  },
+  {
+   "default": "en",
+   "description": "Meta language code e.g. en, en_US, sw (Swahili)",
+   "fieldname": "language",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Language",
+   "reqd": 1
+  },
+  {
+   "default": "Pending",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Pending\nApproved\nRejected\nPaused\nDisabled",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_meta",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "ID assigned by Meta on approval. Required for sending — Meta API uses this not the name.",
+   "fieldname": "meta_template_id",
+   "fieldtype": "Data",
+   "label": "Meta Template ID"
+  },
+  {
+   "description": "Which Channel Connection this template lives under (each WhatsApp Cloud account has its own template catalog)",
+   "fieldname": "channel_connection",
+   "fieldtype": "Link",
+   "label": "Channel Connection",
+   "options": "Channel Connection"
+  },
+  {
+   "default": "1",
+   "description": "When OFF, senders skip this template even if Approved at Meta",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active"
+  },
+  {
+   "fieldname": "sb_content",
+   "fieldtype": "Section Break",
+   "label": "Content"
+  },
+  {
+   "description": "Optional header text. For media headers, store the media URL/handle here.",
+   "fieldname": "header_text",
+   "fieldtype": "Data",
+   "label": "Header Text"
+  },
+  {
+   "description": "Main message body with {{1}}, {{2}}, ... placeholders. e.g. 'Welcome to {{1}}! Your membership starts on {{2}}.'",
+   "fieldname": "body_text",
+   "fieldtype": "Text",
+   "label": "Body Text",
+   "reqd": 1
+  },
+  {
+   "fieldname": "footer_text",
+   "fieldtype": "Data",
+   "label": "Footer Text"
+  },
+  {
+   "fieldname": "sb_placeholders",
+   "fieldtype": "Section Break",
+   "label": "Placeholders & Tracking"
+  },
+  {
+   "default": "0",
+   "description": "Auto-computed from body_text by counting unique {{n}} occurrences",
+   "fieldname": "placeholder_count",
+   "fieldtype": "Int",
+   "label": "Placeholder Count",
+   "read_only": 1
+  },
+  {
+   "description": "Comma list of example values for each placeholder, e.g. 'FitHub Westlands, 2026-06-01'. Meta requires these when submitting the template for approval.",
+   "fieldname": "example_values",
+   "fieldtype": "Small Text",
+   "label": "Example Values"
+  },
+  {
+   "fieldname": "cb_placeholders",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "send_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Sends",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_used_on",
+   "fieldtype": "Datetime",
+   "label": "Last Used On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_meta_sync",
+   "fieldtype": "Section Break",
+   "label": "Meta Sync"
+  },
+  {
+   "description": "Last time we polled Meta's API for this template's status",
+   "fieldname": "meta_status_synced_on",
+   "fieldtype": "Datetime",
+   "label": "Meta Status Synced On",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.status=='Rejected'",
+   "description": "Meta's stated reason for rejection (e.g. promotional content in UTILITY category)",
+   "fieldname": "rejection_reason",
+   "fieldtype": "Small Text",
+   "label": "Rejection Reason"
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-05-29 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "WhatsApp Template",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "template_name,category,language,status",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "template_name",
+ "track_changes": 1
+}
