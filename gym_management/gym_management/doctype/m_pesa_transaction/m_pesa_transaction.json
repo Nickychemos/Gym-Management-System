@@ -37,6 +37,7 @@
   "linked_pt_package",
   "linked_class_booking",
   "linked_member_request",
+  "linked_refund_request",
   "sb_payloads",
   "request_payload",
   "response_payload",
@@ -240,6 +241,13 @@
    "fieldtype": "Link",
    "label": "Linked Member Request",
    "options": "Member Request"
+  },
+  {
+   "description": "If this is a B2C disbursement for an approved Refund Request",
+   "fieldname": "linked_refund_request",
+   "fieldtype": "Link",
+   "label": "Linked Refund Request",
+   "options": "Refund Request"
   },
   {
    "fieldname": "sb_payloads",

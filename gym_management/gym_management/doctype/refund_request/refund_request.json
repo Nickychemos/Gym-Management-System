@@ -1,0 +1,306 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-05-28 21:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "customer",
+  "refund_reason",
+  "cb_meta",
+  "requested_on",
+  "requested_by",
+  "branch",
+  "sb_source",
+  "source_type",
+  "linked_subscription",
+  "linked_pt_package",
+  "linked_class_booking",
+  "linked_invoice",
+  "sb_amount",
+  "original_amount_paid",
+  "requested_refund_amount",
+  "refund_method",
+  "cb_amount",
+  "refund_account_phone",
+  "bank_details",
+  "sb_approval",
+  "status",
+  "approved_by",
+  "approved_on",
+  "cb_approval",
+  "rejection_reason",
+  "sb_execution",
+  "refund_initiated_on",
+  "refund_completed_on",
+  "linked_payment_entry",
+  "linked_mpesa_transaction",
+  "sb_justification",
+  "justification",
+  "internal_notes"
+ ],
+ "fields": [
+  {
+   "default": "RR-.YYYY.-.######",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "RR-.YYYY.-.######",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "refund_reason",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Refund Reason",
+   "options": "Cancellation\nService Not Delivered\nDuplicate Payment\nGoodwill\nEquipment Issue\nMember Request\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_meta",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "requested_on",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Requested On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested By",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Branch",
+   "options": "Branch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_source",
+   "fieldtype": "Section Break",
+   "label": "Source of Refund"
+  },
+  {
+   "fieldname": "source_type",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Source Type",
+   "options": "Subscription\nPT Package\nClass Booking\nPOS Sale\nOther",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.source_type=='Subscription'",
+   "fieldname": "linked_subscription",
+   "fieldtype": "Link",
+   "label": "Linked Subscription",
+   "options": "Member Subscription"
+  },
+  {
+   "depends_on": "eval:doc.source_type=='PT Package'",
+   "fieldname": "linked_pt_package",
+   "fieldtype": "Link",
+   "label": "Linked PT Package",
+   "options": "PT Package"
+  },
+  {
+   "depends_on": "eval:doc.source_type=='Class Booking'",
+   "fieldname": "linked_class_booking",
+   "fieldtype": "Link",
+   "label": "Linked Class Booking",
+   "options": "Class Booking"
+  },
+  {
+   "fieldname": "linked_invoice",
+   "fieldtype": "Link",
+   "label": "Linked Invoice",
+   "options": "Sales Invoice"
+  },
+  {
+   "fieldname": "sb_amount",
+   "fieldtype": "Section Break",
+   "label": "Amount & Method"
+  },
+  {
+   "fieldname": "original_amount_paid",
+   "fieldtype": "Currency",
+   "label": "Original Amount Paid",
+   "reqd": 1
+  },
+  {
+   "fieldname": "requested_refund_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Requested Refund Amount",
+   "reqd": 1
+  },
+  {
+   "fieldname": "refund_method",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Refund Method",
+   "options": "M-Pesa B2C\nCash\nBank Transfer\nStore Credit\nCheque",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_amount",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.refund_method=='M-Pesa B2C'",
+   "description": "MSISDN to disburse the refund to (e.g. 2547XXXXXXXX)",
+   "fieldname": "refund_account_phone",
+   "fieldtype": "Data",
+   "label": "Refund Phone Number",
+   "options": "Phone"
+  },
+  {
+   "depends_on": "eval:doc.refund_method=='Bank Transfer'",
+   "fieldname": "bank_details",
+   "fieldtype": "Small Text",
+   "label": "Bank Details"
+  },
+  {
+   "fieldname": "sb_approval",
+   "fieldtype": "Section Break",
+   "label": "Approval"
+  },
+  {
+   "default": "Draft",
+   "description": "State machine: Draft → Pending Manager → Pending Owner → Approved → Refund Initiated → Refunded (or Rejected/Failed at any approval step)",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Draft\nPending Manager\nPending Owner\nApproved\nRejected\nRefund Initiated\nRefunded\nFailed",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_on",
+   "fieldtype": "Datetime",
+   "label": "Approved On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_approval",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.status=='Rejected'",
+   "fieldname": "rejection_reason",
+   "fieldtype": "Small Text",
+   "label": "Rejection Reason"
+  },
+  {
+   "fieldname": "sb_execution",
+   "fieldtype": "Section Break",
+   "label": "Refund Execution"
+  },
+  {
+   "fieldname": "refund_initiated_on",
+   "fieldtype": "Datetime",
+   "label": "Refund Initiated On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "refund_completed_on",
+   "fieldtype": "Datetime",
+   "label": "Refund Completed On",
+   "read_only": 1
+  },
+  {
+   "description": "ERPNext Payment Entry recording the cash outflow",
+   "fieldname": "linked_payment_entry",
+   "fieldtype": "Link",
+   "label": "Linked Payment Entry",
+   "options": "Payment Entry"
+  },
+  {
+   "description": "M-Pesa Transaction row for the B2C disbursement (if refund_method = M-Pesa B2C)",
+   "fieldname": "linked_mpesa_transaction",
+   "fieldtype": "Link",
+   "label": "Linked M-Pesa Transaction",
+   "options": "M-Pesa Transaction"
+  },
+  {
+   "fieldname": "sb_justification",
+   "fieldtype": "Section Break",
+   "label": "Justification"
+  },
+  {
+   "description": "Why this refund — required for the approval review",
+   "fieldname": "justification",
+   "fieldtype": "Text",
+   "label": "Justification",
+   "reqd": 1
+  },
+  {
+   "fieldname": "internal_notes",
+   "fieldtype": "Small Text",
+   "label": "Internal Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-05-28 21:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Refund Request",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "customer,source_type,refund_method,status",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "customer",
+ "track_changes": 1
+}
