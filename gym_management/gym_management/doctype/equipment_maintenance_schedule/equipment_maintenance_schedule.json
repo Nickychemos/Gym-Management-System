@@ -1,0 +1,184 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-05-28 18:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "schedule_name",
+  "asset",
+  "branch",
+  "is_active",
+  "cb1",
+  "frequency",
+  "task_type",
+  "estimated_duration_minutes",
+  "auto_create_ticket",
+  "sb_tracking",
+  "last_performed_on",
+  "next_due_on",
+  "cb_tracking",
+  "assigned_to",
+  "estimated_cost_per_run",
+  "sb_instructions",
+  "checklist",
+  "safety_notes"
+ ],
+ "fields": [
+  {
+   "default": "EMS-.######",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "EMS-.######",
+   "reqd": 1
+  },
+  {
+   "description": "Human-friendly name e.g. 'Treadmill #3 Weekly Belt Check'",
+   "fieldname": "schedule_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Schedule Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "asset",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Asset",
+   "options": "Asset",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "asset.location",
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Is Active"
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "frequency",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Frequency",
+   "options": "Daily\nWeekly\nBi-Weekly\nMonthly\nQuarterly\nHalf-Yearly\nAnnually",
+   "reqd": 1
+  },
+  {
+   "fieldname": "task_type",
+   "fieldtype": "Select",
+   "label": "Task Type",
+   "options": "\nVisual Inspection\nCleaning\nLubrication\nCalibration\nReplacement\nService\nOther"
+  },
+  {
+   "fieldname": "estimated_duration_minutes",
+   "fieldtype": "Int",
+   "label": "Estimated Duration (mins)"
+  },
+  {
+   "default": "1",
+   "description": "When ON, a daily task auto-creates an Equipment Maintenance Ticket the day next_due_on arrives. Turn OFF for purely informational schedules.",
+   "fieldname": "auto_create_ticket",
+   "fieldtype": "Check",
+   "label": "Auto-Create Ticket on Due"
+  },
+  {
+   "fieldname": "sb_tracking",
+   "fieldtype": "Section Break",
+   "label": "Tracking"
+  },
+  {
+   "fieldname": "last_performed_on",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Last Performed On"
+  },
+  {
+   "description": "Auto-computed: last_performed_on + frequency. Recomputed on save and daily.",
+   "fieldname": "next_due_on",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Next Due On",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "cb_tracking",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "label": "Assigned To",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "estimated_cost_per_run",
+   "fieldtype": "Currency",
+   "label": "Estimated Cost / Run"
+  },
+  {
+   "fieldname": "sb_instructions",
+   "fieldtype": "Section Break",
+   "label": "Instructions"
+  },
+  {
+   "description": "Numbered checklist of steps the technician should follow",
+   "fieldname": "checklist",
+   "fieldtype": "Text",
+   "label": "Checklist"
+  },
+  {
+   "fieldname": "safety_notes",
+   "fieldtype": "Small Text",
+   "label": "Safety Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-05-28 18:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Equipment Maintenance Schedule",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "schedule_name,asset,branch,frequency",
+ "sort_field": "next_due_on",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "schedule_name",
+ "track_changes": 1
+}

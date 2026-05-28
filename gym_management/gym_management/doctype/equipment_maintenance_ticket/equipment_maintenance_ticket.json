@@ -1,0 +1,255 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-05-28 19:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "title",
+  "asset",
+  "branch",
+  "cb_meta",
+  "reported_by",
+  "reported_at",
+  "ticket_type",
+  "priority",
+  "sb_description",
+  "description",
+  "photos",
+  "sb_status",
+  "status",
+  "out_of_service",
+  "assigned_to",
+  "cb_status",
+  "target_resolution_date",
+  "resolved_at",
+  "resolved_by",
+  "sb_resolution",
+  "resolution_notes",
+  "parts_used",
+  "cb_resolution",
+  "cost",
+  "linked_purchase_invoice",
+  "sb_recurrence",
+  "linked_schedule"
+ ],
+ "fields": [
+  {
+   "default": "EMT-.YYYY.-.######",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "EMT-.YYYY.-.######",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "asset",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Asset",
+   "options": "Asset",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "asset.location",
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "cb_meta",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reported_by",
+   "fieldtype": "Link",
+   "label": "Reported By",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "default": "Now",
+   "fieldname": "reported_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Reported At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "ticket_type",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Ticket Type",
+   "options": "Breakdown\nPreventive\nCosmetic\nCalibration\nOther"
+  },
+  {
+   "default": "Medium",
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Priority",
+   "options": "Low\nMedium\nHigh\nCritical",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_description",
+   "fieldtype": "Section Break",
+   "label": "Description"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "photos",
+   "fieldtype": "Attach",
+   "label": "Photos / Attachment"
+  },
+  {
+   "fieldname": "sb_status",
+   "fieldtype": "Section Break",
+   "label": "Status & Assignment"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Open\nAcknowledged\nIn Progress\nAwaiting Parts\nResolved\nClosed\nCancelled",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "description": "When ON, this asset is hidden from member booking flows until the ticket resolves",
+   "fieldname": "out_of_service",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Out of Service"
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Assigned To",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "cb_status",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "target_resolution_date",
+   "fieldtype": "Date",
+   "label": "Target Resolution Date"
+  },
+  {
+   "fieldname": "resolved_at",
+   "fieldtype": "Datetime",
+   "label": "Resolved At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolved_by",
+   "fieldtype": "Link",
+   "label": "Resolved By",
+   "options": "Employee",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:['Resolved','Closed'].includes(doc.status)",
+   "fieldname": "sb_resolution",
+   "fieldtype": "Section Break",
+   "label": "Resolution"
+  },
+  {
+   "depends_on": "eval:['Resolved','Closed'].includes(doc.status)",
+   "fieldname": "resolution_notes",
+   "fieldtype": "Text",
+   "label": "Resolution Notes"
+  },
+  {
+   "fieldname": "parts_used",
+   "fieldtype": "Small Text",
+   "label": "Parts Used"
+  },
+  {
+   "fieldname": "cb_resolution",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cost",
+   "fieldtype": "Currency",
+   "label": "Cost"
+  },
+  {
+   "fieldname": "linked_purchase_invoice",
+   "fieldtype": "Link",
+   "label": "Linked Purchase Invoice",
+   "options": "Purchase Invoice"
+  },
+  {
+   "fieldname": "sb_recurrence",
+   "fieldtype": "Section Break",
+   "label": "Recurrence Link"
+  },
+  {
+   "description": "If this ticket was auto-created from a preventive Maintenance Schedule",
+   "fieldname": "linked_schedule",
+   "fieldtype": "Link",
+   "label": "From Schedule",
+   "options": "Equipment Maintenance Schedule"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-05-28 19:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Equipment Maintenance Ticket",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "title,asset,status,priority",
+ "sort_field": "reported_at",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title",
+ "track_changes": 1
+}

@@ -165,6 +165,9 @@ scheduler_events = {
 		"gym_management.gym_management.doctype.pt_package.pt_package.auto_expire",
 		# Refresh days_to_expiry and status on Certification Register rows.
 		"gym_management.gym_management.doctype.certification_register.certification_register.refresh_statuses",
+		# Auto-create Equipment Maintenance Tickets when schedules come due.
+		# Self-guards: no-op until Equipment Maintenance Ticket DocType exists.
+		"gym_management.gym_management.doctype.equipment_maintenance_schedule.equipment_maintenance_schedule.create_due_tickets",
 	],
 }
 
