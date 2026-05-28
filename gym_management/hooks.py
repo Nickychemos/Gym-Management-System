@@ -178,6 +178,8 @@ scheduler_events = {
 		"gym_management.campaigns.run_renewal_reminders",
 		# Pull WhatsApp Template approval status from Meta into local rows.
 		"gym_management.gym_management.doctype.whatsapp_template.whatsapp_template.sync_all_statuses",
+		# Flag Sales Invoices that should have reached KRA via eTIMS but didn't.
+		"gym_management.etims.monitor_etims_health",
 	],
 }
 
