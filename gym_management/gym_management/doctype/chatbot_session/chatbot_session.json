@@ -1,0 +1,202 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-05-29 10:10:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "phone_number",
+  "channel",
+  "customer",
+  "referred_lead",
+  "cb_who",
+  "current_flow",
+  "current_node_key",
+  "status",
+  "language",
+  "sb_metrics",
+  "started_at",
+  "last_message_at",
+  "turn_count",
+  "cb_metrics",
+  "unmatched_turn_count",
+  "completed_at",
+  "handover_member_request",
+  "sb_data",
+  "session_data",
+  "sb_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "description": "MSISDN for WhatsApp sessions, or browser session id for Web",
+   "fieldname": "phone_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Phone / Web Session",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "WhatsApp",
+   "fieldname": "channel",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Channel",
+   "options": "WhatsApp\nWeb",
+   "reqd": 1
+  },
+  {
+   "description": "Resolved Customer (if the phone matches one)",
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "description": "Resolved Lead (if no Customer match yet)",
+   "fieldname": "referred_lead",
+   "fieldtype": "Link",
+   "label": "Referred Lead",
+   "options": "Lead"
+  },
+  {
+   "fieldname": "cb_who",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "current_flow",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Current Flow",
+   "options": "Chatbot Flow"
+  },
+  {
+   "fieldname": "current_node_key",
+   "fieldtype": "Data",
+   "label": "Current Node Key"
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Active\nHanded Over\nCompleted\nAbandoned",
+   "reqd": 1
+  },
+  {
+   "default": "en",
+   "fieldname": "language",
+   "fieldtype": "Data",
+   "label": "Language"
+  },
+  {
+   "fieldname": "sb_metrics",
+   "fieldtype": "Section Break",
+   "label": "Metrics"
+  },
+  {
+   "default": "Now",
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started At"
+  },
+  {
+   "fieldname": "last_message_at",
+   "fieldtype": "Datetime",
+   "label": "Last Message At"
+  },
+  {
+   "default": "0",
+   "fieldname": "turn_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Turns",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_metrics",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Number of consecutive turns where the user's input didn't match expected. When this hits Flow.fallback_to_human, session auto-hands over.",
+   "fieldname": "unmatched_turn_count",
+   "fieldtype": "Int",
+   "label": "Unmatched Turns",
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_at",
+   "fieldtype": "Datetime",
+   "label": "Completed At",
+   "read_only": 1
+  },
+  {
+   "description": "Member Request created when this session was handed to a human",
+   "fieldname": "handover_member_request",
+   "fieldtype": "Link",
+   "label": "Handover Member Request",
+   "options": "Member Request",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_data",
+   "fieldtype": "Section Break",
+   "label": "Captured Data"
+  },
+  {
+   "description": "Variables captured during the conversation, e.g. {\"member_name\": \"Mary\", \"requested_action\": \"renew\"}",
+   "fieldname": "session_data",
+   "fieldtype": "Code",
+   "label": "Session Data",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-05-29 10:10:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Chatbot Session",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "phone_number,customer,current_flow,status",
+ "sort_field": "last_message_at",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "phone_number",
+ "track_changes": 1
+}

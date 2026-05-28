@@ -1,0 +1,28 @@
+{
+  "_comment": "WhatsApp Cloud API per-tenant credentials. Add these keys to each tenant's site_config.json (sites/<tenant>/site_config.json). Get all values from the Meta App dashboard at https://developers.facebook.com — System Users > WhatsApp Business Account > API Setup.",
+
+  "whatsapp_phone_number_id": "REPLACE_WITH_PHONE_NUMBER_ID",
+  "whatsapp_business_account_id": "REPLACE_WITH_WABA_ID",
+  "whatsapp_access_token": "REPLACE_WITH_PERMANENT_ACCESS_TOKEN",
+  "whatsapp_verify_token": "REPLACE_WITH_RANDOM_STRING_YOU_INVENT",
+  "whatsapp_app_secret": "REPLACE_WITH_META_APP_SECRET",
+
+  "_webhook_url_to_configure_in_meta_dashboard": "https://<TENANT_SITE>/api/method/gym_management.whatsapp_webhook.receive",
+  "_verify_endpoint": "https://<TENANT_SITE>/api/method/gym_management.whatsapp_webhook.verify",
+  "_subscribed_fields": "messages",
+
+  "_setup_checklist": [
+    "1. Create a Meta Business account at business.facebook.com",
+    "2. Create a Meta App (Business type) at developers.facebook.com",
+    "3. Add the WhatsApp product to the App",
+    "4. Get a phone number — either Meta test number (free, limited) or migrate the gym's real number",
+    "5. Copy the Phone Number ID and WhatsApp Business Account ID from the API Setup screen",
+    "6. Create a permanent access token: System Users (in Business Settings) > Add System User > Add Assets (the WABA) > Generate Token — DO NOT use the temporary 24h token from the API Setup screen",
+    "7. Invent any random string for whatsapp_verify_token — Meta echoes it back during webhook verification",
+    "8. Get the App Secret from the App's Basic Settings — needed to verify X-Hub-Signature-256 on incoming webhooks",
+    "9. In the WhatsApp Configuration screen, set the Callback URL to the receive endpoint above and the Verify Token to whatever you put in whatsapp_verify_token",
+    "10. Click Verify and Save — Meta will GET /verify, our handler will echo the challenge if tokens match",
+    "11. Subscribe to the 'messages' webhook field",
+    "12. Send a test message from your phone to the WhatsApp test number — should hit /receive within ~1 second"
+  ]
+}

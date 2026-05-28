@@ -1,0 +1,143 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:flow_name",
+ "creation": "2026-05-29 10:05:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "flow_name",
+  "channel",
+  "language",
+  "is_active",
+  "cb_meta",
+  "trigger_keywords",
+  "fallback_to_human",
+  "start_node_key",
+  "sb_nodes",
+  "nodes",
+  "sb_notes",
+  "description",
+  "notes"
+ ],
+ "fields": [
+  {
+   "description": "Identifier for this flow e.g. 'renewal_check_en' or 'book_class_sw'. Convention: snake_case + language suffix.",
+   "fieldname": "flow_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Flow Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "WhatsApp",
+   "fieldname": "channel",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Channel",
+   "options": "WhatsApp\nWeb\nBoth",
+   "reqd": 1
+  },
+  {
+   "default": "en",
+   "description": "Language code. Build a separate Flow row per language (renewal_check_en + renewal_check_sw).",
+   "fieldname": "language",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Language",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Is Active"
+  },
+  {
+   "fieldname": "cb_meta",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Comma-separated keywords that trigger this flow when the user has no active session. Matched case-insensitively. e.g. 'renew,expire,membership,1'",
+   "fieldname": "trigger_keywords",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Trigger Keywords"
+  },
+  {
+   "default": "3",
+   "description": "Number of unmatched turns before the bot hands over to a human (creates a Member Request)",
+   "fieldname": "fallback_to_human",
+   "fieldtype": "Int",
+   "label": "Fallback to Human After (turns)"
+  },
+  {
+   "description": "node_key of the first node to execute when the flow starts. Required if the flow has nodes.",
+   "fieldname": "start_node_key",
+   "fieldtype": "Data",
+   "label": "Start Node Key"
+  },
+  {
+   "fieldname": "sb_nodes",
+   "fieldtype": "Section Break",
+   "label": "Nodes"
+  },
+  {
+   "description": "Sequence of nodes that make up this flow. node_key values must be unique within the flow.",
+   "fieldname": "nodes",
+   "fieldtype": "Table",
+   "label": "Nodes",
+   "options": "Chatbot Node"
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Description & Notes"
+  },
+  {
+   "description": "Member-facing description of what this flow does (shown in MENU)",
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Internal Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-29 10:05:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Chatbot Flow",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "flow_name,channel,language,trigger_keywords",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "flow_name",
+ "track_changes": 1
+}

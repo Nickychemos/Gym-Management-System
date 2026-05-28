@@ -1,0 +1,89 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-05-29 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "node_key",
+  "node_type",
+  "next_node_key",
+  "linked_action",
+  "capture_key",
+  "prompt_text",
+  "branch_conditions",
+  "order_index"
+ ],
+ "fields": [
+  {
+   "description": "Unique identifier within the flow e.g. 'ask_name', 'confirm_renewal'",
+   "fieldname": "node_key",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Node Key",
+   "reqd": 1
+  },
+  {
+   "description": "Message: bot says + auto-moves on. Question: bot says + waits for reply. Branch: routes on user input via branch_conditions. Action: runs the named linked_action function. Handover: ends session + creates Member Request.",
+   "fieldname": "node_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Node Type",
+   "options": "Message\nQuestion\nBranch\nAction\nHandover",
+   "reqd": 1
+  },
+  {
+   "description": "node_key of the next node (linear flow). For Branch nodes, this is the DEFAULT next node if no branch_condition matches.",
+   "fieldname": "next_node_key",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Next Node"
+  },
+  {
+   "description": "Python function name to invoke when node_type=Action. Resolved at runtime by gym_management.chatbot.ACTION_REGISTRY (e.g. 'lookup_subscription', 'lookup_class_schedule', 'create_member_request', 'send_template').",
+   "fieldname": "linked_action",
+   "fieldtype": "Data",
+   "label": "Linked Action"
+  },
+  {
+   "description": "For Question nodes only: name of the session_data key to store the user's reply into (e.g. 'name', 'phone', 'goal'). Leave blank if you don't need to remember the reply.",
+   "fieldname": "capture_key",
+   "fieldtype": "Data",
+   "label": "Capture Key"
+  },
+  {
+   "description": "What the bot says. May reference session variables with {{var_name}} (e.g. 'Hi {{member_name}}, your sub ends on {{end_date}}'). Required for Message / Question / Handover nodes; optional for Branch / Action.",
+   "fieldname": "prompt_text",
+   "fieldtype": "Text",
+   "label": "Prompt Text"
+  },
+  {
+   "description": "JSON dict mapping reply patterns to next_node_keys. Used by Branch nodes. e.g. {\"yes|yeah|confirm\": \"confirm_yes\", \"no|nope|cancel\": \"confirm_no\"} — keys are pipe-separated keyword groups (case-insensitive substring match).",
+   "fieldname": "branch_conditions",
+   "fieldtype": "Code",
+   "label": "Branch Conditions",
+   "options": "JSON"
+  },
+  {
+   "default": "0",
+   "fieldname": "order_index",
+   "fieldtype": "Int",
+   "label": "Order"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-29 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Chatbot Node",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "order_index",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 0
+}
