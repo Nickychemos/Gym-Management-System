@@ -1,0 +1,224 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-05-28 15:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "class_schedule",
+  "class_type",
+  "trainer",
+  "branch",
+  "room",
+  "cb_when",
+  "start_time",
+  "end_time",
+  "duration_minutes",
+  "sb_capacity",
+  "capacity",
+  "bookings_count",
+  "waitlist_count",
+  "cb_capacity",
+  "spots_remaining",
+  "status",
+  "sb_substitution",
+  "substitute_trainer",
+  "cancellation_reason",
+  "sb_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "default": "CS-.YYYY.-.######",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "CS-.YYYY.-.######",
+   "reqd": 1
+  },
+  {
+   "description": "The Class Schedule this session was generated from. Empty for ad-hoc one-off sessions.",
+   "fieldname": "class_schedule",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Class Schedule",
+   "options": "Class Schedule"
+  },
+  {
+   "fetch_from": "class_schedule.class_type",
+   "fieldname": "class_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Class Type",
+   "options": "Class Type",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "class_schedule.trainer",
+   "fieldname": "trainer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Trainer",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "class_schedule.branch",
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Branch",
+   "options": "Branch",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "class_schedule.room",
+   "fieldname": "room",
+   "fieldtype": "Data",
+   "label": "Room"
+  },
+  {
+   "fieldname": "cb_when",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "start_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Start Time",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Auto-computed: start_time + duration_minutes",
+   "fieldname": "end_time",
+   "fieldtype": "Datetime",
+   "label": "End Time",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "class_schedule.duration_minutes",
+   "fieldname": "duration_minutes",
+   "fieldtype": "Int",
+   "label": "Duration (mins)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_capacity",
+   "fieldtype": "Section Break",
+   "label": "Capacity"
+  },
+  {
+   "fetch_from": "class_schedule.capacity",
+   "fieldname": "capacity",
+   "fieldtype": "Int",
+   "label": "Capacity",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "bookings_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Bookings",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "waitlist_count",
+   "fieldtype": "Int",
+   "label": "Waitlist",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_capacity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Auto-computed: capacity - bookings_count",
+   "fieldname": "spots_remaining",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Spots Remaining",
+   "read_only": 1
+  },
+  {
+   "default": "Scheduled",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Scheduled\nIn Progress\nCompleted\nCancelled",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_substitution",
+   "fieldtype": "Section Break",
+   "label": "Substitution / Cancellation"
+  },
+  {
+   "description": "If the main trainer was substituted for this specific occurrence",
+   "fieldname": "substitute_trainer",
+   "fieldtype": "Link",
+   "label": "Substitute Trainer",
+   "options": "Employee"
+  },
+  {
+   "depends_on": "eval:doc.status=='Cancelled'",
+   "fieldname": "cancellation_reason",
+   "fieldtype": "Small Text",
+   "label": "Cancellation Reason"
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-05-28 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Class Session",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "class_type,trainer,branch,start_time,status",
+ "sort_field": "start_time",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "class_type",
+ "track_changes": 1
+}

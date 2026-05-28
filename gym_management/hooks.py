@@ -158,6 +158,9 @@ scheduler_events = {
 		"gym_management.gym_management.doctype.member_subscription.member_subscription.auto_lapse_expired",
 		# Flip Active trial passes whose expiry_date has passed to Expired.
 		"gym_management.gym_management.doctype.trial_pass.trial_pass.auto_expire",
+		# For every active Class Schedule, generate Class Session instances
+		# for the next auto_generate_days_ahead days (idempotent).
+		"gym_management.gym_management.doctype.class_session.class_session.generate_sessions",
 	],
 }
 
