@@ -1,0 +1,267 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-05-28 21:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "branch",
+  "pos_profile",
+  "cashier",
+  "shift_date",
+  "cb_meta",
+  "opened_at",
+  "closed_at",
+  "status",
+  "sb_opening",
+  "opening_float",
+  "opening_notes",
+  "sb_sales",
+  "expected_cash_sales",
+  "actual_cash_counted",
+  "transaction_count",
+  "cb_sales",
+  "variance",
+  "variance_acceptable",
+  "sb_drops",
+  "cash_drops",
+  "cash_pickups",
+  "sb_closing",
+  "closed_by",
+  "supervisor_witness",
+  "cb_closing",
+  "variance_explanation",
+  "attachments",
+  "sb_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "default": "CDS-.YYYY.-.MM.-.######",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "CDS-.YYYY.-.MM.-.######",
+   "reqd": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Branch",
+   "options": "Branch",
+   "reqd": 1
+  },
+  {
+   "description": "Optional — link to the ERPNext POS Profile if reception uses POS",
+   "fieldname": "pos_profile",
+   "fieldtype": "Link",
+   "label": "POS Profile",
+   "options": "POS Profile"
+  },
+  {
+   "fieldname": "cashier",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Cashier",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "shift_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Shift Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_meta",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Now",
+   "fieldname": "opened_at",
+   "fieldtype": "Datetime",
+   "label": "Opened At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "closed_at",
+   "fieldtype": "Datetime",
+   "label": "Closed At"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Open\nClosed\nReconciled\nDisputed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_opening",
+   "fieldtype": "Section Break",
+   "label": "Opening"
+  },
+  {
+   "description": "Cash physically in the drawer when the shift starts",
+   "fieldname": "opening_float",
+   "fieldtype": "Currency",
+   "label": "Opening Float",
+   "reqd": 1
+  },
+  {
+   "fieldname": "opening_notes",
+   "fieldtype": "Small Text",
+   "label": "Opening Notes"
+  },
+  {
+   "fieldname": "sb_sales",
+   "fieldtype": "Section Break",
+   "label": "Sales During Shift"
+  },
+  {
+   "description": "Cash collected from POS Invoices in the shift window. Auto-computable from ERPNext POS once wired; enter manually for v1.",
+   "fieldname": "expected_cash_sales",
+   "fieldtype": "Currency",
+   "label": "Expected Cash Sales"
+  },
+  {
+   "description": "Physical cash counted at close-out, minus opening float",
+   "fieldname": "actual_cash_counted",
+   "fieldtype": "Currency",
+   "label": "Actual Cash Counted"
+  },
+  {
+   "description": "POS transactions in the window. Auto-computable; manual for v1.",
+   "fieldname": "transaction_count",
+   "fieldtype": "Int",
+   "label": "Transaction Count"
+  },
+  {
+   "fieldname": "cb_sales",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Auto-computed: actual_cash_counted - (opening_float + expected_cash_sales - cash_drops - cash_pickups). Positive = surplus, negative = shortage.",
+   "fieldname": "variance",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Variance",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "description": "Auto-computed: |variance| <= Gym Settings.cash_variance_threshold",
+   "fieldname": "variance_acceptable",
+   "fieldtype": "Check",
+   "label": "Variance Acceptable",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_drops",
+   "fieldtype": "Section Break",
+   "label": "Drops & Pickups"
+  },
+  {
+   "default": "0",
+   "description": "Cash moved from drawer to safe during the shift",
+   "fieldname": "cash_drops",
+   "fieldtype": "Currency",
+   "label": "Cash Drops"
+  },
+  {
+   "default": "0",
+   "description": "Cash withdrawn by owner / manager during the shift",
+   "fieldname": "cash_pickups",
+   "fieldtype": "Currency",
+   "label": "Cash Pickups"
+  },
+  {
+   "fieldname": "sb_closing",
+   "fieldtype": "Section Break",
+   "label": "Closing"
+  },
+  {
+   "fieldname": "closed_by",
+   "fieldtype": "Link",
+   "label": "Closed By",
+   "options": "Employee"
+  },
+  {
+   "description": "Required when variance is outside the Gym Settings threshold — dual-control sign-off",
+   "fieldname": "supervisor_witness",
+   "fieldtype": "Link",
+   "label": "Supervisor Witness",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "cb_closing",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.variance && doc.variance != 0",
+   "description": "Reason for the variance — required when |variance| exceeds the Gym Settings threshold",
+   "fieldname": "variance_explanation",
+   "fieldtype": "Small Text",
+   "label": "Variance Explanation"
+  },
+  {
+   "description": "Photos of cash counts, receipts, count slips",
+   "fieldname": "attachments",
+   "fieldtype": "Attach",
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-05-28 21:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Cash Drawer Session",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "branch,cashier,shift_date,status",
+ "sort_field": "shift_date",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "cashier",
+ "track_changes": 1
+}
