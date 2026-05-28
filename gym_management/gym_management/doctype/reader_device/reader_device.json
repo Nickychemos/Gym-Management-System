@@ -64,12 +64,14 @@
    "reqd": 1
   },
   {
+   "default": "Manual Reception",
+   "description": "Manual Reception = a receptionist's tablet/laptop (the typical Kenyan gym setup). The others are physical scanners.",
    "fieldname": "device_type",
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Device Type",
-   "options": "RFID\nQR Scanner\nFace Reader\nCombined",
+   "options": "Manual Reception\nRFID\nQR Scanner\nFace Reader\nCombined",
    "reqd": 1
   },
   {

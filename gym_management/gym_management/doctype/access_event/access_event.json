@@ -20,6 +20,7 @@
   "cb_decision",
   "linked_member_subscription",
   "linked_trial_pass",
+  "linked_visit_log",
   "notes"
  ],
  "fields": [
@@ -117,6 +118,14 @@
    "fieldtype": "Link",
    "label": "Granted By Trial Pass",
    "options": "Trial Pass"
+  },
+  {
+   "description": "The Visit Log row this scan opened or closed (Grants only)",
+   "fieldname": "linked_visit_log",
+   "fieldtype": "Link",
+   "label": "Linked Visit Log",
+   "options": "Visit Log",
+   "read_only": 1
   },
   {
    "fieldname": "notes",

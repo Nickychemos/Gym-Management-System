@@ -1,0 +1,202 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-05-28 14:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "incident_type",
+  "severity",
+  "branch",
+  "occurred_at",
+  "cb1",
+  "reported_by",
+  "customer_involved",
+  "linked_access_event",
+  "linked_visit_log",
+  "sb_description",
+  "description",
+  "camera_footage_attached",
+  "attachment",
+  "sb_resolution",
+  "status",
+  "resolution_notes",
+  "cb_resolution",
+  "resolved_on",
+  "resolved_by"
+ ],
+ "fields": [
+  {
+   "default": "INC-.YYYY.-.######",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "INC-.YYYY.-.######",
+   "reqd": 1
+  },
+  {
+   "fieldname": "incident_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Incident Type",
+   "options": "Anti-Passback\nTailgating\nEquipment Misuse\nDisturbance\nInjury\nTheft\nVandalism\nMedical Emergency\nHarassment\nNo-Show\nProperty Damage\nOther",
+   "reqd": 1
+  },
+  {
+   "default": "Medium",
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Severity",
+   "options": "Low\nMedium\nHigh\nCritical",
+   "reqd": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Branch",
+   "options": "Branch",
+   "reqd": 1
+  },
+  {
+   "default": "Now",
+   "fieldname": "occurred_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Occurred At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reported_by",
+   "fieldtype": "Link",
+   "label": "Reported By",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "customer_involved",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Customer Involved",
+   "options": "Customer"
+  },
+  {
+   "description": "If the incident came from a denied or override Access Event",
+   "fieldname": "linked_access_event",
+   "fieldtype": "Link",
+   "label": "Linked Access Event",
+   "options": "Access Event"
+  },
+  {
+   "description": "If the incident happened during a known check-in session",
+   "fieldname": "linked_visit_log",
+   "fieldtype": "Link",
+   "label": "Linked Visit Log",
+   "options": "Visit Log"
+  },
+  {
+   "fieldname": "sb_description",
+   "fieldtype": "Section Break",
+   "label": "Description"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "camera_footage_attached",
+   "fieldtype": "Check",
+   "label": "Camera Footage Attached"
+  },
+  {
+   "depends_on": "camera_footage_attached",
+   "description": "Attach CCTV clip, photo, or any supporting file",
+   "fieldname": "attachment",
+   "fieldtype": "Attach",
+   "label": "Attachment"
+  },
+  {
+   "fieldname": "sb_resolution",
+   "fieldtype": "Section Break",
+   "label": "Resolution"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Open\nUnder Review\nResolved\nDismissed\nEscalated",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:['Resolved','Dismissed','Escalated'].includes(doc.status)",
+   "fieldname": "resolution_notes",
+   "fieldtype": "Text",
+   "label": "Resolution Notes"
+  },
+  {
+   "fieldname": "cb_resolution",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:['Resolved','Dismissed','Escalated'].includes(doc.status)",
+   "fieldname": "resolved_on",
+   "fieldtype": "Date",
+   "label": "Resolved On"
+  },
+  {
+   "depends_on": "eval:['Resolved','Dismissed','Escalated'].includes(doc.status)",
+   "fieldname": "resolved_by",
+   "fieldtype": "Link",
+   "label": "Resolved By",
+   "options": "User"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-05-28 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Incident",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "incident_type,branch,customer_involved,severity,status",
+ "sort_field": "occurred_at",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "incident_type",
+ "track_changes": 1
+}
