@@ -1,0 +1,183 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:employee",
+ "creation": "2026-05-28 17:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "trainer_full_name",
+  "cb1",
+  "accepts_new_clients",
+  "years_experience",
+  "sb_bio",
+  "specialisations",
+  "languages_spoken",
+  "bio",
+  "sb_rates",
+  "pt_hourly_rate",
+  "class_rate",
+  "commission_percent",
+  "cb_rates",
+  "max_clients",
+  "current_active_clients",
+  "sb_portal",
+  "profile_photo",
+  "show_in_member_portal",
+  "tags"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "trainer_full_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Trainer Full Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "accepts_new_clients",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Accepts New Clients"
+  },
+  {
+   "fieldname": "years_experience",
+   "fieldtype": "Int",
+   "label": "Years Experience"
+  },
+  {
+   "fieldname": "sb_bio",
+   "fieldtype": "Section Break",
+   "label": "Specialisations & Bio"
+  },
+  {
+   "description": "Strength, HIIT, Yoga, Rehab, Crossfit, Boxing, etc.",
+   "fieldname": "specialisations",
+   "fieldtype": "Small Text",
+   "label": "Specialisations"
+  },
+  {
+   "description": "e.g. English, Swahili, French",
+   "fieldname": "languages_spoken",
+   "fieldtype": "Data",
+   "label": "Languages Spoken"
+  },
+  {
+   "description": "Member-facing biography shown in the portal",
+   "fieldname": "bio",
+   "fieldtype": "Text Editor",
+   "label": "Bio"
+  },
+  {
+   "fieldname": "sb_rates",
+   "fieldtype": "Section Break",
+   "label": "Rates & Limits"
+  },
+  {
+   "fieldname": "pt_hourly_rate",
+   "fieldtype": "Currency",
+   "label": "PT Hourly Rate"
+  },
+  {
+   "description": "Pay rate per class taught",
+   "fieldname": "class_rate",
+   "fieldtype": "Currency",
+   "label": "Class Rate"
+  },
+  {
+   "default": "50",
+   "description": "Default trainer commission % on PT revenue (overridable by Trainer Commission Rule)",
+   "fieldname": "commission_percent",
+   "fieldtype": "Percent",
+   "label": "Default Commission %"
+  },
+  {
+   "fieldname": "cb_rates",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "20",
+   "description": "Maximum number of active PT clients this trainer takes",
+   "fieldname": "max_clients",
+   "fieldtype": "Int",
+   "label": "Max Active Clients"
+  },
+  {
+   "description": "Auto-computed: count of Active PT Packages for this trainer",
+   "fieldname": "current_active_clients",
+   "fieldtype": "Int",
+   "label": "Current Active Clients",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_portal",
+   "fieldtype": "Section Break",
+   "label": "Member Portal"
+  },
+  {
+   "description": "Public-facing profile photo",
+   "fieldname": "profile_photo",
+   "fieldtype": "Attach Image",
+   "label": "Profile Photo"
+  },
+  {
+   "default": "1",
+   "fieldname": "show_in_member_portal",
+   "fieldtype": "Check",
+   "label": "Show in Member Portal"
+  },
+  {
+   "description": "Searchable keywords members might use, comma-separated",
+   "fieldname": "tags",
+   "fieldtype": "Small Text",
+   "label": "Tags"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-28 17:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Trainer Profile",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "employee,trainer_full_name,specialisations,tags",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "trainer_full_name",
+ "track_changes": 1
+}
