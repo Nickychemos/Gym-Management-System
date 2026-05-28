@@ -1,0 +1,187 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-05-28 11:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "subject",
+  "cb_who",
+  "lead",
+  "customer",
+  "trial_pass",
+  "sb_when",
+  "followup_date",
+  "channel",
+  "cb_when",
+  "owner_user",
+  "status",
+  "sb_outcome",
+  "outcome",
+  "notes",
+  "sb_next",
+  "next_action",
+  "next_action_date",
+  "next_action_owner"
+ ],
+ "fields": [
+  {
+   "default": "FU-.YYYY.-.######",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "FU-.YYYY.-.######",
+   "reqd": 1
+  },
+  {
+   "description": "Short label for this follow-up touchpoint",
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Subject",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_who",
+   "fieldtype": "Column Break",
+   "label": "Who"
+  },
+  {
+   "description": "If following up on a prospect from ERPNext Lead",
+   "fieldname": "lead",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Lead",
+   "options": "Lead"
+  },
+  {
+   "description": "If following up on an existing or converted Customer",
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "description": "If following up specifically about a Trial Pass nurture flow",
+   "fieldname": "trial_pass",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Trial Pass",
+   "options": "Trial Pass"
+  },
+  {
+   "fieldname": "sb_when",
+   "fieldtype": "Section Break",
+   "label": "Touchpoint"
+  },
+  {
+   "default": "Today",
+   "fieldname": "followup_date",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Follow-up Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Channel",
+   "options": "Phone\nWhatsApp\nSMS\nEmail\nIn-Person\nVideo Call\nSocial DM\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_when",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "owner_user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Owner",
+   "options": "User"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Pending\nCompleted\nCancelled"
+  },
+  {
+   "fieldname": "sb_outcome",
+   "fieldtype": "Section Break",
+   "label": "Outcome"
+  },
+  {
+   "fieldname": "outcome",
+   "fieldtype": "Select",
+   "label": "Outcome",
+   "options": "\nConnected - Interested\nConnected - Not Interested\nConnected - Reschedule\nNo Answer\nVoicemail Left\nWrong Number\nBusy\nConverted\nLost\nOther"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "sb_next",
+   "fieldtype": "Section Break",
+   "label": "Next Action"
+  },
+  {
+   "description": "What's the next step for this lead/customer?",
+   "fieldname": "next_action",
+   "fieldtype": "Data",
+   "label": "Next Action"
+  },
+  {
+   "fieldname": "next_action_date",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Next Action Date"
+  },
+  {
+   "fieldname": "next_action_owner",
+   "fieldtype": "Link",
+   "label": "Next Action Owner",
+   "options": "User"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-28 11:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Lead Followup",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "lead,customer,subject,channel,status",
+ "sort_field": "followup_date",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "subject",
+ "track_changes": 1
+}

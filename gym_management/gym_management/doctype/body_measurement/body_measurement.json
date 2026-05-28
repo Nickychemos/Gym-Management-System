@@ -1,0 +1,246 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-05-28 11:15:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "customer",
+  "measured_on",
+  "measured_by",
+  "cb1",
+  "next_measurement_on",
+  "session_type",
+  "sb_vitals",
+  "height_cm",
+  "weight_kg",
+  "bmi",
+  "cb_vitals",
+  "body_fat_pct",
+  "muscle_mass_kg",
+  "resting_heart_rate",
+  "sb_girth",
+  "chest_cm",
+  "waist_cm",
+  "hip_cm",
+  "cb_girth",
+  "arm_cm",
+  "thigh_cm",
+  "calf_cm",
+  "sb_photos",
+  "photo_front",
+  "photo_side",
+  "photo_back",
+  "sb_notes",
+  "trainer_notes",
+  "member_goals"
+ ],
+ "fields": [
+  {
+   "default": "BM-.YYYY.-.######",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "BM-.YYYY.-.######",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "measured_on",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Measured On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "measured_by",
+   "fieldtype": "Link",
+   "label": "Measured By",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Suggested date for the next measurement (e.g. +30 days). Used by reminder hook.",
+   "fieldname": "next_measurement_on",
+   "fieldtype": "Date",
+   "label": "Next Measurement On"
+  },
+  {
+   "default": "Routine Check-in",
+   "fieldname": "session_type",
+   "fieldtype": "Select",
+   "label": "Session Type",
+   "options": "Initial Assessment\nRoutine Check-in\nPre-Program\nMid-Program\nPost-Program\nOther"
+  },
+  {
+   "fieldname": "sb_vitals",
+   "fieldtype": "Section Break",
+   "label": "Vitals"
+  },
+  {
+   "fieldname": "height_cm",
+   "fieldtype": "Float",
+   "label": "Height (cm)",
+   "precision": "1"
+  },
+  {
+   "fieldname": "weight_kg",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Weight (kg)",
+   "precision": "2"
+  },
+  {
+   "description": "Auto-computed: weight_kg / (height_cm / 100)^2",
+   "fieldname": "bmi",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "BMI",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_vitals",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "body_fat_pct",
+   "fieldtype": "Percent",
+   "label": "Body Fat (%)"
+  },
+  {
+   "fieldname": "muscle_mass_kg",
+   "fieldtype": "Float",
+   "label": "Muscle Mass (kg)",
+   "precision": "2"
+  },
+  {
+   "fieldname": "resting_heart_rate",
+   "fieldtype": "Int",
+   "label": "Resting HR (bpm)"
+  },
+  {
+   "fieldname": "sb_girth",
+   "fieldtype": "Section Break",
+   "label": "Girth (cm)"
+  },
+  {
+   "fieldname": "chest_cm",
+   "fieldtype": "Float",
+   "label": "Chest",
+   "precision": "1"
+  },
+  {
+   "fieldname": "waist_cm",
+   "fieldtype": "Float",
+   "label": "Waist",
+   "precision": "1"
+  },
+  {
+   "fieldname": "hip_cm",
+   "fieldtype": "Float",
+   "label": "Hip",
+   "precision": "1"
+  },
+  {
+   "fieldname": "cb_girth",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "arm_cm",
+   "fieldtype": "Float",
+   "label": "Arm",
+   "precision": "1"
+  },
+  {
+   "fieldname": "thigh_cm",
+   "fieldtype": "Float",
+   "label": "Thigh",
+   "precision": "1"
+  },
+  {
+   "fieldname": "calf_cm",
+   "fieldtype": "Float",
+   "label": "Calf",
+   "precision": "1"
+  },
+  {
+   "fieldname": "sb_photos",
+   "fieldtype": "Section Break",
+   "label": "Progress Photos"
+  },
+  {
+   "fieldname": "photo_front",
+   "fieldtype": "Attach Image",
+   "label": "Front Photo"
+  },
+  {
+   "fieldname": "photo_side",
+   "fieldtype": "Attach Image",
+   "label": "Side Photo"
+  },
+  {
+   "fieldname": "photo_back",
+   "fieldtype": "Attach Image",
+   "label": "Back Photo"
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "trainer_notes",
+   "fieldtype": "Text",
+   "label": "Trainer Notes"
+  },
+  {
+   "fieldname": "member_goals",
+   "fieldtype": "Small Text",
+   "label": "Member Goals (this period)"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-28 11:15:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Body Measurement",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "customer,measured_on",
+ "sort_field": "measured_on",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "customer",
+ "track_changes": 1
+}
