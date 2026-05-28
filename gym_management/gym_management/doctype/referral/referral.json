@@ -1,0 +1,204 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-05-28 22:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "referrer_customer",
+  "referred_customer",
+  "referred_lead",
+  "cb_who",
+  "referral_code_used",
+  "referred_on",
+  "channel",
+  "sb_status",
+  "status",
+  "referred_signed_up_on",
+  "first_payment_date",
+  "cb_status",
+  "reward_type",
+  "reward_value",
+  "reward_paid_on",
+  "sb_links",
+  "linked_subscription",
+  "linked_payment_entry",
+  "sb_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "default": "REF-.YYYY.-.######",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "REF-.YYYY.-.######",
+   "reqd": 1
+  },
+  {
+   "description": "The existing member doing the referring",
+   "fieldname": "referrer_customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Referrer (Customer)",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "description": "Filled once the referred person signs up as a Customer",
+   "fieldname": "referred_customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Referred Customer",
+   "options": "Customer"
+  },
+  {
+   "description": "If known before they convert: link to the ERPNext Lead",
+   "fieldname": "referred_lead",
+   "fieldtype": "Link",
+   "label": "Referred Lead",
+   "options": "Lead"
+  },
+  {
+   "fieldname": "cb_who",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Promo code the referrer shared (if your program uses codes)",
+   "fieldname": "referral_code_used",
+   "fieldtype": "Data",
+   "label": "Referral Code"
+  },
+  {
+   "default": "Today",
+   "fieldname": "referred_on",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Referred On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Channel",
+   "options": "\nWhatsApp\nSMS\nWord of Mouth\nSocial Share\nEmail\nIn-Person\nOther"
+  },
+  {
+   "fieldname": "sb_status",
+   "fieldtype": "Section Break",
+   "label": "Lifecycle"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Pending\nSigned Up\nFirst Payment\nReward Earned\nReward Paid\nExpired",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "referred_signed_up_on",
+   "fieldtype": "Date",
+   "label": "Referred Signed Up On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "first_payment_date",
+   "fieldtype": "Date",
+   "label": "First Payment Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_status",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reward_type",
+   "fieldtype": "Select",
+   "label": "Reward Type",
+   "options": "\nFree Days\nDiscount\nCash Credit\nFree Class\nMerchandise\nFree PT Session"
+  },
+  {
+   "description": "Monetary value of the reward (for accounting/reporting)",
+   "fieldname": "reward_value",
+   "fieldtype": "Currency",
+   "label": "Reward Value"
+  },
+  {
+   "fieldname": "reward_paid_on",
+   "fieldtype": "Date",
+   "label": "Reward Paid On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_links",
+   "fieldtype": "Section Break",
+   "label": "Linked Documents"
+  },
+  {
+   "description": "The Member Subscription that triggered the reward (the referred member's first paid subscription)",
+   "fieldname": "linked_subscription",
+   "fieldtype": "Link",
+   "label": "Linked Subscription",
+   "options": "Member Subscription"
+  },
+  {
+   "description": "If reward_type is Cash Credit and disbursed via Payment Entry",
+   "fieldname": "linked_payment_entry",
+   "fieldtype": "Link",
+   "label": "Linked Payment Entry",
+   "options": "Payment Entry"
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-05-28 22:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Referral",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "referrer_customer,referred_customer,referral_code_used,status",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "referrer_customer",
+ "track_changes": 1
+}

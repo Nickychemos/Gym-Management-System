@@ -170,6 +170,8 @@ scheduler_events = {
 		"gym_management.gym_management.doctype.equipment_maintenance_schedule.equipment_maintenance_schedule.create_due_tickets",
 		# Refresh days_to_expiry and status on Compliance Item rows.
 		"gym_management.gym_management.doctype.compliance_item.compliance_item.refresh_statuses",
+		# Expire Pending referrals older than REFERRAL_EXPIRY_DAYS days.
+		"gym_management.gym_management.doctype.referral.referral.auto_expire_stale",
 	],
 }
 
