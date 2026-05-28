@@ -161,6 +161,8 @@ scheduler_events = {
 		# For every active Class Schedule, generate Class Session instances
 		# for the next auto_generate_days_ahead days (idempotent).
 		"gym_management.gym_management.doctype.class_session.class_session.generate_sessions",
+		# Flip Active PT Packages past their expiry_date to Expired.
+		"gym_management.gym_management.doctype.pt_package.pt_package.auto_expire",
 	],
 }
 
