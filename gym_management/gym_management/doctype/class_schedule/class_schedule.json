@@ -1,0 +1,240 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:schedule_name",
+ "creation": "2026-05-28 14:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "schedule_name",
+  "class_type",
+  "trainer",
+  "branch",
+  "room",
+  "cb1",
+  "start_time",
+  "duration_minutes",
+  "capacity",
+  "sb_recurrence",
+  "mon",
+  "tue",
+  "wed",
+  "thu",
+  "cb_recurrence",
+  "fri",
+  "sat",
+  "sun",
+  "sb_validity",
+  "effective_from",
+  "effective_until",
+  "auto_generate_days_ahead",
+  "cb_validity",
+  "is_active",
+  "substitute_trainer",
+  "sb_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "description": "Human-friendly name e.g. 'Monday Morning Spin' (this is the primary key)",
+   "fieldname": "schedule_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Schedule Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "class_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Class Type",
+   "options": "Class Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "trainer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Trainer",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Branch",
+   "options": "Branch",
+   "reqd": 1
+  },
+  {
+   "description": "Studio / room name e.g. 'Studio A'",
+   "fieldname": "room",
+   "fieldtype": "Data",
+   "label": "Room"
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Time of day the class starts (e.g. 06:00:00)",
+   "fieldname": "start_time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Start Time",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "class_type.default_duration_minutes",
+   "fieldname": "duration_minutes",
+   "fieldtype": "Int",
+   "label": "Duration (mins)",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "class_type.default_capacity",
+   "fieldname": "capacity",
+   "fieldtype": "Int",
+   "label": "Capacity",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_recurrence",
+   "fieldtype": "Section Break",
+   "label": "Days of Week"
+  },
+  {
+   "default": "0",
+   "fieldname": "mon",
+   "fieldtype": "Check",
+   "label": "Monday"
+  },
+  {
+   "default": "0",
+   "fieldname": "tue",
+   "fieldtype": "Check",
+   "label": "Tuesday"
+  },
+  {
+   "default": "0",
+   "fieldname": "wed",
+   "fieldtype": "Check",
+   "label": "Wednesday"
+  },
+  {
+   "default": "0",
+   "fieldname": "thu",
+   "fieldtype": "Check",
+   "label": "Thursday"
+  },
+  {
+   "fieldname": "cb_recurrence",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "fri",
+   "fieldtype": "Check",
+   "label": "Friday"
+  },
+  {
+   "default": "0",
+   "fieldname": "sat",
+   "fieldtype": "Check",
+   "label": "Saturday"
+  },
+  {
+   "default": "0",
+   "fieldname": "sun",
+   "fieldtype": "Check",
+   "label": "Sunday"
+  },
+  {
+   "fieldname": "sb_validity",
+   "fieldtype": "Section Break",
+   "label": "Validity"
+  },
+  {
+   "default": "Today",
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "label": "Effective From",
+   "reqd": 1
+  },
+  {
+   "description": "Leave blank for an indefinite schedule. Set to end a class series.",
+   "fieldname": "effective_until",
+   "fieldtype": "Date",
+   "label": "Effective Until"
+  },
+  {
+   "default": "14",
+   "description": "How many days ahead the daily scheduler should generate Class Session instances",
+   "fieldname": "auto_generate_days_ahead",
+   "fieldtype": "Int",
+   "label": "Generate Sessions Days Ahead"
+  },
+  {
+   "fieldname": "cb_validity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Active"
+  },
+  {
+   "description": "Default substitute when the main trainer is unavailable for a session",
+   "fieldname": "substitute_trainer",
+   "fieldtype": "Link",
+   "label": "Substitute Trainer",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-28 14:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Class Schedule",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "schedule_name,class_type,trainer,branch",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "schedule_name",
+ "track_changes": 1
+}
