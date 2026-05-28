@@ -1,0 +1,154 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-05-28 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "timestamp",
+  "reader_device",
+  "credential_value",
+  "cb1",
+  "matched_credential",
+  "matched_customer",
+  "branch",
+  "sb_decision",
+  "decision",
+  "decision_reason",
+  "cb_decision",
+  "linked_member_subscription",
+  "linked_trial_pass",
+  "notes"
+ ],
+ "fields": [
+  {
+   "default": "Now",
+   "fieldname": "timestamp",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Timestamp",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "reader_device",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Reader Device",
+   "options": "Reader Device",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Raw credential string scanned by the reader (RFID UID, QR payload, face hash, etc.)",
+   "fieldname": "credential_value",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Credential Value"
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Member Credential whose credential_value matched, if any",
+   "fieldname": "matched_credential",
+   "fieldtype": "Link",
+   "label": "Matched Credential",
+   "options": "Member Credential"
+  },
+  {
+   "description": "Customer derived from the matched credential, denormalised for query speed",
+   "fieldname": "matched_customer",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Matched Customer",
+   "options": "Customer",
+   "search_index": 1
+  },
+  {
+   "fetch_from": "reader_device.branch",
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "sb_decision",
+   "fieldtype": "Section Break",
+   "label": "Decision"
+  },
+  {
+   "fieldname": "decision",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Decision",
+   "options": "Granted\nDenied\nError\nManual Override",
+   "reqd": 1
+  },
+  {
+   "fieldname": "decision_reason",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Decision Reason",
+   "options": "\nActive Subscription\nActive Trial\nFamily Plan Access\nNo Subscription\nLapsed\nFrozen\nCancelled\nDisabled Credential\nUnknown Credential\nMissing Waiver\nAnti-Passback Block\nOutside Hours\nReader Error\nDevice Offline\nManual Override"
+  },
+  {
+   "fieldname": "cb_decision",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Filled when decision = Granted via an active subscription",
+   "fieldname": "linked_member_subscription",
+   "fieldtype": "Link",
+   "label": "Granted By Subscription",
+   "options": "Member Subscription"
+  },
+  {
+   "description": "Filled when decision = Granted via an active trial",
+   "fieldname": "linked_trial_pass",
+   "fieldtype": "Link",
+   "label": "Granted By Trial Pass",
+   "options": "Trial Pass"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-05-28 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Access Event",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 0
+  }
+ ],
+ "search_fields": "credential_value,matched_customer,reader_device,decision",
+ "sort_field": "timestamp",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "credential_value",
+ "track_changes": 0
+}
