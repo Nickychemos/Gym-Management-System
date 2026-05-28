@@ -1,0 +1,188 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:customer",
+ "creation": "2026-05-28 22:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "customer",
+  "sb_channels",
+  "sms_opt_in",
+  "email_opt_in",
+  "whatsapp_opt_in",
+  "push_opt_in",
+  "cb_channels",
+  "preferred_language",
+  "preferred_contact_time",
+  "sb_topics",
+  "transactional_only",
+  "marketing_promotions",
+  "class_reminders",
+  "renewal_reminders",
+  "cb_topics",
+  "birthday_messages",
+  "newsletter",
+  "sb_stop",
+  "last_stop_keyword_received",
+  "globally_unsubscribed"
+ ],
+ "fields": [
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "sb_channels",
+   "fieldtype": "Section Break",
+   "label": "Channels"
+  },
+  {
+   "default": "1",
+   "fieldname": "sms_opt_in",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "SMS Opt-In"
+  },
+  {
+   "default": "1",
+   "fieldname": "email_opt_in",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Email Opt-In"
+  },
+  {
+   "default": "0",
+   "fieldname": "whatsapp_opt_in",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "WhatsApp Opt-In"
+  },
+  {
+   "default": "1",
+   "fieldname": "push_opt_in",
+   "fieldtype": "Check",
+   "label": "Push Opt-In"
+  },
+  {
+   "fieldname": "cb_channels",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "English",
+   "fieldname": "preferred_language",
+   "fieldtype": "Select",
+   "label": "Preferred Language",
+   "options": "English\nSwahili\nBoth"
+  },
+  {
+   "default": "Anytime",
+   "fieldname": "preferred_contact_time",
+   "fieldtype": "Select",
+   "label": "Preferred Contact Time",
+   "options": "Anytime\nMorning\nAfternoon\nEvening"
+  },
+  {
+   "fieldname": "sb_topics",
+   "fieldtype": "Section Break",
+   "label": "Topics"
+  },
+  {
+   "default": "0",
+   "description": "When ON, overrides marketing toggles below — only payment / expiry / freeze / refund notifications fire",
+   "fieldname": "transactional_only",
+   "fieldtype": "Check",
+   "label": "Transactional Only"
+  },
+  {
+   "default": "1",
+   "fieldname": "marketing_promotions",
+   "fieldtype": "Check",
+   "label": "Marketing Promotions"
+  },
+  {
+   "default": "1",
+   "fieldname": "class_reminders",
+   "fieldtype": "Check",
+   "label": "Class Reminders"
+  },
+  {
+   "default": "1",
+   "fieldname": "renewal_reminders",
+   "fieldtype": "Check",
+   "label": "Renewal Reminders"
+  },
+  {
+   "fieldname": "cb_topics",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "birthday_messages",
+   "fieldtype": "Check",
+   "label": "Birthday Messages"
+  },
+  {
+   "default": "1",
+   "fieldname": "newsletter",
+   "fieldtype": "Check",
+   "label": "Newsletter"
+  },
+  {
+   "fieldname": "sb_stop",
+   "fieldtype": "Section Break",
+   "label": "Stop List"
+  },
+  {
+   "description": "Last time the customer replied STOP / UNSUBSCRIBE via inbound webhook",
+   "fieldname": "last_stop_keyword_received",
+   "fieldtype": "Datetime",
+   "label": "Last STOP Received",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "When ON, ALL outbound is blocked except statutory (legal / KRA / data-protection notices)",
+   "fieldname": "globally_unsubscribed",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Globally Unsubscribed",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-05-28 22:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Communication Preference",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "customer,globally_unsubscribed",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "customer",
+ "track_changes": 1
+}

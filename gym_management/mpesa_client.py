@@ -22,7 +22,6 @@ with simulated money against shortcode 174379 + the public sandbox passkey.
 import base64
 import json
 from datetime import datetime
-from typing import Any
 
 import requests
 
@@ -316,10 +315,6 @@ class MPesaClient:
 		before sending. Implementation deferred until we have a real production
 		paybill and Safaricom's cert. For sandbox testing, plain text works.
 		"""
-		from gym_management.gym_management.doctype.m_pesa_transaction.m_pesa_transaction import (
-			MPesaTransaction,
-		)
-
 		if not self.initiator_name or not self.initiator_password:
 			raise MPesaConfigError(
 				"B2C requires mpesa_initiator_name + mpesa_initiator_password in site_config"
@@ -540,8 +535,9 @@ def b2c_result_callback(**kwargs) -> dict:
 
 
 @frappe.whitelist(allow_guest=True)
-def b2c_timeout_callback(**kwargs) -> dict:
-	"""Daraja B2C queue timeout — fires when the disbursement queue stalls."""
+def b2c_timeout_callback(**_kwargs) -> dict:
+	"""Daraja B2C queue timeout — fires when the disbursement queue stalls.
+	Frappe's whitelist passes form data as kwargs; we read from raw body only."""
 	try:
 		raw = frappe.request.get_data(as_text=True) if frappe.request else ""
 		frappe.log_error(
@@ -596,10 +592,13 @@ def c2b_confirmation(**kwargs) -> dict:
 
 
 @frappe.whitelist(allow_guest=True)
-def c2b_validation(**kwargs) -> dict:
+def c2b_validation(**form_data) -> dict:
 	"""C2B validation — fires BEFORE accepting a manual paybill payment.
 	Return ResultCode 0 to accept; non-zero to reject (e.g. unknown account ref).
 
-	For v1, accept everything. Phase 4 polish can add rule-based rejection
-	(unknown member, blocked customer, etc.)."""
+	For v1, accept everything (logged for debugging). Phase 4 polish can add
+	rule-based rejection (unknown member, blocked customer, etc.)."""
+	frappe.logger().debug(
+		f"c2b_validation incoming keys: {sorted(form_data.keys())}"
+	)
 	return {"ResultCode": 0, "ResultDesc": "Accepted"}

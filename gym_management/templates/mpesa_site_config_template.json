@@ -1,0 +1,27 @@
+{
+  "_comment": "M-Pesa Daraja per-tenant credentials. Add these keys to each tenant's site_config.json (sites/<tenant>/site_config.json). The values below are Safaricom's PUBLIC sandbox credentials — anyone can run STK Push with simulated money against shortcode 174379. For production, replace ALL values with the tenant's real Daraja app credentials and set mpesa_env to 'production'.",
+
+  "mpesa_env": "sandbox",
+  "mpesa_consumer_key": "REPLACE_WITH_DARAJA_APP_CONSUMER_KEY",
+  "mpesa_consumer_secret": "REPLACE_WITH_DARAJA_APP_CONSUMER_SECRET",
+  "mpesa_passkey": "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919",
+  "mpesa_shortcode": "174379",
+
+  "mpesa_initiator_name": "REPLACE_FOR_B2C_REFUNDS",
+  "mpesa_initiator_password": "REPLACE_FOR_B2C_REFUNDS",
+
+  "mpesa_callback_base_url": "https://YOUR_SITE.example.com",
+
+  "_sandbox_test_phone": "Use 254708374149 as PartyA for sandbox STK push — Safaricom's test phone that auto-completes",
+  "_production_checklist": [
+    "1. Get a Paybill or Till from Safaricom (visit a Safaricom branch with KRA PIN + biz cert)",
+    "2. Register a Daraja app at https://developer.safaricom.co.ke",
+    "3. Copy Consumer Key + Consumer Secret from the app dashboard into this file",
+    "4. Copy the Passkey (assigned per shortcode) into mpesa_passkey",
+    "5. Set mpesa_shortcode to your real paybill/till number",
+    "6. For B2C refunds: create an initiator user in the Safaricom portal, set initiator_name + initiator_password",
+    "7. Set mpesa_env to 'production'",
+    "8. Make mpesa_callback_base_url publicly reachable on HTTPS (Safaricom won't call HTTP or behind firewall)",
+    "9. Run MPesaClient.for_current_site().register_urls() to register the C2B callback URLs with Safaricom"
+  ]
+}
