@@ -1,0 +1,166 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:device_code",
+ "creation": "2026-05-27 19:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "device_code",
+  "device_label",
+  "branch",
+  "cb1",
+  "gate_position",
+  "device_type",
+  "status",
+  "sb1",
+  "ip_address",
+  "mac_address",
+  "last_seen",
+  "last_whitelist_sync",
+  "sb2",
+  "offline_mode_enabled",
+  "max_offline_minutes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "description": "Stable hardware identifier (used as primary key)",
+   "fieldname": "device_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Device Code",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "description": "Human-friendly name e.g. 'Westlands Main Entry'",
+   "fieldname": "device_label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Device Label",
+   "reqd": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Branch",
+   "options": "Branch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gate_position",
+   "fieldtype": "Select",
+   "label": "Gate Position",
+   "options": "Entry\nExit\nBoth",
+   "reqd": 1
+  },
+  {
+   "fieldname": "device_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Device Type",
+   "options": "RFID\nQR Scanner\nFace Reader\nCombined",
+   "reqd": 1
+  },
+  {
+   "default": "Online",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Online\nOffline\nMaintenance\nDecommissioned",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb1",
+   "fieldtype": "Section Break",
+   "label": "Network"
+  },
+  {
+   "fieldname": "ip_address",
+   "fieldtype": "Data",
+   "label": "IP Address"
+  },
+  {
+   "fieldname": "mac_address",
+   "fieldtype": "Data",
+   "label": "MAC Address"
+  },
+  {
+   "description": "Last successful heartbeat from the device",
+   "fieldname": "last_seen",
+   "fieldtype": "Datetime",
+   "label": "Last Seen",
+   "read_only": 1
+  },
+  {
+   "description": "Last time the active-credentials list was pushed to the device",
+   "fieldname": "last_whitelist_sync",
+   "fieldtype": "Datetime",
+   "label": "Last Whitelist Sync",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb2",
+   "fieldtype": "Section Break",
+   "label": "Configuration"
+  },
+  {
+   "default": "1",
+   "description": "If enabled, device accepts cached whitelist when offline",
+   "fieldname": "offline_mode_enabled",
+   "fieldtype": "Check",
+   "label": "Offline Mode Enabled"
+  },
+  {
+   "default": "60",
+   "description": "Max minutes the device may operate offline before locking",
+   "fieldname": "max_offline_minutes",
+   "fieldtype": "Int",
+   "label": "Max Offline (minutes)"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-27 19:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Reader Device",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "device_label",
+ "track_changes": 1
+}
