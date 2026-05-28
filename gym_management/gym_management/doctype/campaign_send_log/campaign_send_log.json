@@ -1,0 +1,294 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-05-28 23:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "campaign_name",
+  "channel",
+  "status",
+  "cb_meta",
+  "segment",
+  "target_count",
+  "sent_at",
+  "triggered_by",
+  "sb_stats",
+  "delivered",
+  "opened",
+  "clicked",
+  "cb_stats",
+  "bounced",
+  "unsubscribed",
+  "complaints",
+  "sb_rates",
+  "delivery_rate",
+  "open_rate",
+  "cb_rates",
+  "click_rate",
+  "unsubscribe_rate",
+  "sb_cost",
+  "estimated_cost",
+  "actual_cost",
+  "cb_cost",
+  "cost_per_delivered",
+  "sb_links",
+  "linked_whatsapp_template",
+  "linked_email_template",
+  "sb_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "default": "CSL-.YYYY.-.MM.-.######",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "CSL-.YYYY.-.MM.-.######",
+   "reqd": 1
+  },
+  {
+   "fieldname": "campaign_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Campaign Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Channel",
+   "options": "SMS\nEmail\nWhatsApp\nPush\nIn-App",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Draft\nSending\nSent\nFailed\nCancelled",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_meta",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Audience description e.g. 'Lapsed > 30d in Westlands' — free-text or a saved filter name",
+   "fieldname": "segment",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Segment"
+  },
+  {
+   "description": "Total recipients the campaign was queued for",
+   "fieldname": "target_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Target Count"
+  },
+  {
+   "default": "Now",
+   "fieldname": "sent_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Sent At"
+  },
+  {
+   "fieldname": "triggered_by",
+   "fieldtype": "Link",
+   "label": "Triggered By",
+   "options": "User"
+  },
+  {
+   "fieldname": "sb_stats",
+   "fieldtype": "Section Break",
+   "label": "Delivery Stats"
+  },
+  {
+   "default": "0",
+   "description": "Provider confirmed delivery to the device / inbox",
+   "fieldname": "delivered",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Delivered",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "opened",
+   "fieldtype": "Int",
+   "label": "Opened",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "clicked",
+   "fieldtype": "Int",
+   "label": "Clicked",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_stats",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Hard or soft bounces — bad number, full inbox, blocked",
+   "fieldname": "bounced",
+   "fieldtype": "Int",
+   "label": "Bounced",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Recipients who unsubscribed in response (STOP replies, list-unsubscribe clicks)",
+   "fieldname": "unsubscribed",
+   "fieldtype": "Int",
+   "label": "Unsubscribed",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Spam complaints — for Email channel only",
+   "fieldname": "complaints",
+   "fieldtype": "Int",
+   "label": "Complaints",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_rates",
+   "fieldtype": "Section Break",
+   "label": "Rates"
+  },
+  {
+   "default": "0",
+   "description": "delivered / target_count * 100",
+   "fieldname": "delivery_rate",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Delivery Rate",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "opened / delivered * 100",
+   "fieldname": "open_rate",
+   "fieldtype": "Percent",
+   "label": "Open Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_rates",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "clicked / opened * 100 (click-through rate)",
+   "fieldname": "click_rate",
+   "fieldtype": "Percent",
+   "label": "Click Rate",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "unsubscribed / delivered * 100 — flag for >2% review",
+   "fieldname": "unsubscribe_rate",
+   "fieldtype": "Percent",
+   "label": "Unsubscribe Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_cost",
+   "fieldtype": "Section Break",
+   "label": "Cost"
+  },
+  {
+   "description": "Pre-send estimate based on target_count * provider rate",
+   "fieldname": "estimated_cost",
+   "fieldtype": "Currency",
+   "label": "Estimated Cost"
+  },
+  {
+   "description": "Actual cost from provider invoice / API metering",
+   "fieldname": "actual_cost",
+   "fieldtype": "Currency",
+   "label": "Actual Cost"
+  },
+  {
+   "fieldname": "cb_cost",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "actual_cost / delivered — gives effective per-message cost",
+   "fieldname": "cost_per_delivered",
+   "fieldtype": "Currency",
+   "label": "Cost per Delivered",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_links",
+   "fieldtype": "Section Break",
+   "label": "Linked Documents"
+  },
+  {
+   "description": "Source template (channel-specific) — to be linked once WhatsApp Template DocType is built",
+   "fieldname": "linked_whatsapp_template",
+   "fieldtype": "Data",
+   "label": "Linked WhatsApp Template"
+  },
+  {
+   "description": "ERPNext Email Template used for the body, if channel = Email",
+   "fieldname": "linked_email_template",
+   "fieldtype": "Link",
+   "label": "Linked Email Template",
+   "options": "Email Template"
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-05-28 23:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Campaign Send Log",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "campaign_name,channel,segment,status",
+ "sort_field": "sent_at",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "campaign_name",
+ "track_changes": 1
+}
