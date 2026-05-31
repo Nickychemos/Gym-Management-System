@@ -41,7 +41,7 @@ bench --site <tenant.example.com> migrate
 
 Navari registers ~28 DocTypes including:
 
-- `Navari KRA eTIMS Settings` (Single) — credentials
+- `Navari KRA eTims Settings` (Single) — credentials
 - `eTIMS Sales Ledger Entry` — per-invoice submission record (this is the
   table gym_management's monitor uses)
 - Various lookups: `Navari eTIMS Country`, `Navari KRA eTIMS Item Classification`,
@@ -54,7 +54,7 @@ install + reload).
 ## Per-tenant configuration (after install)
 
 Login to the tenant site as Administrator. Open
-**Navari KRA eTIMS Settings** (Awesome Bar → search "etims settings"). Fill:
+**Navari KRA eTims Settings** (Awesome Bar → search "etims settings"). Fill:
 
 | Field                 | Source                                   |
 |-----------------------|------------------------------------------|

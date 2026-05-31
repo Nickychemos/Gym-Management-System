@@ -33,7 +33,10 @@
   "pt_default_trainer_commission_percent",
   "sb_pos",
   "cash_variance_threshold",
-  "require_dual_control_for_refunds"
+  "require_dual_control_for_refunds",
+  "sb_public_info",
+  "operating_hours",
+  "location"
  ],
  "fields": [
   {
@@ -202,6 +205,23 @@
    "fieldname": "require_dual_control_for_refunds",
    "fieldtype": "Check",
    "label": "Require Dual Control on Refund"
+  },
+  {
+   "fieldname": "sb_public_info",
+   "fieldtype": "Section Break",
+   "label": "Public Info (shown to members via chatbot / portal)"
+  },
+  {
+   "description": "Free-text operating hours, shown verbatim by the chatbot and portal. e.g. 'Mon-Fri 5:00 AM — 10:00 PM\\nSat-Sun 7:00 AM — 8:00 PM\\nPublic holidays 8:00 AM — 6:00 PM'",
+   "fieldname": "operating_hours",
+   "fieldtype": "Small Text",
+   "label": "Operating Hours"
+  },
+  {
+   "description": "Physical address / landmarks. Falls back to Brand Settings.physical_address if blank.",
+   "fieldname": "location",
+   "fieldtype": "Small Text",
+   "label": "Location"
   }
  ],
  "index_web_pages_for_search": 1,

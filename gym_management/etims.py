@@ -24,7 +24,11 @@ from frappe.utils import add_to_date, now_datetime
 
 
 NAVARI_APP = "kenya_compliance_via_slade"
-NAVARI_SETTINGS_DOCTYPE = "Navari KRA eTIMS Settings"
+# Navari's actual DocType naming is inconsistent across the app — settings
+# uses "eTims" (lowercase ims), ledger uses "eTIMS" (uppercase IMS). Match
+# exactly or table lookups silently fail (Frappe is case-sensitive on the
+# physical table name even if DocType.exists() is sometimes lenient).
+NAVARI_SETTINGS_DOCTYPE = "Navari KRA eTims Settings"
 NAVARI_LEDGER_DOCTYPE = "eTIMS Sales Ledger Entry"
 
 
@@ -39,27 +43,22 @@ def is_installed() -> bool:
 
 
 def is_configured() -> bool:
-	"""True if the Navari settings DocType exists and has a non-empty row.
+	"""True if Navari settings has at least one active row with a KRA PIN.
 
-	Navari's settings DocType is a Single — its presence in the schema isn't
-	enough; we also check that at least one credential field is filled.
-	Different Navari versions name fields slightly differently, so we check
-	for any of the typical credential fields.
+	Navari KRA eTIMS Settings is per-company (not a Single) — the tenant
+	creates one row per ERPNext Company they want to fiscalize. We consider
+	the tenant "configured" if any row has `is_active=1` and `tin` populated
+	(tin = Tax Payer's PIN, Navari's name for the KRA PIN field).
 	"""
 	if not is_installed():
 		return False
 	if not frappe.db.exists("DocType", NAVARI_SETTINGS_DOCTYPE):
 		return False
-	# Settings is a Single — its row name equals the DocType name
-	try:
-		settings = frappe.get_single(NAVARI_SETTINGS_DOCTYPE)
-	except Exception:
-		return False
-	# Any of these being populated indicates the tenant has done the onboarding
-	for field in ("slade360_username", "slade_user", "kra_pin", "company_pin"):
-		if getattr(settings, field, None):
-			return True
-	return False
+	return bool(
+		frappe.db.exists(
+			NAVARI_SETTINGS_DOCTYPE, {"is_active": 1, "tin": ["!=", ""]}
+		)
+	)
 
 
 # ============================================================================

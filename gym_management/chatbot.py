@@ -66,31 +66,76 @@ def _action_lookup_subscription(session, user_text: str) -> str | None:
 
 
 def _action_lookup_class_schedule(session, user_text: str) -> str | None:
-	"""Action: list active classes for today at the session's branch."""
+	"""Action: list active classes for today, scoped to the member's home branch
+	when known. Guests (no linked customer) see all branches with branch names."""
 	from datetime import date
 
 	today = date.today()
 	weekday_field = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")[today.weekday()]
+
+	# Resolve the member's home branch (if we know who they are)
+	home_branch = None
+	if session.customer:
+		home_branch = frappe.db.get_value(
+			"Member Profile", {"customer": session.customer}, "home_branch"
+		)
+
+	filters = {"is_active": 1, weekday_field: 1}
+	if home_branch:
+		filters["branch"] = home_branch
+
 	schedules = frappe.get_all(
 		"Class Schedule",
-		filters={"is_active": 1, weekday_field: 1},
-		fields=["schedule_name", "start_time", "class_type"],
+		filters=filters,
+		fields=["schedule_name", "start_time", "class_type", "branch", "trainer"],
 		order_by="start_time asc",
 		limit=10,
 	)
 	if not schedules:
+		if home_branch:
+			return f"No classes today at your branch ({home_branch})."
 		return "No classes scheduled today."
-	lines = ["Today's classes:"]
+
+	if home_branch:
+		header = f"Today's classes at {home_branch}:"
+	else:
+		header = "Today's classes (across all branches):"
+	lines = [header]
 	for s in schedules:
-		lines.append(f"• {s.start_time} — {s.class_type} ({s.schedule_name})")
+		t = _format_time(s.start_time)
+		branch_suffix = "" if home_branch else f" @ {s.branch}"
+		lines.append(f"• {t} — {s.class_type} ({s.schedule_name}){branch_suffix}")
 	return "\n".join(lines)
 
 
+def _format_time(value) -> str:
+	"""Format a Frappe Time field (stored as datetime.timedelta) as HH:MM."""
+	if value is None:
+		return "??:??"
+	# timedelta → seconds → HH:MM
+	if hasattr(value, "total_seconds"):
+		total = int(value.total_seconds())
+		hh, mm = divmod(total // 60, 60)
+		return f"{hh:02d}:{mm:02d}"
+	# String fallback ("06:00:00")
+	s = str(value)
+	return s[:5] if len(s) >= 5 else s
+
+
 def _action_create_member_request(session, user_text: str) -> str | None:
-	"""Action: create a Member Request from the conversation."""
+	"""Action: create a Member Request from the conversation.
+
+	For known members (session.customer set) we link the Customer directly.
+	For guests we fall back to guest_name + contact_phone, which Member Request
+	now accepts in lieu of a Customer link.
+	"""
 	data = _load_session_data(session)
 	doc = frappe.new_doc("Member Request")
-	doc.customer = session.customer
+	if session.customer:
+		doc.customer = session.customer
+	else:
+		doc.guest_name = data.get("name") or "Unknown (chatbot guest)"
+		doc.contact_phone = session.phone_number
 	doc.request_type = data.get("request_type", "Other")
 	doc.subject = data.get("subject") or "Chatbot inquiry"
 	doc.description = data.get("description") or user_text
@@ -134,12 +179,25 @@ def _action_register_lead(session, user_text: str) -> str | None:
 
 
 def _action_show_hours(session, user_text: str) -> str | None:
-	"""Action: read the gym's operating hours from Brand Settings / Gym Settings
-	and reply with them."""
-	# Phase 5 polish: pull from Gym Settings when operating-hours fields are added.
-	# For now, return a placeholder pulled from Brand Settings if available.
-	hours = frappe.db.get_single_value("Brand Settings", "physical_address") or ""
-	return "Our operating hours: Mon-Fri 5:00 AM - 10:00 PM, Sat-Sun 7:00 AM - 8:00 PM.\nLocation: " + (hours or "see our website")
+	"""Action: read the gym's operating hours + location from Gym Settings and
+	reply. Falls back to Brand Settings.physical_address for location if the
+	Gym Settings location is blank."""
+	hours = frappe.db.get_single_value("Gym Settings", "operating_hours") or ""
+	location = (
+		frappe.db.get_single_value("Gym Settings", "location")
+		or frappe.db.get_single_value("Brand Settings", "physical_address")
+		or ""
+	)
+	if not (hours or location):
+		return (
+			"Operating hours aren't set up yet — type 'help' to talk to a team member."
+		)
+	parts = []
+	if hours:
+		parts.append("🕒 *Operating Hours*\n" + hours)
+	if location:
+		parts.append("📍 *Location*\n" + location)
+	return "\n\n".join(parts)
 
 
 ACTION_REGISTRY: dict[str, Callable] = {
@@ -408,9 +466,21 @@ def _complete(session):
 
 
 def _hand_over(session, message: str) -> dict:
-	"""End the session, create a Member Request for staff to pick up."""
+	"""End the session, create a Member Request for staff to pick up.
+
+	Works for both known members (customer link) and guests (guest_name +
+	contact_phone). Member Request's validator accepts either, so the insert
+	succeeds in both cases.
+	"""
+	data = _load_session_data(session)
 	doc = frappe.new_doc("Member Request")
-	doc.customer = session.customer or ""
+	if session.customer:
+		doc.customer = session.customer
+	else:
+		doc.guest_name = (
+			data.get("name") or f"Guest via {session.channel} ({session.phone_number})"
+		)
+		doc.contact_phone = session.phone_number
 	doc.request_type = "Other"
 	doc.subject = "Chatbot handover"
 	doc.description = (
@@ -422,9 +492,6 @@ def _hand_over(session, message: str) -> dict:
 	doc.channel = "WhatsApp" if session.channel == "WhatsApp" else "Member Portal"
 	doc.submitted_on = now_datetime()
 	doc.priority = "Medium"
-	if not doc.customer:
-		# Skip the link entirely if no customer
-		doc.customer = None
 	try:
 		doc.insert(ignore_permissions=True)
 		session.handover_member_request = doc.name

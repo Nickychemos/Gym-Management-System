@@ -25,6 +25,7 @@
   "cb2",
   "physical_address",
   "city",
+  "home_branch",
   "sb_emergency",
   "emergency_contact_name",
   "emergency_contact_phone",
@@ -166,6 +167,13 @@
    "fieldname": "city",
    "fieldtype": "Data",
    "label": "City"
+  },
+  {
+   "description": "The Branch this member signed up at — used by the chatbot to scope class schedule lookups, and by analytics for branch attribution.",
+   "fieldname": "home_branch",
+   "fieldtype": "Link",
+   "label": "Home Branch",
+   "options": "Branch"
   },
   {
    "fieldname": "sb_emergency",

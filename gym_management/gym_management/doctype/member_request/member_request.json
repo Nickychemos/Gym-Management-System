@@ -9,6 +9,8 @@
  "field_order": [
   "naming_series",
   "customer",
+  "guest_name",
+  "contact_phone",
   "request_type",
   "branch",
   "cb1",
@@ -41,13 +43,26 @@
    "reqd": 1
   },
   {
+   "description": "Leave blank for guest / prospect inquiries — fill guest_name + contact_phone instead. Required at validation time only if guest_name is also blank.",
    "fieldname": "customer",
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Customer",
-   "options": "Customer",
-   "reqd": 1
+   "options": "Customer"
+  },
+  {
+   "description": "Name for guests/prospects without a Customer record yet (e.g. chatbot handover from an unknown phone).",
+   "fieldname": "guest_name",
+   "fieldtype": "Data",
+   "label": "Guest Name"
+  },
+  {
+   "description": "Phone for callback — required when customer is blank, optional otherwise.",
+   "fieldname": "contact_phone",
+   "fieldtype": "Data",
+   "label": "Contact Phone",
+   "options": "Phone"
   },
   {
    "fieldname": "request_type",
