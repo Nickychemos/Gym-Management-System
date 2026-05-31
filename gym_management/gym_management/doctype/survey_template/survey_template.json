@@ -1,0 +1,146 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:survey_name",
+ "creation": "2026-05-31 15:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "survey_name",
+  "survey_type",
+  "is_active",
+  "cb_meta",
+  "trigger_event",
+  "channels",
+  "linked_whatsapp_template",
+  "sb_messages",
+  "intro_message",
+  "thank_you_message",
+  "sb_questions",
+  "questions",
+  "sb_notes",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "survey_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Survey Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "NPS",
+   "description": "NPS: single 0-10 promoter question. CSAT: 1-5 satisfaction ratings. Post-Class Feedback: per-class ratings. Custom: free-form mix.",
+   "fieldname": "survey_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Survey Type",
+   "options": "NPS\nCSAT\nPost-Class Feedback\nCustom",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Active"
+  },
+  {
+   "fieldname": "cb_meta",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Manual",
+   "description": "When the campaign sender should auto-send this survey. Manual = only when staff explicitly trigger.",
+   "fieldname": "trigger_event",
+   "fieldtype": "Select",
+   "label": "Trigger Event",
+   "options": "Manual\nAfter First Class\nAfter Renewal\nAfter Cancellation\nQuarterly\nAfter 30 Days"
+  },
+  {
+   "default": "WhatsApp Only",
+   "fieldname": "channels",
+   "fieldtype": "Select",
+   "label": "Channels",
+   "options": "WhatsApp Only\nEmail Only\nBoth\nPortal Only"
+  },
+  {
+   "description": "For WhatsApp channel — which approved template carries the survey link.",
+   "fieldname": "linked_whatsapp_template",
+   "fieldtype": "Link",
+   "label": "Linked WhatsApp Template",
+   "options": "WhatsApp Template"
+  },
+  {
+   "fieldname": "sb_messages",
+   "fieldtype": "Section Break",
+   "label": "Messages"
+  },
+  {
+   "description": "Shown to member before the survey starts.",
+   "fieldname": "intro_message",
+   "fieldtype": "Small Text",
+   "label": "Intro Message"
+  },
+  {
+   "description": "Shown after the member submits.",
+   "fieldname": "thank_you_message",
+   "fieldtype": "Small Text",
+   "label": "Thank You Message"
+  },
+  {
+   "fieldname": "sb_questions",
+   "fieldtype": "Section Break",
+   "label": "Questions"
+  },
+  {
+   "fieldname": "questions",
+   "fieldtype": "Table",
+   "label": "Questions",
+   "options": "Survey Question",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Description"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-31 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Survey Template",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "survey_name,survey_type",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "survey_name",
+ "track_changes": 1
+}
