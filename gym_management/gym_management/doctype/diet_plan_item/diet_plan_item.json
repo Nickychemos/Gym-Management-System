@@ -1,0 +1,101 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-05-31 14:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "meal_slot",
+  "food_name",
+  "portion_qty",
+  "portion_unit",
+  "cb_macros",
+  "kcal",
+  "protein_g",
+  "carbs_g",
+  "fat_g",
+  "notes"
+ ],
+ "fields": [
+  {
+   "description": "Must match a meal_slot value in the parent Diet Plan's meals table (validated at submit).",
+   "fieldname": "meal_slot",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Meal Slot",
+   "reqd": 1
+  },
+  {
+   "fieldname": "food_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Food",
+   "reqd": 1
+  },
+  {
+   "fieldname": "portion_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Portion Qty",
+   "precision": "2",
+   "reqd": 1
+  },
+  {
+   "description": "Free-text unit e.g. 'g', 'ml', 'cup', 'piece', 'slice'.",
+   "fieldname": "portion_unit",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Unit",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_macros",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "kcal",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "kcal",
+   "precision": "1"
+  },
+  {
+   "fieldname": "protein_g",
+   "fieldtype": "Float",
+   "label": "Protein (g)",
+   "precision": "1"
+  },
+  {
+   "fieldname": "carbs_g",
+   "fieldtype": "Float",
+   "label": "Carbs (g)",
+   "precision": "1"
+  },
+  {
+   "fieldname": "fat_g",
+   "fieldtype": "Float",
+   "label": "Fat (g)",
+   "precision": "1"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-31 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Diet Plan Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "meal_slot",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 0
+}

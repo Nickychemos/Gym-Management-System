@@ -1,0 +1,85 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-05-31 14:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "session_name",
+  "exercise_name",
+  "sets",
+  "reps",
+  "weight_kg",
+  "rest_seconds",
+  "tempo",
+  "notes"
+ ],
+ "fields": [
+  {
+   "description": "Must match a session_name in the parent Training Prescription's sessions table.",
+   "fieldname": "session_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Session",
+   "reqd": 1
+  },
+  {
+   "fieldname": "exercise_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Exercise",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sets",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Sets"
+  },
+  {
+   "description": "Free-text e.g. '8-12', 'AMRAP', '5', 'to failure'.",
+   "fieldname": "reps",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Reps"
+  },
+  {
+   "fieldname": "weight_kg",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Weight (kg)",
+   "precision": "2"
+  },
+  {
+   "fieldname": "rest_seconds",
+   "fieldtype": "Int",
+   "label": "Rest (sec)"
+  },
+  {
+   "description": "Optional tempo notation e.g. '3-1-1-0' for eccentric-pause-concentric-pause.",
+   "fieldname": "tempo",
+   "fieldtype": "Data",
+   "label": "Tempo"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-31 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Training Exercise Set",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "idx",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 0
+}

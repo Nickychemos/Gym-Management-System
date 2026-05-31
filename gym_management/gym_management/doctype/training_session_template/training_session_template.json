@@ -1,0 +1,65 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-05-31 14:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "block_name",
+  "session_name",
+  "day_of_week",
+  "duration_minutes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "description": "Must match a block_name in the parent Training Prescription's blocks table.",
+   "fieldname": "block_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Block",
+   "reqd": 1
+  },
+  {
+   "description": "Free-text session label e.g. 'Upper A', 'Pull Day', 'Push Day', 'Leg Day'. Training Exercise Set rows reference this in their session_name field.",
+   "fieldname": "session_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Session Name",
+   "reqd": 1
+  },
+  {
+   "default": "Any",
+   "fieldname": "day_of_week",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Day of Week",
+   "options": "Any\nMonday\nTuesday\nWednesday\nThursday\nFriday\nSaturday\nSunday"
+  },
+  {
+   "fieldname": "duration_minutes",
+   "fieldtype": "Int",
+   "label": "Duration (min)"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-31 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Training Session Template",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "idx",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 0
+}

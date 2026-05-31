@@ -1,0 +1,57 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-05-31 14:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "meal_slot",
+  "target_time",
+  "target_kcal",
+  "notes"
+ ],
+ "fields": [
+  {
+   "description": "Free-text slot label e.g. 'Breakfast', 'Mid-morning Snack', 'Lunch', 'Pre-Workout', 'Post-Workout', 'Dinner'. Diet Plan Item rows reference this label in their meal_slot field.",
+   "fieldname": "meal_slot",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Meal Slot",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Target Time"
+  },
+  {
+   "default": "0",
+   "description": "Calorie target for this meal slot (sum of items planned for it).",
+   "fieldname": "target_kcal",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Target kcal"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-31 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Diet Plan Meal",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "target_time",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 0
+}

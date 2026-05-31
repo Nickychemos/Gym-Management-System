@@ -1,0 +1,63 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-05-31 14:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "block_name",
+  "focus",
+  "duration_days",
+  "sessions_per_week",
+  "notes"
+ ],
+ "fields": [
+  {
+   "description": "Free-text label e.g. 'Week 1', 'Hypertrophy Block', 'Deload Week'. Training Session Template rows reference this label in their block_name field.",
+   "fieldname": "block_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Block Name",
+   "reqd": 1
+  },
+  {
+   "description": "Training focus e.g. Hypertrophy, Strength, Endurance, Power, Deload, Mobility.",
+   "fieldname": "focus",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Focus"
+  },
+  {
+   "fieldname": "duration_days",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Duration (Days)"
+  },
+  {
+   "fieldname": "sessions_per_week",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Sessions / Week"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-31 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Training Block",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "idx",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 0
+}
