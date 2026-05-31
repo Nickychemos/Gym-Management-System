@@ -1,0 +1,140 @@
+/**
+ * Typed Frappe API client.
+ *
+ * Talks to the Frappe site behind Vite's dev proxy (see vite.config.ts).
+ * Cookies flow automatically via `credentials: 'include'`, so once the
+ * /api/method/login call succeeds the session cookie carries every
+ * subsequent request.
+ *
+ * Three call shapes:
+ *   - api.getDoc('Member Profile', name)        — single document
+ *   - api.getList('Member Profile', {filters})  — list with filters
+ *   - api.callMethod('gym_management.x.y', ...) — whitelisted methods
+ */
+
+export class ApiError extends Error {
+  status: number
+  body: unknown
+
+  constructor(status: number, body: unknown, message?: string) {
+    super(message ?? `API error ${status}`)
+    this.name = 'ApiError'
+    this.status = status
+    this.body = body
+  }
+}
+
+async function request<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
+  const res = await fetch(path, {
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'X-Frappe-CSRF-Token': getCsrfToken() ?? '',
+      ...(init.headers ?? {}),
+    },
+    ...init,
+  })
+
+  let body: unknown
+  try {
+    body = await res.json()
+  } catch {
+    body = null
+  }
+
+  if (!res.ok) {
+    const message =
+      (body as { message?: string; exception?: string } | null)?.message ??
+      (body as { exception?: string } | null)?.exception ??
+      `${res.status} ${res.statusText}`
+    throw new ApiError(res.status, body, message)
+  }
+  return body as T
+}
+
+function getCsrfToken(): string | null {
+  // Frappe sets csrf_token on window after login; before that we can omit.
+  const w = window as unknown as { csrf_token?: string }
+  return w.csrf_token ?? null
+}
+
+// ---------- Auth ----------
+
+export interface FrappeUser {
+  full_name: string
+  email: string
+  username: string
+}
+
+export const authApi = {
+  /** POST /api/method/login — sets session cookie on success */
+  async login(usr: string, pwd: string) {
+    return request<{ message: string; full_name: string }>(
+      '/api/method/login',
+      {
+        method: 'POST',
+        body: JSON.stringify({ usr, pwd }),
+      },
+    )
+  },
+
+  /** POST /api/method/logout */
+  async logout() {
+    return request<unknown>('/api/method/logout', { method: 'POST' })
+  },
+
+  /** GET /api/method/frappe.auth.get_logged_user */
+  async getCurrentUser() {
+    return request<{ message: string }>(
+      '/api/method/frappe.auth.get_logged_user',
+    )
+  },
+}
+
+// ---------- Generic doc helpers (used as we build out pages) ----------
+
+interface ListParams {
+  fields?: string[]
+  filters?: Record<string, unknown>
+  order_by?: string
+  limit_page_length?: number
+  limit_start?: number
+}
+
+export const api = {
+  async getDoc<T>(doctype: string, name: string): Promise<T> {
+    const enc = encodeURIComponent(name)
+    const res = await request<{ data: T }>(
+      `/api/resource/${encodeURIComponent(doctype)}/${enc}`,
+    )
+    return res.data
+  },
+
+  async getList<T>(doctype: string, params: ListParams = {}): Promise<T[]> {
+    const search = new URLSearchParams()
+    if (params.fields) search.set('fields', JSON.stringify(params.fields))
+    if (params.filters) search.set('filters', JSON.stringify(params.filters))
+    if (params.order_by) search.set('order_by', params.order_by)
+    if (params.limit_page_length)
+      search.set('limit_page_length', String(params.limit_page_length))
+    if (params.limit_start) search.set('limit_start', String(params.limit_start))
+    const url = `/api/resource/${encodeURIComponent(doctype)}?${search.toString()}`
+    const res = await request<{ data: T[] }>(url)
+    return res.data
+  },
+
+  async callMethod<T>(
+    method: string,
+    args: Record<string, unknown> = {},
+  ): Promise<T> {
+    const res = await request<{ message: T }>(`/api/method/${method}`, {
+      method: 'POST',
+      body: JSON.stringify(args),
+    })
+    return res.message
+  },
+}

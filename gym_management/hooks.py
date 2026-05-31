@@ -5,6 +5,15 @@ app_description = "Custom Frappe app for the multi-tenant Gym Management SaaS "
 app_email = "nickyhemos@gmail.com"
 app_license = "mit"
 
+# Website
+# -------
+# Serve the React single-page app (built by frontend/, emitted to www/gym.html)
+# at /gym. The catch-all lets client-side routing own every sub-path so that
+# refreshing e.g. /gym/members hits the SPA instead of 404-ing.
+website_route_rules = [
+	{"from_route": "/gym/<path:app_path>", "to_route": "gym"},
+]
+
 # Apps
 # ------------------
 

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/assets/gym_management/frontend/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gym Management</title>
+    <meta name="description" content="Multi-tenant gym management SaaS" />
+    <script>
+      // In production Frappe serves this file as a www page and Jinja-renders the
+      // expression below into the real CSRF token used by src/lib/api.ts for write
+      // requests. In Vite dev it stays a literal string, which is harmless because
+      // developer_mode relaxes CSRF checks. IMPORTANT: Jinja scans this whole file,
+      // so the token expression below must be the ONLY Jinja-style double-brace
+      // sequence anywhere in this file (comments included), or rendering will fail.
+      window.csrf_token = "{{ frappe.session.csrf_token }}";
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
