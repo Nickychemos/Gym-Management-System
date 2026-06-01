@@ -6,7 +6,9 @@ import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import { AuthProvider } from '@/context/AuthContext'
 import { ToastProvider } from '@/context/ToastContext'
 import ClassesPage from '@/pages/classes/Classes'
+import CompliancePage from '@/pages/compliance/Compliance'
 import DashboardPage from '@/pages/Dashboard'
+import EquipmentPage from '@/pages/equipment/Equipment'
 import LoginPage from '@/pages/Login'
 import MemberDetailPage from '@/pages/members/MemberDetail'
 import MembersListPage from '@/pages/members/MembersList'
@@ -56,14 +58,8 @@ function App() {
               <Route path="pt/:id" element={<PtPackageDetailPage />} />
               <Route path="payments" element={<PaymentsPage />} />
               <Route path="refunds" element={<RefundsPage />} />
-              <Route
-                path="equipment"
-                element={<Placeholder title="Equipment" hint="Maintenance dashboard. Week 7." />}
-              />
-              <Route
-                path="compliance"
-                element={<Placeholder title="Compliance" hint="Renewals + certifications. Week 7." />}
-              />
+              <Route path="equipment" element={<EquipmentPage />} />
+              <Route path="compliance" element={<CompliancePage />} />
               <Route
                 path="marketing"
                 element={<Placeholder title="Marketing" hint="Campaigns + WhatsApp templates + chatbot. Weeks 8-9." />}

@@ -94,6 +94,54 @@ export function ptSessionVariant(status: string | null | undefined): Variant {
   }
 }
 
+/** Expiry severity (compliance / certs) → badge variant. */
+export function severityVariant(severity: string | null | undefined): Variant {
+  switch (severity) {
+    case 'expired':
+      return 'danger'
+    case 'soon':
+      return 'warning'
+    case 'ok':
+      return 'success'
+    default:
+      return 'neutral'
+  }
+}
+
+/** Maintenance ticket status → badge variant. */
+export function ticketVariant(status: string | null | undefined): Variant {
+  switch (status) {
+    case 'Resolved':
+    case 'Closed':
+      return 'success'
+    case 'In Progress':
+      return 'info'
+    case 'Awaiting Parts':
+      return 'warning'
+    case 'Open':
+    case 'Acknowledged':
+      return 'brand'
+    case 'Cancelled':
+    default:
+      return 'neutral'
+  }
+}
+
+/** Ticket priority → badge variant. */
+export function priorityVariant(priority: string | null | undefined): Variant {
+  switch (priority) {
+    case 'Critical':
+      return 'danger'
+    case 'High':
+      return 'warning'
+    case 'Medium':
+      return 'info'
+    case 'Low':
+    default:
+      return 'neutral'
+  }
+}
+
 /** M-Pesa transaction status → badge variant. */
 export function paymentVariant(status: string | null | undefined): Variant {
   switch (status) {

@@ -395,6 +395,97 @@ export interface PtFormOptions {
   plans: { name: string; price: number; sessions: number }[]
 }
 
+// ---- Equipment maintenance (gym_management.equipment.*) ----
+
+export type TicketStatus =
+  | 'Open'
+  | 'Acknowledged'
+  | 'In Progress'
+  | 'Awaiting Parts'
+  | 'Resolved'
+  | 'Closed'
+  | 'Cancelled'
+
+export type TicketPriority = 'Low' | 'Medium' | 'High' | 'Critical'
+
+export interface TicketRow {
+  name: string
+  title: string
+  asset: string | null
+  branch: string | null
+  priority: TicketPriority
+  status: TicketStatus
+  out_of_service: 0 | 1
+  ticket_type: string | null
+  assigned_to: string | null
+  reported_at: string | null
+  target_resolution_date: string | null
+  cost: number
+}
+
+export interface TicketListResult {
+  rows: TicketRow[]
+  total: number
+  limit_start: number
+  limit_page_length: number
+}
+
+export interface TicketSummary {
+  open: number
+  out_of_service: number
+  critical: number
+}
+
+export interface AssetOption {
+  name: string
+  asset_name: string
+  location: string | null
+}
+
+// ---- Compliance + certifications (gym_management.compliance.*) ----
+
+export type Severity = 'expired' | 'soon' | 'ok'
+
+export interface ComplianceRow {
+  name: string
+  compliance_name: string
+  authority: string | null
+  category: string | null
+  branch: string | null
+  issued_on: string | null
+  expires_on: string | null
+  days_to_expiry: number | null
+  severity: Severity
+  reference_number: string | null
+  cost: number
+}
+
+export interface ComplianceListResult {
+  rows: ComplianceRow[]
+  total: number
+}
+
+export interface CertRow {
+  name: string
+  employee: string
+  employee_name: string
+  certification_name: string
+  issuing_body: string | null
+  certification_number: string | null
+  issued_on: string | null
+  expires_on: string | null
+  days_to_expiry: number | null
+  severity: Severity
+  verified_by_hr: 0 | 1
+}
+
+export interface ComplianceSummary {
+  compliance_soon: number
+  compliance_expired: number
+  cert_soon: number
+  cert_expired: number
+}
+
 // ---- Class catalog (Class Type DocType, via REST) ----
 
 export interface ClassType {
