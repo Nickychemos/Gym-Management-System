@@ -294,6 +294,47 @@ export interface StkPushResult {
   reason?: string
 }
 
+// ---- Refunds (gym_management.refunds.*) ----
+
+export type RefundStatus =
+  | 'Draft'
+  | 'Pending Manager'
+  | 'Pending Owner'
+  | 'Approved'
+  | 'Rejected'
+  | 'Refund Initiated'
+  | 'Refunded'
+  | 'Failed'
+
+export interface RefundRow {
+  name: string
+  customer: string
+  customer_name: string
+  status: RefundStatus
+  refund_reason: string
+  source_type: string
+  refund_method: string
+  requested_refund_amount: number
+  original_amount_paid: number
+  requested_on: string | null
+  branch: string | null
+}
+
+export interface RefundListResult {
+  rows: RefundRow[]
+  total: number
+  limit_start: number
+  limit_page_length: number
+}
+
+export interface RefundSummary {
+  by_status: Record<string, number>
+  awaiting_approval: number
+  awaiting_payout: number
+  refunded_total: number
+  require_dual_control: 0 | 1
+}
+
 // ---- Class catalog (Class Type DocType, via REST) ----
 
 export interface ClassType {

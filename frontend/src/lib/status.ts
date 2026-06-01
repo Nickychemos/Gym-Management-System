@@ -39,6 +39,26 @@ export function bookingVariant(status: string | null | undefined): Variant {
   }
 }
 
+/** Refund Request workflow status → badge variant. */
+export function refundVariant(status: string | null | undefined): Variant {
+  switch (status) {
+    case 'Refunded':
+      return 'success'
+    case 'Pending Manager':
+    case 'Pending Owner':
+      return 'warning'
+    case 'Approved':
+    case 'Refund Initiated':
+      return 'info'
+    case 'Rejected':
+    case 'Failed':
+      return 'danger'
+    case 'Draft':
+    default:
+      return 'neutral'
+  }
+}
+
 /** M-Pesa transaction status → badge variant. */
 export function paymentVariant(status: string | null | undefined): Variant {
   switch (status) {

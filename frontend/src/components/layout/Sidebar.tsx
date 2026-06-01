@@ -6,6 +6,7 @@ import {
   HeartHandshake,
   Home,
   MessageSquare,
+  Receipt,
   Settings,
   ShieldCheck,
   Smile,
@@ -37,6 +38,7 @@ const groups: NavGroup[] = [
       { to: '/classes', label: 'Classes', icon: Dumbbell },
       { to: '/pt', label: 'PT Packages', icon: ClipboardList },
       { to: '/payments', label: 'Payments', icon: Wallet },
+      { to: '/refunds', label: 'Refunds', icon: Receipt },
     ],
   },
   {
