@@ -12,6 +12,8 @@ import MemberDetailPage from '@/pages/members/MemberDetail'
 import MembersListPage from '@/pages/members/MembersList'
 import PaymentsPage from '@/pages/payments/Payments'
 import Placeholder from '@/pages/Placeholder'
+import PtPackageDetailPage from '@/pages/pt/PtPackageDetail'
+import PtPackagesPage from '@/pages/pt/PtPackages'
 import RefundsPage from '@/pages/refunds/Refunds'
 import SchedulePage from '@/pages/schedule/Schedule'
 
@@ -50,10 +52,8 @@ function App() {
               <Route path="members/:id" element={<MemberDetailPage />} />
               <Route path="schedule" element={<SchedulePage />} />
               <Route path="classes" element={<ClassesPage />} />
-              <Route
-                path="pt"
-                element={<Placeholder title="PT Packages" hint="Package list + sell flow. Week 6." />}
-              />
+              <Route path="pt" element={<PtPackagesPage />} />
+              <Route path="pt/:id" element={<PtPackageDetailPage />} />
               <Route path="payments" element={<PaymentsPage />} />
               <Route path="refunds" element={<RefundsPage />} />
               <Route

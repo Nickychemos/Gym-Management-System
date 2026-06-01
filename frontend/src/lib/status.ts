@@ -59,6 +59,41 @@ export function refundVariant(status: string | null | undefined): Variant {
   }
 }
 
+/** PT Package status → badge variant. */
+export function ptVariant(status: string | null | undefined): Variant {
+  switch (status) {
+    case 'Active':
+      return 'success'
+    case 'Completed':
+      return 'info'
+    case 'Expired':
+      return 'warning'
+    case 'Cancelled':
+    case 'Refunded':
+      return 'danger'
+    case 'Draft':
+    default:
+      return 'neutral'
+  }
+}
+
+/** PT Session status → badge variant. */
+export function ptSessionVariant(status: string | null | undefined): Variant {
+  switch (status) {
+    case 'Completed':
+      return 'success'
+    case 'Scheduled':
+      return 'brand'
+    case 'No-Show':
+      return 'danger'
+    case 'Rescheduled':
+      return 'warning'
+    case 'Cancelled':
+    default:
+      return 'neutral'
+  }
+}
+
 /** M-Pesa transaction status → badge variant. */
 export function paymentVariant(status: string | null | undefined): Variant {
   switch (status) {

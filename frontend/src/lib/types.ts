@@ -335,6 +335,66 @@ export interface RefundSummary {
   require_dual_control: 0 | 1
 }
 
+// ---- PT packages (gym_management.pt.*) ----
+
+export type PtStatus =
+  | 'Draft'
+  | 'Active'
+  | 'Completed'
+  | 'Expired'
+  | 'Cancelled'
+  | 'Refunded'
+
+export type PtSessionStatus =
+  | 'Scheduled'
+  | 'Completed'
+  | 'No-Show'
+  | 'Cancelled'
+  | 'Rescheduled'
+
+export interface PtPackageRow {
+  name: string
+  customer: string
+  customer_name: string
+  trainer: string | null
+  trainer_name: string | null
+  branch: string | null
+  status: PtStatus
+  start_date: string | null
+  expiry_date: string | null
+  price: number
+  sessions_purchased: number
+  sessions_used: number
+  sessions_remaining: number
+  payment_status: PaymentStatus | null
+}
+
+export interface PtPackageListResult {
+  rows: PtPackageRow[]
+  total: number
+  limit_start: number
+  limit_page_length: number
+}
+
+export interface PtSession {
+  name: string
+  scheduled_at: string | null
+  status: PtSessionStatus
+  room: string | null
+  workout_focus: string | null
+  rating: number | null
+}
+
+export interface PtPackageDetail {
+  package: PtPackageRow & { goals: string | null }
+  sessions: PtSession[]
+}
+
+export interface PtFormOptions {
+  trainers: { value: string; label: string }[]
+  plans: { name: string; price: number; sessions: number }[]
+}
+
 // ---- Class catalog (Class Type DocType, via REST) ----
 
 export interface ClassType {
