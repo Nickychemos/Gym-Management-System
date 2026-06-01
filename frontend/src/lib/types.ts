@@ -235,6 +235,65 @@ export interface SessionDetail {
   bookings: SessionBooking[]
 }
 
+// ---- Payments (gym_management.payments.*) ----
+
+export type TransactionType =
+  | 'STK Push'
+  | 'C2B Paybill'
+  | 'B2C Refund'
+  | 'Reversal'
+
+export type Direction = 'Inbound' | 'Outbound'
+
+export interface PaymentRow {
+  name: string
+  transaction_type: TransactionType
+  direction: Direction
+  status: MpesaStatus
+  amount: number
+  phone_number: string | null
+  customer: string | null
+  customer_name: string | null
+  account_reference: string | null
+  mpesa_receipt_number: string | null
+  reconciled: 0 | 1
+  at: string
+}
+
+export interface PaymentStreamResult {
+  rows: PaymentRow[]
+  total: number
+  limit_start: number
+  limit_page_length: number
+}
+
+export interface PaymentSummary {
+  today_collected: number
+  today_success_count: number
+  today_pending_count: number
+  today_failed_count: number
+  mtd_collected: number
+}
+
+export interface MemberPayment {
+  name: string
+  transaction_type: TransactionType
+  direction: Direction
+  status: MpesaStatus
+  amount: number
+  account_reference: string | null
+  mpesa_receipt_number: string | null
+  at: string
+}
+
+export interface StkPushResult {
+  ok: boolean
+  sent: boolean
+  transaction: string
+  status: string
+  reason?: string
+}
+
 // ---- Class catalog (Class Type DocType, via REST) ----
 
 export interface ClassType {

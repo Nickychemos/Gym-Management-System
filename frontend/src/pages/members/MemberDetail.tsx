@@ -18,9 +18,10 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, type TabDef } from '@/components/ui/tabs'
 import { dateTime, fullDate, ksh, monthYear } from '@/lib/format'
-import { subscriptionVariant } from '@/lib/status'
+import { paymentVariant, subscriptionVariant } from '@/lib/status'
 import { type ActivityType } from '@/lib/types'
 import { useMemberActivity, useMemberOverview } from '@/queries/members'
+import { useMemberPayments } from '@/queries/payments'
 
 const TABS: TabDef[] = [
   { value: 'overview', label: 'Overview' },
@@ -113,6 +114,8 @@ export default function MemberDetailPage() {
 
           {tab === 'overview' ? (
             <OverviewTab member={id!} overview={data} />
+          ) : tab === 'payments' ? (
+            <PaymentsTab member={id!} />
           ) : (
             <TabComingSoon tab={tab} />
           )}
@@ -266,6 +269,63 @@ function Stat({ label, value }: { label: string; value: string }) {
         {value}
       </span>
     </div>
+  )
+}
+
+function PaymentsTab({ member }: { member: string }) {
+  const { data, isLoading } = useMemberPayments(member)
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Payments</CardTitle>
+        {data && data.length > 0 && (
+          <span className="text-small text-neutral-500">
+            {data.length} transaction{data.length === 1 ? '' : 's'}
+          </span>
+        )}
+      </CardHeader>
+      <CardContent className="px-0 py-0">
+        {isLoading ? (
+          <div className="px-5 py-4 space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-5 w-full" />
+            ))}
+          </div>
+        ) : !data || data.length === 0 ? (
+          <EmptyState
+            icon={CreditCard}
+            title="No payments yet"
+            description="M-Pesa transactions for this member will appear here."
+          />
+        ) : (
+          <ul className="divide-y divide-neutral-100">
+            {data.map((p) => (
+              <li key={p.name} className="flex items-center gap-4 px-5 py-3">
+                <Badge variant={paymentVariant(p.status)}>{p.status}</Badge>
+                <div className="flex-1 min-w-0">
+                  <div className="text-small text-neutral-900">
+                    {p.transaction_type}
+                    <span className="text-tiny text-neutral-400 ml-1.5">
+                      {p.direction === 'Outbound' ? '↑ out' : '↓ in'}
+                    </span>
+                  </div>
+                  <div className="text-tiny text-neutral-400 font-mono">
+                    {p.mpesa_receipt_number ?? p.account_reference ?? '—'}
+                  </div>
+                </div>
+                <span className="text-tiny text-neutral-400 tabular-nums whitespace-nowrap">
+                  {dateTime(p.at)}
+                </span>
+                <span className="text-small font-medium tabular-nums text-neutral-900">
+                  {ksh(p.amount)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 

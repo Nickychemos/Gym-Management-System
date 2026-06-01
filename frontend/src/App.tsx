@@ -10,6 +10,7 @@ import DashboardPage from '@/pages/Dashboard'
 import LoginPage from '@/pages/Login'
 import MemberDetailPage from '@/pages/members/MemberDetail'
 import MembersListPage from '@/pages/members/MembersList'
+import PaymentsPage from '@/pages/payments/Payments'
 import Placeholder from '@/pages/Placeholder'
 import SchedulePage from '@/pages/schedule/Schedule'
 
@@ -52,10 +53,7 @@ function App() {
                 path="pt"
                 element={<Placeholder title="PT Packages" hint="Package list + sell flow. Week 6." />}
               />
-              <Route
-                path="payments"
-                element={<Placeholder title="Payments" hint="M-Pesa stream + recording. Week 4." />}
-              />
+              <Route path="payments" element={<PaymentsPage />} />
               <Route
                 path="equipment"
                 element={<Placeholder title="Equipment" hint="Maintenance dashboard. Week 7." />}
