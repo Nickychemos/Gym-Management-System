@@ -137,4 +137,25 @@ export const api = {
     })
     return res.message
   },
+
+  /**
+   * GET a read-only whitelisted method. Prefer this for queries: GET skips
+   * Frappe's CSRF check (which matters in dev, where the SPA HTML isn't
+   * Jinja-rendered so window.csrf_token is absent) and the response is
+   * cacheable. Use callMethod (POST) for anything that mutates.
+   */
+  async callMethodGet<T>(
+    method: string,
+    params: Record<string, unknown> = {},
+  ): Promise<T> {
+    const search = new URLSearchParams()
+    for (const [k, v] of Object.entries(params)) {
+      if (v === undefined || v === null || v === '') continue
+      search.set(k, typeof v === 'string' ? v : JSON.stringify(v))
+    }
+    const qs = search.toString()
+    const url = `/api/method/${method}${qs ? `?${qs}` : ''}`
+    const res = await request<{ message: T }>(url)
+    return res.message
+  },
 }

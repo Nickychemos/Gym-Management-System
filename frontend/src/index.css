@@ -1,7 +1,9 @@
-@import 'tailwindcss';
-
-/* Inter (variable) + JetBrains Mono — one network call, all weights */
+/* Inter (variable) + JetBrains Mono — one network call, all weights.
+   Must precede the Tailwind import: CSS @import rules have to come before any
+   other rules (aside from @charset / @layer). */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@import 'tailwindcss';
 
 /* ==========================================================================
    Design tokens — matches FRONTEND_PLAN.md §5

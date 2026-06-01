@@ -4,8 +4,11 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from '@/components/layout/Layout'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import { AuthProvider } from '@/context/AuthContext'
+import { ToastProvider } from '@/context/ToastContext'
 import DashboardPage from '@/pages/Dashboard'
 import LoginPage from '@/pages/Login'
+import MemberDetailPage from '@/pages/members/MemberDetail'
+import MembersListPage from '@/pages/members/MembersList'
 import Placeholder from '@/pages/Placeholder'
 
 const queryClient = new QueryClient({
@@ -26,6 +29,7 @@ function App() {
           Prod: served at /gym. Dev: visit http://localhost:5173/gym */}
       <BrowserRouter basename="/gym">
         <AuthProvider>
+          <ToastProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
 
@@ -38,14 +42,8 @@ function App() {
             >
               <Route index element={<DashboardPage />} />
 
-              <Route
-                path="members"
-                element={<Placeholder title="Members" hint="Member list, search, filters. Week 2." />}
-              />
-              <Route
-                path="members/:id"
-                element={<Placeholder title="Member 360" hint="6-tab member detail view. Week 2." />}
-              />
+              <Route path="members" element={<MembersListPage />} />
+              <Route path="members/:id" element={<MemberDetailPage />} />
               <Route
                 path="schedule"
                 element={<Placeholder title="Schedule" hint="Weekly class grid. Week 3." />}
@@ -90,6 +88,7 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>
+          </ToastProvider>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
