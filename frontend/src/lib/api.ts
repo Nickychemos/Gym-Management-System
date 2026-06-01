@@ -119,7 +119,8 @@ export const api = {
     if (params.fields) search.set('fields', JSON.stringify(params.fields))
     if (params.filters) search.set('filters', JSON.stringify(params.filters))
     if (params.order_by) search.set('order_by', params.order_by)
-    if (params.limit_page_length)
+    // 0 is meaningful to Frappe ("return all rows"), so test for undefined.
+    if (params.limit_page_length !== undefined)
       search.set('limit_page_length', String(params.limit_page_length))
     if (params.limit_start) search.set('limit_start', String(params.limit_start))
     const url = `/api/resource/${encodeURIComponent(doctype)}?${search.toString()}`

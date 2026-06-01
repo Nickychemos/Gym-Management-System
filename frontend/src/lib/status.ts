@@ -21,6 +21,24 @@ export function subscriptionVariant(status: string | null | undefined): Variant 
   }
 }
 
+/** Class booking status → badge variant. */
+export function bookingVariant(status: string | null | undefined): Variant {
+  switch (status) {
+    case 'Checked-In':
+      return 'success'
+    case 'Booked':
+      return 'brand'
+    case 'Waitlisted':
+      return 'warning'
+    case 'No-Show':
+      return 'danger'
+    case 'Cancelled':
+      return 'neutral'
+    default:
+      return 'neutral'
+  }
+}
+
 /** M-Pesa transaction status → badge variant. */
 export function paymentVariant(status: string | null | undefined): Variant {
   switch (status) {

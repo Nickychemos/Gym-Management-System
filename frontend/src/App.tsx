@@ -5,11 +5,13 @@ import { Layout } from '@/components/layout/Layout'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import { AuthProvider } from '@/context/AuthContext'
 import { ToastProvider } from '@/context/ToastContext'
+import ClassesPage from '@/pages/classes/Classes'
 import DashboardPage from '@/pages/Dashboard'
 import LoginPage from '@/pages/Login'
 import MemberDetailPage from '@/pages/members/MemberDetail'
 import MembersListPage from '@/pages/members/MembersList'
 import Placeholder from '@/pages/Placeholder'
+import SchedulePage from '@/pages/schedule/Schedule'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,14 +46,8 @@ function App() {
 
               <Route path="members" element={<MembersListPage />} />
               <Route path="members/:id" element={<MemberDetailPage />} />
-              <Route
-                path="schedule"
-                element={<Placeholder title="Schedule" hint="Weekly class grid. Week 3." />}
-              />
-              <Route
-                path="classes"
-                element={<Placeholder title="Classes" hint="Class type catalog. Week 3." />}
-              />
+              <Route path="schedule" element={<SchedulePage />} />
+              <Route path="classes" element={<ClassesPage />} />
               <Route
                 path="pt"
                 element={<Placeholder title="PT Packages" hint="Package list + sell flow. Week 6." />}

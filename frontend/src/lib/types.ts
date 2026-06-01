@@ -160,3 +160,92 @@ export interface ActivityItem {
   ref_doctype: string
   ref_name: string
 }
+
+// ---- Schedule + bookings (gym_management.schedule.*) ----
+
+export type SessionStatus =
+  | 'Scheduled'
+  | 'In Progress'
+  | 'Completed'
+  | 'Cancelled'
+
+export type BookingStatus =
+  | 'Booked'
+  | 'Waitlisted'
+  | 'Checked-In'
+  | 'Cancelled'
+  | 'No-Show'
+
+export interface ScheduleSession {
+  name: string
+  class_type: string
+  color: string
+  trainer: string | null
+  start_time: string
+  time_label: string
+  day_index: number
+  booked: number
+  capacity: number
+  waitlist: number
+  spots_remaining: number
+  status: SessionStatus
+}
+
+export interface ScheduleDay {
+  date: string
+  label: string
+  weekday: number
+}
+
+export interface WeekSchedule {
+  week_start: string
+  week_end: string
+  days: ScheduleDay[]
+  sessions: ScheduleSession[]
+}
+
+export interface SessionInfo {
+  name: string
+  class_type: string
+  trainer: string | null
+  trainer_name?: string
+  branch: string | null
+  room: string | null
+  start_time: string
+  end_time: string | null
+  capacity: number
+  bookings_count: number
+  waitlist_count: number
+  spots_remaining: number
+  status: SessionStatus
+}
+
+export interface SessionBooking {
+  name: string
+  customer: string
+  customer_name: string
+  status: BookingStatus
+  waitlist_position: number | null
+  check_in_time: string | null
+  payment_required: 0 | 1
+}
+
+export interface SessionDetail {
+  session: SessionInfo
+  bookings: SessionBooking[]
+}
+
+// ---- Class catalog (Class Type DocType, via REST) ----
+
+export interface ClassType {
+  name: string
+  class_type_name: string
+  short_code: string | null
+  default_duration_minutes: number
+  default_capacity: number
+  is_active: 0 | 1
+  display_color: string | null
+  intensity_level: string | null
+  description: string | null
+  equipment_required: string | null
+}
