@@ -326,6 +326,34 @@ export interface StkPushResult {
   reason?: string
 }
 
+export interface CashSession {
+  name: string
+  branch: string | null
+  cashier: string | null
+  cashier_name: string | null
+  shift_date: string | null
+  status: string
+  opening_float: number
+  expected_cash_sales: number
+  actual_cash_counted: number
+  variance: number
+  variance_acceptable: 0 | 1
+  opened_at: string | null
+  closed_at: string | null
+  transaction_count: number
+}
+
+export interface DrawerSummary {
+  open_drawers: number
+  today_variance: number
+}
+
+export interface DrawerOptions {
+  cashiers: { value: string; label: string }[]
+  branches: string[]
+  variance_threshold: number
+}
+
 // ---- Refunds (gym_management.refunds.*) ----
 
 export type RefundStatus =

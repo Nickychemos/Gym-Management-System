@@ -16,12 +16,19 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TBody, TD, TH, THead, TR, Table } from '@/components/ui/table'
+import { Tabs } from '@/components/ui/tabs'
 import { useDebounce } from '@/hooks/useDebounce'
 import { dateTime, ksh, kshCompact } from '@/lib/format'
 import { paymentVariant } from '@/lib/status'
 import { cn } from '@/lib/utils'
 import { usePaymentStream, usePaymentSummary } from '@/queries/payments'
+import { CashDrawerTab } from './CashDrawer'
 import { StkPushModal } from './StkPushModal'
+
+const VIEW_TABS = [
+  { value: 'mpesa', label: 'M-Pesa' },
+  { value: 'cash', label: 'Cash Drawer' },
+]
 
 const PAGE_LENGTH = 25
 const STATUSES = ['Success', 'Pending', 'Failed', 'Timeout', 'Reversed']
@@ -29,6 +36,7 @@ const STATUSES = ['Success', 'Pending', 'Failed', 'Timeout', 'Reversed']
 export default function PaymentsPage() {
   const [params, setParams] = useSearchParams()
   const [stkOpen, setStkOpen] = useState(false)
+  const view = params.get('view') ?? 'mpesa'
 
   const status = params.get('status') ?? ''
   const direction = params.get('direction') ?? ''
@@ -71,16 +79,38 @@ export default function PaymentsPage() {
             Payments
           </h1>
           <p className="text-body text-neutral-500">
-            M-Pesa transaction stream
-            {isFetching && !isLoading ? ' · refreshing…' : ' · live'}
+            {view === 'cash'
+              ? 'Cash reconciliation'
+              : `M-Pesa transaction stream${isFetching && !isLoading ? ' · refreshing…' : ' · live'}`}
           </p>
         </div>
-        <Button onClick={() => setStkOpen(true)}>
-          <Smartphone className="size-4" strokeWidth={2} />
-          STK Push
-        </Button>
+        {view === 'mpesa' && (
+          <Button onClick={() => setStkOpen(true)}>
+            <Smartphone className="size-4" strokeWidth={2} />
+            STK Push
+          </Button>
+        )}
       </div>
 
+      <div className="mb-6">
+        <Tabs
+          tabs={VIEW_TABS}
+          value={view}
+          onValueChange={(v) =>
+            setParams((prev) => {
+              const next = new URLSearchParams(prev)
+              if (v === 'mpesa') next.delete('view')
+              else next.set('view', v)
+              return next
+            })
+          }
+        />
+      </div>
+
+      {view === 'cash' ? (
+        <CashDrawerTab />
+      ) : (
+        <>
       {/* KPI strip */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <Kpi label="Collected today" value={s ? kshCompact(s.today_collected) : '—'} loading={summary.isLoading} />
@@ -213,6 +243,8 @@ export default function PaymentsPage() {
       )}
 
       <StkPushModal open={stkOpen} onClose={() => setStkOpen(false)} />
+        </>
+      )}
     </div>
   )
 }
