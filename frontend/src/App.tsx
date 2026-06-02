@@ -12,6 +12,7 @@ import EquipmentPage from '@/pages/equipment/Equipment'
 import EquipmentDetailPage from '@/pages/equipment/EquipmentDetail'
 import LoginPage from '@/pages/Login'
 import MemberDetailPage from '@/pages/members/MemberDetail'
+import MarketingPage from '@/pages/marketing/Marketing'
 import MembersListPage from '@/pages/members/MembersList'
 import PaymentsPage from '@/pages/payments/Payments'
 import Placeholder from '@/pages/Placeholder'
@@ -63,10 +64,7 @@ function App() {
               <Route path="equipment" element={<EquipmentPage />} />
               <Route path="equipment/:id" element={<EquipmentDetailPage />} />
               <Route path="compliance" element={<CompliancePage />} />
-              <Route
-                path="marketing"
-                element={<Placeholder title="Marketing" hint="Campaigns + WhatsApp templates + chatbot. Weeks 8-9." />}
-              />
+              <Route path="marketing" element={<MarketingPage />} />
               <Route
                 path="coaching"
                 element={<Placeholder title="Coaching" hint="Diet + training plan builders. Weeks 10-12." />}

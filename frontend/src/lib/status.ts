@@ -156,6 +156,52 @@ export function priorityVariant(priority: string | null | undefined): Variant {
   }
 }
 
+/** WhatsApp template status → badge variant. */
+export function templateVariant(status: string | null | undefined): Variant {
+  switch (status) {
+    case 'Approved':
+      return 'success'
+    case 'Pending':
+      return 'warning'
+    case 'Rejected':
+    case 'Disabled':
+      return 'danger'
+    default:
+      return 'neutral'
+  }
+}
+
+/** Campaign status → badge variant. */
+export function campaignVariant(status: string | null | undefined): Variant {
+  switch (status) {
+    case 'Sent':
+      return 'success'
+    case 'Sending':
+      return 'info'
+    case 'Failed':
+      return 'danger'
+    default:
+      return 'neutral'
+  }
+}
+
+/** Referral status → badge variant. */
+export function referralVariant(status: string | null | undefined): Variant {
+  switch (status) {
+    case 'Reward Paid':
+      return 'success'
+    case 'Reward Earned':
+    case 'First Payment':
+      return 'info'
+    case 'Signed Up':
+      return 'brand'
+    case 'Pending':
+      return 'warning'
+    default:
+      return 'neutral'
+  }
+}
+
 /** M-Pesa transaction status → badge variant. */
 export function paymentVariant(status: string | null | undefined): Variant {
   switch (status) {

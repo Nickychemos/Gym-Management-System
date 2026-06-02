@@ -581,6 +581,117 @@ export interface EmployeeOption {
   employee_name: string
 }
 
+// ---- Marketing (gym_management.marketing.*) ----
+
+export interface MarketingSummary {
+  campaigns_sent: number
+  templates_approved: number
+  active_referrals: number
+  chatbot_sessions: number
+}
+
+export interface CampaignRow {
+  name: string
+  campaign_name: string
+  channel: string
+  status: string
+  segment: string | null
+  target_count: number
+  sent_at: string | null
+  delivered: number
+  opened: number
+  clicked: number
+  delivery_rate: number
+  open_rate: number
+  click_rate: number
+  estimated_cost: number
+  actual_cost: number
+}
+
+export interface TemplateRow {
+  name: string
+  template_name: string
+  category: string
+  language: string
+  status: string
+  is_active: 0 | 1
+  body_text: string | null
+  header_text: string | null
+  footer_text: string | null
+  placeholder_count: number
+  send_count: number
+  last_used_on: string | null
+  rejection_reason: string | null
+  meta_template_id: string | null
+}
+
+export interface ChatbotFlowRow {
+  name: string
+  flow_name: string
+  channel: string
+  language: string
+  is_active: 0 | 1
+  trigger_keywords: string | null
+  start_node_key: string | null
+  description: string | null
+  node_count: number
+}
+
+export interface ChatbotNode {
+  node_key: string
+  node_type: string
+  prompt_text: string | null
+  next_node_key: string | null
+  linked_action: string | null
+  order_index: number
+}
+
+export interface ChatbotFlowDetail {
+  name: string
+  flow_name: string
+  channel: string
+  is_active: 0 | 1
+  trigger_keywords: string | null
+  start_node_key: string | null
+  nodes: ChatbotNode[]
+}
+
+export interface ChatbotSessionRow {
+  name: string
+  phone_number: string
+  channel: string
+  customer: string | null
+  customer_name: string | null
+  status: string
+  current_flow: string | null
+  turn_count: number
+  started_at: string | null
+  last_message_at: string | null
+}
+
+export type ReferralStatus =
+  | 'Pending'
+  | 'Signed Up'
+  | 'First Payment'
+  | 'Reward Earned'
+  | 'Reward Paid'
+  | 'Expired'
+
+export interface ReferralRow {
+  name: string
+  referrer_customer: string
+  referrer_name: string
+  referred_customer: string | null
+  referred_lead: string | null
+  referred_name: string
+  referred_on: string | null
+  channel: string | null
+  status: ReferralStatus
+  reward_type: string | null
+  reward_value: number
+  reward_paid_on: string | null
+}
+
 // ---- Settings (gym_management.settings.*) ----
 
 export interface GymSettings {
