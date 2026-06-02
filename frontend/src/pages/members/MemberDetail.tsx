@@ -29,6 +29,11 @@ import {
   useMemberSubscriptions,
 } from '@/queries/members'
 import { useMemberPayments } from '@/queries/payments'
+import {
+  useCoachingNotes,
+  useDietPlans,
+  useTrainingPlans,
+} from '@/queries/coaching'
 import { EditMemberDrawer } from './EditMemberDrawer'
 import { SubscribeButton, SubscriptionLifecycle } from './SubscriptionActions'
 
@@ -137,6 +142,8 @@ export default function MemberDetailPage() {
             <ClassesTab member={id!} />
           ) : tab === 'payments' ? (
             <PaymentsTab member={id!} />
+          ) : tab === 'coaching' ? (
+            <CoachingTab member={id!} />
           ) : (
             <TabComingSoon tab={tab} />
           )}
@@ -458,6 +465,91 @@ function ClassesTab({ member }: { member: string }) {
         )}
       </CardContent>
     </Card>
+  )
+}
+
+function CoachingTab({ member }: { member: string }) {
+  const diet = useDietPlans(member)
+  const training = useTrainingPlans(member)
+  const notes = useCoachingNotes(member)
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Diet Plans</CardTitle>
+            <Link to="/coaching/diet/new" className="text-small text-brand-600 hover:text-brand-700">New</Link>
+          </CardHeader>
+          <CardContent className="px-0 py-0">
+            {diet.isLoading ? (
+              <div className="px-5 py-4"><Skeleton className="h-8 w-full" /></div>
+            ) : !diet.data || diet.data.length === 0 ? (
+              <EmptyState title="No diet plans" />
+            ) : (
+              <ul className="divide-y divide-neutral-100">
+                {diet.data.map((p) => (
+                  <li key={p.name}>
+                    <Link to={`/coaching/diet/${encodeURIComponent(p.name)}`} className="flex items-center gap-3 px-5 py-3 hover:bg-neutral-50 transition-colors">
+                      <span className="flex-1 min-w-0 text-small text-neutral-900 truncate">{p.plan_name}</span>
+                      <Badge variant={subscriptionVariant(p.status)}>{p.status}</Badge>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Training Plans</CardTitle>
+            <Link to="/coaching/training/new" className="text-small text-brand-600 hover:text-brand-700">New</Link>
+          </CardHeader>
+          <CardContent className="px-0 py-0">
+            {training.isLoading ? (
+              <div className="px-5 py-4"><Skeleton className="h-8 w-full" /></div>
+            ) : !training.data || training.data.length === 0 ? (
+              <EmptyState title="No training plans" />
+            ) : (
+              <ul className="divide-y divide-neutral-100">
+                {training.data.map((p) => (
+                  <li key={p.name}>
+                    <Link to={`/coaching/training/${encodeURIComponent(p.name)}`} className="flex items-center gap-3 px-5 py-3 hover:bg-neutral-50 transition-colors">
+                      <span className="flex-1 min-w-0 text-small text-neutral-900 truncate">{p.plan_name}</span>
+                      <span className="text-tiny text-neutral-400">{p.goal}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader><CardTitle>Coaching Notes</CardTitle></CardHeader>
+        <CardContent className="px-0 py-0">
+          {notes.isLoading ? (
+            <div className="px-5 py-4 space-y-2">{Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-6 w-full" />)}</div>
+          ) : !notes.data || notes.data.length === 0 ? (
+            <EmptyState title="No notes yet" />
+          ) : (
+            <ul className="divide-y divide-neutral-100">
+              {notes.data.map((n) => (
+                <li key={n.name} className="px-5 py-3">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="neutral">{n.category}</Badge>
+                    <span className="text-tiny text-neutral-400 ml-auto">{dateTime(n.note_date)}</span>
+                  </div>
+                  <p className="text-small text-neutral-700 mt-1">{n.note_text}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   )
 }
 

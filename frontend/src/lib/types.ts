@@ -581,6 +581,112 @@ export interface EmployeeOption {
   employee_name: string
 }
 
+// ---- Coaching (gym_management.coaching.*) ----
+
+export interface DietMeal {
+  meal_slot: string
+  target_time: string | null
+  target_kcal: number
+  notes?: string | null
+}
+
+export interface DietItem {
+  meal_slot: string
+  food_name: string
+  portion_qty: number
+  portion_unit: string | null
+  kcal: number
+  protein_g: number
+  carbs_g: number
+  fat_g: number
+}
+
+export interface MacroTotals {
+  kcal: number
+  protein_g: number
+  carbs_g: number
+  fat_g: number
+}
+
+export interface DietPlanRow {
+  name: string
+  plan_name: string
+  member: string
+  member_name: string
+  trainer_name: string | null
+  status: string
+  start_date: string | null
+  end_date: string | null
+  daily_kcal_target: number
+  item_count: number
+}
+
+export interface DietPlanDetail {
+  name: string
+  plan_name: string
+  member: string | null
+  trainer: string | null
+  member_name: string
+  status: string
+  start_date: string | null
+  end_date: string | null
+  daily_kcal_target: number
+  daily_protein_g: number
+  daily_carbs_g: number
+  daily_fat_g: number
+  meals: DietMeal[]
+  items: DietItem[]
+  totals: MacroTotals
+}
+
+export interface ExerciseSet {
+  session_name: string
+  exercise_name: string
+  sets: number
+  reps: string | null
+  weight_kg: number
+  rest_seconds: number
+  tempo: string | null
+}
+
+export interface TrainingPlanRow {
+  name: string
+  plan_name: string
+  member: string
+  member_name: string
+  trainer_name: string | null
+  goal: string | null
+  status: string
+  start_date: string | null
+  end_date: string | null
+  set_count: number
+}
+
+export interface TrainingPlanDetail {
+  name: string
+  plan_name: string
+  member: string | null
+  trainer: string | null
+  member_name: string
+  goal: string | null
+  status: string
+  start_date: string | null
+  end_date: string | null
+  exercise_sets: ExerciseSet[]
+}
+
+export interface CoachingNote {
+  name: string
+  member: string
+  member_name: string
+  trainer_name: string | null
+  note_date: string | null
+  category: string
+  note_text: string | null
+  linked_diet_plan: string | null
+  linked_training_prescription: string | null
+}
+
 // ---- Marketing (gym_management.marketing.*) ----
 
 export interface MarketingSummary {

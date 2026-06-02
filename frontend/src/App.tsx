@@ -6,6 +6,9 @@ import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import { AuthProvider } from '@/context/AuthContext'
 import { ToastProvider } from '@/context/ToastContext'
 import ClassesPage from '@/pages/classes/Classes'
+import CoachingPage from '@/pages/coaching/Coaching'
+import DietPlanBuilderPage from '@/pages/coaching/DietPlanBuilder'
+import TrainingPlanBuilderPage from '@/pages/coaching/TrainingPlanBuilder'
 import CompliancePage from '@/pages/compliance/Compliance'
 import DashboardPage from '@/pages/Dashboard'
 import EquipmentPage from '@/pages/equipment/Equipment'
@@ -65,10 +68,9 @@ function App() {
               <Route path="equipment/:id" element={<EquipmentDetailPage />} />
               <Route path="compliance" element={<CompliancePage />} />
               <Route path="marketing" element={<MarketingPage />} />
-              <Route
-                path="coaching"
-                element={<Placeholder title="Coaching" hint="Diet + training plan builders. Weeks 10-12." />}
-              />
+              <Route path="coaching" element={<CoachingPage />} />
+              <Route path="coaching/diet/:id" element={<DietPlanBuilderPage />} />
+              <Route path="coaching/training/:id" element={<TrainingPlanBuilderPage />} />
               <Route
                 path="surveys"
                 element={<Placeholder title="Surveys & NPS" hint="Templates + live NPS dashboard. Week 13." />}
