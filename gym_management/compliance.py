@@ -15,6 +15,9 @@ from __future__ import annotations
 import frappe
 from frappe.utils import date_diff, flt, getdate, today
 
+# Placeholder used when a renewal/cert is recorded without a file upload yet.
+_DOC_PLACEHOLDER = "/files/compliance-document-pending.txt"
+
 # Days-to-expiry threshold that counts as "expiring soon".
 SOON_DAYS = 30
 
@@ -160,3 +163,200 @@ def summary() -> dict:
 		"cert_soon": cert_soon,
 		"cert_expired": cert_expired,
 	}
+
+
+# ---------------------------------------------------------------------------
+# Form options
+# ---------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+def list_authorities() -> list[str]:
+	"""Compliance authorities for the item form."""
+	return [
+		a.name
+		for a in frappe.get_all(
+			"Compliance Authority", fields=["name"], order_by="name asc"
+		)
+	]
+
+
+@frappe.whitelist()
+def create_authority(authority_name: str) -> dict:
+	"""Register a new compliance authority on the fly."""
+	authority_name = (authority_name or "").strip()
+	if not authority_name:
+		frappe.throw(frappe._("Authority name is required"))
+	if not frappe.db.exists("Compliance Authority", authority_name):
+		frappe.get_doc(
+			{"doctype": "Compliance Authority", "authority_name": authority_name}
+		).insert(ignore_permissions=True)
+		frappe.db.commit()
+	return {"ok": True, "authority": authority_name}
+
+
+@frappe.whitelist()
+def list_employees() -> list[dict]:
+	"""Active employees for the certification form."""
+	return [
+		{"name": e.name, "employee_name": e.employee_name or e.name}
+		for e in frappe.get_all(
+			"Employee",
+			filters={"status": "Active"},
+			fields=["name", "employee_name"],
+			order_by="employee_name asc",
+			limit_page_length=200,
+		)
+	]
+
+
+# ---------------------------------------------------------------------------
+# Compliance Item CRUD + renewal
+# ---------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+def create_compliance_item(
+	compliance_name: str,
+	compliance_authority: str,
+	expires_on: str,
+	compliance_category: str | None = None,
+	branch: str | None = None,
+	issued_on: str | None = None,
+	reference_number: str | None = None,
+	cost: float = 0,
+) -> dict:
+	"""Register a new compliance obligation (license/permit/tax/insurance)."""
+	doc = frappe.get_doc(
+		{
+			"doctype": "Compliance Item",
+			"compliance_name": compliance_name,
+			"compliance_authority": compliance_authority,
+			"compliance_category": compliance_category,
+			"branch": branch,
+			"issued_on": issued_on,
+			"expires_on": expires_on,
+			"reference_number": reference_number,
+			"cost": flt(cost),
+		}
+	)
+	doc.insert(ignore_permissions=True)
+	frappe.db.commit()
+	return {"ok": True, "name": doc.name}
+
+
+@frappe.whitelist()
+def update_compliance_item(name: str, **fields) -> dict:
+	"""Edit a compliance item. Accepts any of: compliance_name,
+	compliance_authority, compliance_category, branch, issued_on, expires_on,
+	reference_number, cost."""
+	allowed = {
+		"compliance_name",
+		"compliance_authority",
+		"compliance_category",
+		"branch",
+		"issued_on",
+		"expires_on",
+		"reference_number",
+		"cost",
+	}
+	doc = frappe.get_doc("Compliance Item", name)
+	for k, v in fields.items():
+		if k in allowed:
+			doc.set(k, v)
+	doc.save(ignore_permissions=True)
+	frappe.db.commit()
+	return {"ok": True, "name": name}
+
+
+@frappe.whitelist()
+def renew_compliance(
+	compliance_item: str,
+	new_expiry_date: str,
+	renewed_on: str | None = None,
+	cost_paid: float = 0,
+	payment_method: str | None = None,
+	new_reference_number: str | None = None,
+	new_document: str | None = None,
+) -> dict:
+	"""Record a renewal: creates + submits a Compliance Renewal, which pushes
+	the item's expires_on to new_expiry_date. Returns the new expiry."""
+	old_expiry = frappe.db.get_value("Compliance Item", compliance_item, "expires_on")
+	doc = frappe.get_doc(
+		{
+			"doctype": "Compliance Renewal",
+			"compliance_item": compliance_item,
+			"old_expiry_date": old_expiry,
+			"new_expiry_date": new_expiry_date,
+			"renewed_on": renewed_on or today(),
+			"new_document": new_document or _DOC_PLACEHOLDER,
+			"new_reference_number": new_reference_number,
+			"cost_paid": flt(cost_paid),
+			"payment_method": payment_method,
+		}
+	)
+	doc.insert(ignore_permissions=True)
+	doc.submit()
+	frappe.db.commit()
+	return {
+		"ok": True,
+		"renewal": doc.name,
+		"compliance_item": compliance_item,
+		"new_expiry_date": str(new_expiry_date),
+	}
+
+
+# ---------------------------------------------------------------------------
+# Certification CRUD
+# ---------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+def create_certification(
+	employee: str,
+	certification_name: str,
+	issuing_body: str,
+	issued_on: str,
+	expires_on: str,
+	certification_number: str | None = None,
+	certificate_attachment: str | None = None,
+	verified_by_hr: int | str = 0,
+) -> dict:
+	"""Register a staff certification."""
+	doc = frappe.get_doc(
+		{
+			"doctype": "Certification Register",
+			"employee": employee,
+			"certification_name": certification_name,
+			"issuing_body": issuing_body,
+			"issued_on": issued_on,
+			"expires_on": expires_on,
+			"certification_number": certification_number,
+			"certificate_attachment": certificate_attachment or _DOC_PLACEHOLDER,
+			"verified_by_hr": 1 if str(verified_by_hr) in ("1", "true", "True") else 0,
+		}
+	)
+	doc.insert(ignore_permissions=True)
+	frappe.db.commit()
+	return {"ok": True, "name": doc.name}
+
+
+@frappe.whitelist()
+def update_certification(name: str, **fields) -> dict:
+	"""Edit a certification. Accepts certification_name, issuing_body,
+	certification_number, issued_on, expires_on, verified_by_hr."""
+	allowed = {
+		"certification_name",
+		"issuing_body",
+		"certification_number",
+		"issued_on",
+		"expires_on",
+		"verified_by_hr",
+	}
+	doc = frappe.get_doc("Certification Register", name)
+	for k, v in fields.items():
+		if k in allowed:
+			doc.set(k, v)
+	doc.save(ignore_permissions=True)
+	frappe.db.commit()
+	return {"ok": True, "name": name}

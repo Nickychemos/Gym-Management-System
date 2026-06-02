@@ -9,6 +9,7 @@ import ClassesPage from '@/pages/classes/Classes'
 import CompliancePage from '@/pages/compliance/Compliance'
 import DashboardPage from '@/pages/Dashboard'
 import EquipmentPage from '@/pages/equipment/Equipment'
+import EquipmentDetailPage from '@/pages/equipment/EquipmentDetail'
 import LoginPage from '@/pages/Login'
 import MemberDetailPage from '@/pages/members/MemberDetail'
 import MembersListPage from '@/pages/members/MembersList'
@@ -59,6 +60,7 @@ function App() {
               <Route path="payments" element={<PaymentsPage />} />
               <Route path="refunds" element={<RefundsPage />} />
               <Route path="equipment" element={<EquipmentPage />} />
+              <Route path="equipment/:id" element={<EquipmentDetailPage />} />
               <Route path="compliance" element={<CompliancePage />} />
               <Route
                 path="marketing"

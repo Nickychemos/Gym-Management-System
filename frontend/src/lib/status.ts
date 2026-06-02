@@ -108,6 +108,20 @@ export function severityVariant(severity: string | null | undefined): Variant {
   }
 }
 
+/** Equipment operational status → badge variant. */
+export function opStatusVariant(status: string | null | undefined): Variant {
+  switch (status) {
+    case 'Operational':
+      return 'success'
+    case 'Maintenance Due':
+      return 'warning'
+    case 'Out of Service':
+      return 'danger'
+    default:
+      return 'neutral'
+  }
+}
+
 /** Maintenance ticket status → badge variant. */
 export function ticketVariant(status: string | null | undefined): Variant {
   switch (status) {

@@ -20,12 +20,14 @@ const TYPES = ['Breakdown', 'Preventive', 'Cosmetic', 'Calibration', 'Other']
 interface Props {
   open: boolean
   onClose: () => void
+  /** Pre-selected machine (from an equipment detail page); hides the picker. */
+  presetAsset?: AssetOption | null
 }
 
-export function CreateTicketDrawer({ open, onClose }: Props) {
+export function CreateTicketDrawer({ open, onClose, presetAsset }: Props) {
   const { toast } = useToast()
   const create = useCreateTicket()
-  const [asset, setAsset] = useState<AssetOption | null>(null)
+  const [asset, setAsset] = useState<AssetOption | null>(presetAsset ?? null)
   const [title, setTitle] = useState('')
   const [priority, setPriority] = useState('Medium')
   const [type, setType] = useState('Breakdown')
@@ -33,7 +35,7 @@ export function CreateTicketDrawer({ open, onClose }: Props) {
   const [oos, setOos] = useState(false)
 
   function reset() {
-    setAsset(null)
+    setAsset(presetAsset ?? null)
     setTitle('')
     setPriority('Medium')
     setType('Breakdown')
@@ -101,9 +103,11 @@ export function CreateTicketDrawer({ open, onClose }: Props) {
                   <span className="text-neutral-400"> · {asset.location}</span>
                 )}
               </span>
-              <Button variant="ghost" size="sm" onClick={() => setAsset(null)}>
-                Change
-              </Button>
+              {!presetAsset && (
+                <Button variant="ghost" size="sm" onClick={() => setAsset(null)}>
+                  Change
+                </Button>
+              )}
             </div>
           ) : (
             <AssetPicker onPick={setAsset} />

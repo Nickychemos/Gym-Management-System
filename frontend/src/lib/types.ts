@@ -442,6 +442,64 @@ export interface AssetOption {
   location: string | null
 }
 
+export type OpStatus = 'Operational' | 'Maintenance Due' | 'Out of Service'
+
+export interface EquipmentRow {
+  name: string
+  asset_name: string
+  category: string | null
+  branch: string | null
+  cost: number
+  purchase_date: string | null
+  op_status: OpStatus
+  open_tickets: number
+  next_service: string | null
+  out_of_service: 0 | 1
+}
+
+export interface EquipmentListResult {
+  rows: EquipmentRow[]
+  total: number
+}
+
+export interface EquipmentSummary {
+  total: number
+  operational: number
+  maintenance_due: number
+  out_of_service: number
+}
+
+export interface MaintenanceSchedule {
+  name: string
+  schedule_name: string
+  frequency: string
+  task_type: string | null
+  is_active: 0 | 1
+  last_performed_on: string | null
+  next_due_on: string | null
+  assigned_to: string | null
+  estimated_cost_per_run: number
+  due: boolean
+}
+
+export interface EquipmentTicketRow {
+  name: string
+  title: string
+  priority: TicketPriority
+  status: TicketStatus
+  out_of_service: 0 | 1
+  ticket_type: string | null
+  reported_at: string | null
+  resolved_at: string | null
+  cost: number
+}
+
+export interface EquipmentDetail {
+  asset: EquipmentRow
+  tickets: EquipmentTicketRow[]
+  schedules: MaintenanceSchedule[]
+}
+
 // ---- Compliance + certifications (gym_management.compliance.*) ----
 
 export type Severity = 'expired' | 'soon' | 'ok'
@@ -484,6 +542,11 @@ export interface ComplianceSummary {
   compliance_expired: number
   cert_soon: number
   cert_expired: number
+}
+
+export interface EmployeeOption {
+  name: string
+  employee_name: string
 }
 
 // ---- Class catalog (Class Type DocType, via REST) ----

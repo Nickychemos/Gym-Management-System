@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ShieldCheck } from 'lucide-react'
+import { Plus, ShieldCheck } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Select } from '@/components/ui/select'
@@ -11,11 +13,15 @@ import { Tabs } from '@/components/ui/tabs'
 import { fullDate } from '@/lib/format'
 import { severityVariant } from '@/lib/status'
 import { cn } from '@/lib/utils'
+import { type CertRow, type ComplianceRow } from '@/lib/types'
 import {
   useCertifications,
   useCompliance,
   useComplianceSummary,
 } from '@/queries/compliance'
+import { CertDrawer } from './CertDrawer'
+import { ComplianceItemDrawer } from './ComplianceItemDrawer'
+import { RenewDialog } from './RenewDialog'
 
 const TABS = [
   { value: 'items', label: 'Compliance Items' },
@@ -28,12 +34,26 @@ function expiryLabel(days: number | null, severity: string): string {
   return `${days}d left`
 }
 
+function ExpiryCell({ row }: { row: { expires_on: string | null; days_to_expiry: number | null; severity: string } }) {
+  return (
+    <span className="whitespace-nowrap">
+      <span className="text-neutral-700">{fullDate(row.expires_on)}</span>
+      <span className={cn('ml-2 text-tiny', row.severity === 'expired' ? 'text-danger-700' : row.severity === 'soon' ? 'text-warning-700' : 'text-neutral-400')}>
+        {expiryLabel(row.days_to_expiry, row.severity)}
+      </span>
+    </span>
+  )
+}
+
 export default function CompliancePage() {
   const [params, setParams] = useSearchParams()
   const tab = params.get('tab') ?? 'items'
   const bucket = params.get('bucket') ?? ''
-
   const summary = useComplianceSummary()
+
+  const [itemDrawer, setItemDrawer] = useState<{ open: boolean; edit: ComplianceRow | null }>({ open: false, edit: null })
+  const [certDrawer, setCertDrawer] = useState<{ open: boolean; edit: CertRow | null }>({ open: false, edit: null })
+  const [renewing, setRenewing] = useState<ComplianceRow | null>(null)
 
   function setParam(key: string, value: string) {
     setParams((prev) => {
@@ -48,16 +68,24 @@ export default function CompliancePage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-display font-semibold tracking-tight text-neutral-900">
-          Compliance
-        </h1>
-        <p className="text-body text-neutral-500">
-          Licenses, permits & staff certifications
-        </p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-display font-semibold tracking-tight text-neutral-900">Compliance</h1>
+          <p className="text-body text-neutral-500">Licenses, permits & staff certifications</p>
+        </div>
+        {tab === 'items' ? (
+          <Button onClick={() => setItemDrawer({ open: true, edit: null })}>
+            <Plus className="size-4" strokeWidth={2} />
+            Add Item
+          </Button>
+        ) : (
+          <Button onClick={() => setCertDrawer({ open: true, edit: null })}>
+            <Plus className="size-4" strokeWidth={2} />
+            Add Certification
+          </Button>
+        )}
       </div>
 
-      {/* KPI strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Kpi label="Compliance expiring" value={s?.compliance_soon} loading={summary.isLoading} tone={s && s.compliance_soon > 0 ? 'warning' : undefined} />
         <Kpi label="Compliance expired" value={s?.compliance_expired} loading={summary.isLoading} tone={s && s.compliance_expired > 0 ? 'danger' : undefined} />
@@ -78,15 +106,42 @@ export default function CompliancePage() {
       </div>
 
       {tab === 'items' ? (
-        <ComplianceItems bucket={bucket} />
+        <ComplianceItems
+          bucket={bucket}
+          onRenew={setRenewing}
+          onEdit={(row) => setItemDrawer({ open: true, edit: row })}
+          onAdd={() => setItemDrawer({ open: true, edit: null })}
+        />
       ) : (
-        <Certifications bucket={bucket} />
+        <Certifications
+          bucket={bucket}
+          onEdit={(row) => setCertDrawer({ open: true, edit: row })}
+          onAdd={() => setCertDrawer({ open: true, edit: null })}
+        />
       )}
+
+      {itemDrawer.open && (
+        <ComplianceItemDrawer edit={itemDrawer.edit} onClose={() => setItemDrawer({ open: false, edit: null })} />
+      )}
+      {certDrawer.open && (
+        <CertDrawer edit={certDrawer.edit} onClose={() => setCertDrawer({ open: false, edit: null })} />
+      )}
+      {renewing && <RenewDialog item={renewing} onClose={() => setRenewing(null)} />}
     </div>
   )
 }
 
-function ComplianceItems({ bucket }: { bucket: string }) {
+function ComplianceItems({
+  bucket,
+  onRenew,
+  onEdit,
+  onAdd,
+}: {
+  bucket: string
+  onRenew: (row: ComplianceRow) => void
+  onEdit: (row: ComplianceRow) => void
+  onAdd: () => void
+}) {
   const { data, isLoading, isError } = useCompliance({ bucket: bucket || undefined })
   const rows = data?.rows ?? []
 
@@ -97,7 +152,7 @@ function ComplianceItems({ bucket }: { bucket: string }) {
       ) : isLoading ? (
         <TableSkeleton />
       ) : rows.length === 0 ? (
-        <EmptyState icon={ShieldCheck} title="No compliance items" description="Licenses, permits and tax filings will appear here." />
+        <EmptyState icon={ShieldCheck} title="No compliance items" description="Register a license, permit or filing to track." action={<Button onClick={onAdd}><Plus className="size-4" strokeWidth={2} />Add Item</Button>} />
       ) : (
         <Table>
           <THead>
@@ -107,6 +162,7 @@ function ComplianceItems({ bucket }: { bucket: string }) {
               <TH>Authority</TH>
               <TH>Expires</TH>
               <TH>Status</TH>
+              <TH className="text-right">Actions</TH>
             </TR>
           </THead>
           <TBody>
@@ -114,22 +170,17 @@ function ComplianceItems({ bucket }: { bucket: string }) {
               <TR key={r.name}>
                 <TD>
                   <div className="text-neutral-900">{r.compliance_name}</div>
-                  {r.reference_number && (
-                    <div className="text-tiny text-neutral-400 font-mono">{r.reference_number}</div>
-                  )}
+                  {r.reference_number && <div className="text-tiny text-neutral-400 font-mono">{r.reference_number}</div>}
                 </TD>
                 <TD>{r.category ?? '—'}</TD>
                 <TD className="text-neutral-500">{r.authority ?? '—'}</TD>
-                <TD className="whitespace-nowrap">
-                  <span className="text-neutral-700">{fullDate(r.expires_on)}</span>
-                  <span className={cn('ml-2 text-tiny', r.severity === 'expired' ? 'text-danger-700' : r.severity === 'soon' ? 'text-warning-700' : 'text-neutral-400')}>
-                    {expiryLabel(r.days_to_expiry, r.severity)}
-                  </span>
-                </TD>
-                <TD>
-                  <Badge variant={severityVariant(r.severity)}>
-                    {r.severity === 'expired' ? 'Expired' : r.severity === 'soon' ? 'Expiring' : 'Current'}
-                  </Badge>
+                <TD><ExpiryCell row={r} /></TD>
+                <TD><Badge variant={severityVariant(r.severity)}>{r.severity === 'expired' ? 'Expired' : r.severity === 'soon' ? 'Expiring' : 'Current'}</Badge></TD>
+                <TD className="text-right">
+                  <div className="inline-flex items-center gap-1.5">
+                    <Button variant="secondary" size="sm" onClick={() => onRenew(r)}>Renew</Button>
+                    <Button variant="ghost" size="sm" onClick={() => onEdit(r)}>Edit</Button>
+                  </div>
                 </TD>
               </TR>
             ))}
@@ -140,7 +191,15 @@ function ComplianceItems({ bucket }: { bucket: string }) {
   )
 }
 
-function Certifications({ bucket }: { bucket: string }) {
+function Certifications({
+  bucket,
+  onEdit,
+  onAdd,
+}: {
+  bucket: string
+  onEdit: (row: CertRow) => void
+  onAdd: () => void
+}) {
   const { data, isLoading, isError } = useCertifications({ bucket: bucket || undefined })
   const rows = data ?? []
 
@@ -151,7 +210,7 @@ function Certifications({ bucket }: { bucket: string }) {
       ) : isLoading ? (
         <TableSkeleton />
       ) : rows.length === 0 ? (
-        <EmptyState icon={ShieldCheck} title="No certifications" description="Trainer and facility certifications will appear here." />
+        <EmptyState icon={ShieldCheck} title="No certifications" description="Track trainer and facility certifications." action={<Button onClick={onAdd}><Plus className="size-4" strokeWidth={2} />Add Certification</Button>} />
       ) : (
         <Table>
           <THead>
@@ -161,6 +220,7 @@ function Certifications({ bucket }: { bucket: string }) {
               <TH>Issuer</TH>
               <TH>Expires</TH>
               <TH>Status</TH>
+              <TH className="text-right">Actions</TH>
             </TR>
           </THead>
           <TBody>
@@ -168,22 +228,14 @@ function Certifications({ bucket }: { bucket: string }) {
               <TR key={r.name}>
                 <TD>
                   <div className="text-neutral-900">{r.certification_name}</div>
-                  {!r.verified_by_hr && (
-                    <div className="text-tiny text-warning-700">Unverified</div>
-                  )}
+                  {!r.verified_by_hr && <div className="text-tiny text-warning-700">Unverified</div>}
                 </TD>
                 <TD>{r.employee_name}</TD>
                 <TD className="text-neutral-500">{r.issuing_body ?? '—'}</TD>
-                <TD className="whitespace-nowrap">
-                  <span className="text-neutral-700">{fullDate(r.expires_on)}</span>
-                  <span className={cn('ml-2 text-tiny', r.severity === 'expired' ? 'text-danger-700' : r.severity === 'soon' ? 'text-warning-700' : 'text-neutral-400')}>
-                    {expiryLabel(r.days_to_expiry, r.severity)}
-                  </span>
-                </TD>
-                <TD>
-                  <Badge variant={severityVariant(r.severity)}>
-                    {r.severity === 'expired' ? 'Expired' : r.severity === 'soon' ? 'Expiring' : 'Current'}
-                  </Badge>
+                <TD><ExpiryCell row={r} /></TD>
+                <TD><Badge variant={severityVariant(r.severity)}>{r.severity === 'expired' ? 'Expired' : r.severity === 'soon' ? 'Expiring' : 'Current'}</Badge></TD>
+                <TD className="text-right">
+                  <Button variant="ghost" size="sm" onClick={() => onEdit(r)}>Edit</Button>
                 </TD>
               </TR>
             ))}
@@ -194,17 +246,7 @@ function Certifications({ bucket }: { bucket: string }) {
   )
 }
 
-function Kpi({
-  label,
-  value,
-  loading,
-  tone,
-}: {
-  label: string
-  value: number | undefined
-  loading?: boolean
-  tone?: 'warning' | 'danger'
-}) {
+function Kpi({ label, value, loading, tone }: { label: string; value: number | undefined; loading?: boolean; tone?: 'warning' | 'danger' }) {
   return (
     <Card>
       <CardContent className="py-4">
@@ -212,14 +254,7 @@ function Kpi({
         {loading ? (
           <Skeleton className="h-7 w-12" />
         ) : (
-          <div
-            className={cn(
-              'text-h2 font-semibold tabular-nums',
-              tone === 'warning' && 'text-warning-700',
-              tone === 'danger' && 'text-danger-700',
-              !tone && 'text-neutral-900',
-            )}
-          >
+          <div className={cn('text-h2 font-semibold tabular-nums', tone === 'warning' && 'text-warning-700', tone === 'danger' && 'text-danger-700', !tone && 'text-neutral-900')}>
             {value ?? '—'}
           </div>
         )}

@@ -8,12 +8,117 @@ import {
 import { api } from '@/lib/api'
 import {
   type AssetOption,
+  type EquipmentDetail,
+  type EquipmentListResult,
+  type EquipmentSummary,
   type TicketListResult,
   type TicketSummary,
 } from '@/lib/types'
 
 const EMT =
   'gym_management.gym_management.doctype.equipment_maintenance_ticket.equipment_maintenance_ticket'
+
+function useEquipInvalidation() {
+  const qc = useQueryClient()
+  return () => qc.invalidateQueries({ queryKey: ['equipment'] })
+}
+
+// ---- Equipment register ----
+
+export function useEquipment(params: {
+  search?: string
+  op_status?: string
+  category?: string
+}) {
+  const { search, op_status, category } = params
+  return useQuery({
+    queryKey: ['equipment', 'register', { search, op_status, category }],
+    queryFn: () =>
+      api.callMethodGet<EquipmentListResult>(
+        'gym_management.equipment.list_equipment',
+        { search, op_status, category },
+      ),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useEquipmentSummary() {
+  return useQuery({
+    queryKey: ['equipment', 'register-summary'],
+    queryFn: () =>
+      api.callMethodGet<EquipmentSummary>(
+        'gym_management.equipment.equipment_summary',
+      ),
+  })
+}
+
+export function useEquipmentDetail(asset: string | undefined) {
+  return useQuery({
+    queryKey: ['equipment', 'detail', asset],
+    queryFn: () =>
+      api.callMethodGet<EquipmentDetail>(
+        'gym_management.equipment.equipment_detail',
+        { asset },
+      ),
+    enabled: !!asset,
+  })
+}
+
+export function useEquipmentCategories() {
+  return useQuery({
+    queryKey: ['equipment', 'categories'],
+    queryFn: () =>
+      api.callMethodGet<string[]>('gym_management.equipment.list_categories'),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export interface CreateEquipmentInput {
+  asset_name: string
+  category: string
+  branch?: string
+  purchase_date?: string
+  cost?: number
+}
+
+export function useCreateEquipment() {
+  const invalidate = useEquipInvalidation()
+  return useMutation({
+    mutationFn: (input: CreateEquipmentInput) =>
+      api.callMethod<{ ok: boolean; asset: string }>(
+        'gym_management.equipment.create_equipment',
+        { ...input },
+      ),
+    onSuccess: invalidate,
+  })
+}
+
+export interface CreateScheduleInput {
+  asset: string
+  frequency: string
+  task_type?: string
+  assigned_to?: string
+  estimated_cost_per_run?: number
+  last_performed_on?: string
+}
+
+export function useCreateSchedule() {
+  const invalidate = useEquipInvalidation()
+  return useMutation({
+    mutationFn: (input: CreateScheduleInput) =>
+      api.callMethod('gym_management.equipment.create_schedule', { ...input }),
+    onSuccess: invalidate,
+  })
+}
+
+export function useMarkServiced() {
+  const invalidate = useEquipInvalidation()
+  return useMutation({
+    mutationFn: (schedule: string) =>
+      api.callMethod('gym_management.equipment.mark_serviced', { schedule }),
+    onSuccess: invalidate,
+  })
+}
 
 export interface TicketListParams {
   status?: string
