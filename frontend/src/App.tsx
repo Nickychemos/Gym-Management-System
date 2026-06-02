@@ -18,11 +18,11 @@ import MemberDetailPage from '@/pages/members/MemberDetail'
 import MarketingPage from '@/pages/marketing/Marketing'
 import MembersListPage from '@/pages/members/MembersList'
 import PaymentsPage from '@/pages/payments/Payments'
-import Placeholder from '@/pages/Placeholder'
 import PtPackageDetailPage from '@/pages/pt/PtPackageDetail'
 import PtPackagesPage from '@/pages/pt/PtPackages'
 import RefundsPage from '@/pages/refunds/Refunds'
 import SettingsPage from '@/pages/settings/Settings'
+import SurveysPage from '@/pages/surveys/Surveys'
 import SchedulePage from '@/pages/schedule/Schedule'
 
 const queryClient = new QueryClient({
@@ -71,10 +71,7 @@ function App() {
               <Route path="coaching" element={<CoachingPage />} />
               <Route path="coaching/diet/:id" element={<DietPlanBuilderPage />} />
               <Route path="coaching/training/:id" element={<TrainingPlanBuilderPage />} />
-              <Route
-                path="surveys"
-                element={<Placeholder title="Surveys & NPS" hint="Templates + live NPS dashboard. Week 13." />}
-              />
+              <Route path="surveys" element={<SurveysPage />} />
               <Route path="settings" element={<SettingsPage />} />
 
               <Route path="*" element={<Navigate to="/" replace />} />

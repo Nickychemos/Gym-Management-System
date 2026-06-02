@@ -121,3 +121,150 @@ def submit_response(
 	doc.insert(ignore_permissions=True)
 	frappe.db.commit()
 	return doc.name
+
+
+# ---------------------------------------------------------------------------
+# Admin frontend surfaces: templates, NPS dashboard, responses
+# ---------------------------------------------------------------------------
+
+
+def _customer_names(ids):
+	ids = [i for i in ids if i]
+	if not ids:
+		return {}
+	return {
+		c.name: c.customer_name
+		for c in frappe.get_all(
+			"Customer", filters={"name": ["in", ids]}, fields=["name", "customer_name"]
+		)
+	}
+
+
+@frappe.whitelist()
+def list_templates() -> list[dict]:
+	rows = frappe.get_all(
+		"Survey Template",
+		fields=["name", "survey_name", "survey_type", "is_active", "trigger_event", "channels"],
+		order_by="modified desc",
+	)
+	for r in rows:
+		r["is_active"] = int(r.is_active or 0)
+		r["question_count"] = frappe.db.count("Survey Question", {"parent": r.name})
+		r["response_count"] = frappe.db.count("Survey Response", {"survey_template": r.name})
+	return rows
+
+
+@frappe.whitelist()
+def create_template(
+	survey_name: str,
+	survey_type: str = "NPS",
+	trigger_event: str = "Manual",
+	channels: str = "WhatsApp Only",
+	intro_message: str | None = None,
+	thank_you_message: str | None = None,
+	questions=None,
+) -> dict:
+	if isinstance(questions, str):
+		questions = json.loads(questions)
+	questions = questions or []
+	# NPS surveys always carry the standard 0-10 question.
+	if survey_type == "NPS" and not questions:
+		questions = [
+			{"question_text": "How likely are you to recommend us to a friend?", "question_type": "NPS", "is_required": 1, "order_index": 0}
+		]
+	doc = frappe.get_doc(
+		{
+			"doctype": "Survey Template",
+			"survey_name": survey_name,
+			"survey_type": survey_type,
+			"trigger_event": trigger_event,
+			"channels": channels,
+			"intro_message": intro_message,
+			"thank_you_message": thank_you_message,
+			"is_active": 1,
+		}
+	)
+	for i, q in enumerate(questions):
+		doc.append("questions", {
+			"question_text": q.get("question_text"),
+			"question_type": q.get("question_type", "Text"),
+			"is_required": 1 if q.get("is_required", 1) else 0,
+			"order_index": q.get("order_index", i),
+			"options": q.get("options"),
+		})
+	doc.insert(ignore_permissions=True)
+	frappe.db.commit()
+	return {"ok": True, "name": doc.name}
+
+
+@frappe.whitelist()
+def set_template_active(name: str, active) -> dict:
+	frappe.db.set_value("Survey Template", name, "is_active", 1 if str(active) in ("1", "true", "True") else 0)
+	frappe.db.commit()
+	return {"ok": True, "name": name}
+
+
+def _active_nps_template():
+	row = frappe.get_all(
+		"Survey Template",
+		filters={"survey_type": "NPS", "is_active": 1},
+		fields=["name"],
+		order_by="modified desc",
+		limit=1,
+	)
+	return row[0].name if row else None
+
+
+@frappe.whitelist()
+def list_responses(survey_template: str | None = None, limit: int = 50) -> list[dict]:
+	filters = {}
+	if survey_template:
+		filters["survey_template"] = survey_template
+	rows = frappe.get_all(
+		"Survey Response",
+		filters=filters,
+		fields=["name", "survey_template", "member", "submitted_on", "submitted_via", "nps_score", "nps_category", "comment"],
+		order_by="submitted_on desc",
+		limit=int(limit),
+	)
+	names = _customer_names([r.member for r in rows])
+	for r in rows:
+		r["member_name"] = names.get(r.member, r.member)
+		r["submitted_on"] = str(r.submitted_on) if r.submitted_on else None
+	return rows
+
+
+@frappe.whitelist()
+def nps_dashboard(survey_template: str | None = None, days: int = 30) -> dict:
+	template = survey_template or _active_nps_template()
+	if not template:
+		return {"template": None, "score": None}
+	score = compute_nps_score(template, days=days)
+	recent = list_responses(template, limit=10)
+	return {"template": template, "score": score, "recent": recent}
+
+
+@frappe.whitelist()
+def record_response(
+	survey_template: str,
+	member: str,
+	nps_score: int | None = None,
+	comment: str | None = None,
+	submitted_via: str = "In-Person",
+) -> dict:
+	"""Front-desk manual entry of a survey response. `member` may be a Member
+	Profile name (resolved to its Customer)."""
+	if member and frappe.db.exists("Member Profile", member):
+		member = frappe.db.get_value("Member Profile", member, "customer")
+	doc = frappe.new_doc("Survey Response")
+	doc.survey_template = survey_template
+	doc.member = member
+	doc.submitted_via = submitted_via
+	doc.submitted_on = now_datetime()
+	if nps_score is not None and nps_score != "":
+		doc.nps_score = int(nps_score)
+	if comment:
+		doc.comment = comment
+	doc.insert(ignore_permissions=True)
+	frappe.db.commit()
+	return {"ok": True, "name": doc.name, "nps_category": doc.nps_category}

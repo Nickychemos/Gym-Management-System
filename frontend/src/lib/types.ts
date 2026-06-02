@@ -581,6 +581,37 @@ export interface EmployeeOption {
   employee_name: string
 }
 
+// ---- Surveys & NPS (gym_management.surveys.*) ----
+
+export interface SurveyTemplateRow {
+  name: string
+  survey_name: string
+  survey_type: string
+  is_active: 0 | 1
+  trigger_event: string | null
+  channels: string | null
+  question_count: number
+  response_count: number
+}
+
+export interface SurveyResponseRow {
+  name: string
+  survey_template: string
+  member: string | null
+  member_name: string
+  submitted_on: string | null
+  submitted_via: string | null
+  nps_score: number | null
+  nps_category: string | null
+  comment: string | null
+}
+
+export interface NpsDashboardData {
+  template: string | null
+  score: NpsResult | null
+  recent?: SurveyResponseRow[]
+}
+
 // ---- Coaching (gym_management.coaching.*) ----
 
 export interface DietMeal {
