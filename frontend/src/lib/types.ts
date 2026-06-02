@@ -581,6 +581,84 @@ export interface EmployeeOption {
   employee_name: string
 }
 
+// ---- Settings (gym_management.settings.*) ----
+
+export interface GymSettings {
+  default_grace_period_days: number
+  default_max_freeze_days_per_year: number
+  allow_member_self_freeze: 0 | 1
+  subscription_reminder_days_before: string | null
+  auto_lapse_after_grace: 0 | 1
+  require_waiver_for_access: 0 | 1
+  class_cancel_window_hours: number
+  class_no_show_fee: number
+  class_no_show_blocks_after_n: number
+  waitlist_auto_promote: 0 | 1
+  waitlist_response_window_minutes: number
+  pt_session_default_duration_minutes: number
+  pt_package_default_validity_days: number
+  pt_default_trainer_commission_percent: number
+  cash_variance_threshold: number
+  require_dual_control_for_refunds: 0 | 1
+  operating_hours: string | null
+  location: string | null
+}
+
+export interface BrandSettings {
+  gym_legal_name: string | null
+  gym_display_name: string | null
+  tagline: string | null
+  primary_color: string | null
+  secondary_color: string | null
+  logo: string | null
+  support_phone: string | null
+  support_email: string | null
+  physical_address: string | null
+  social_facebook: string | null
+  social_instagram: string | null
+  social_twitter: string | null
+  receipt_footer: string | null
+  receipt_show_logo: 0 | 1
+}
+
+export interface SettingsData {
+  gym: GymSettings
+  brand: BrandSettings
+}
+
+export interface PlanRow {
+  name: string
+  plan_name: string
+  plan_type: string
+  billing_frequency: string
+  price: number
+  duration_days: number
+  session_count: number
+  auto_renew: 0 | 1
+  max_freeze_days_per_year: number
+  description: string | null
+  is_active: 0 | 1
+}
+
+export interface IntegrationsStatus {
+  etims: {
+    installed?: boolean
+    configured?: boolean
+    ready: boolean
+    reason?: string
+  }
+  mpesa: { configured: boolean; env: string | null; shortcode: string | null }
+  whatsapp: { configured: boolean }
+}
+
+export interface StaffUser {
+  name: string
+  full_name: string | null
+  enabled: 0 | 1
+  last_login: string | null
+  roles: string[]
+}
+
 // ---- Class catalog (Class Type DocType, via REST) ----
 
 export interface ClassType {
@@ -594,4 +672,27 @@ export interface ClassType {
   intensity_level: string | null
   description: string | null
   equipment_required: string | null
+}
+
+export interface ClassScheduleRow {
+  name: string
+  schedule_name: string
+  class_type: string
+  trainer: string | null
+  trainer_name: string | null
+  branch: string | null
+  room: string | null
+  start_time: string | null
+  duration_minutes: number
+  capacity: number
+  effective_from: string | null
+  effective_until: string | null
+  is_active: 0 | 1
+  days: string[]
+}
+
+export interface ClassFormOptions {
+  trainers: { value: string; label: string }[]
+  branches: string[]
+  class_types: { name: string; default_capacity: number }[]
 }

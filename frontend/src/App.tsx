@@ -18,6 +18,7 @@ import Placeholder from '@/pages/Placeholder'
 import PtPackageDetailPage from '@/pages/pt/PtPackageDetail'
 import PtPackagesPage from '@/pages/pt/PtPackages'
 import RefundsPage from '@/pages/refunds/Refunds'
+import SettingsPage from '@/pages/settings/Settings'
 import SchedulePage from '@/pages/schedule/Schedule'
 
 const queryClient = new QueryClient({
@@ -74,10 +75,7 @@ function App() {
                 path="surveys"
                 element={<Placeholder title="Surveys & NPS" hint="Templates + live NPS dashboard. Week 13." />}
               />
-              <Route
-                path="settings"
-                element={<Placeholder title="Settings" hint="Gym + brand + plans + users + integrations. Week 14." />}
-              />
+              <Route path="settings" element={<SettingsPage />} />
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
