@@ -120,17 +120,18 @@ function CloseDrawerDialog({ session, onClose }: { session: CashSession; onClose
   const [drops, setDrops] = useState('')
   const [pickups, setPickups] = useState('')
   const [explanation, setExplanation] = useState('')
+  const [witness, setWitness] = useState('')
 
   const threshold = options?.variance_threshold ?? 0
   const expectedTotal = session.opening_float + (Number(expectedSales) || 0)
   const liveVariance = counted === '' ? null : (Number(counted) || 0) - expectedTotal
   const overThreshold = liveVariance !== null && Math.abs(liveVariance) > threshold
-  const needsExplanation = overThreshold && !explanation.trim()
+  const needsExtra = overThreshold && (!explanation.trim() || !witness)
 
   function submit() {
     if (counted === '') return toast({ variant: 'error', title: 'Enter the counted cash' })
-    if (needsExplanation)
-      return toast({ variant: 'error', title: 'Variance explanation required', description: `The variance exceeds the ${ksh(threshold)} threshold.` })
+    if (needsExtra)
+      return toast({ variant: 'error', title: 'Explanation & witness required', description: `Variance over ${ksh(threshold)} needs both to close (dual control).` })
     close.mutate(
       {
         session_name: session.name,
@@ -140,6 +141,7 @@ function CloseDrawerDialog({ session, onClose }: { session: CashSession; onClose
         cash_drops: drops === '' ? undefined : Number(drops),
         cash_pickups: pickups === '' ? undefined : Number(pickups),
         variance_explanation: explanation || undefined,
+        supervisor_witness: witness || undefined,
       },
       {
         onSuccess: (r) => {
@@ -153,7 +155,7 @@ function CloseDrawerDialog({ session, onClose }: { session: CashSession; onClose
 
   return (
     <Dialog open onClose={onClose} title="Close drawer" description={`${session.cashier_name} · ${session.branch} · float ${ksh(session.opening_float)}`} widthClassName="max-w-md"
-      footer={<><Button variant="secondary" onClick={onClose} disabled={close.isPending}>Cancel</Button><Button onClick={submit} disabled={close.isPending || needsExplanation}>{close.isPending ? 'Closing…' : 'Close & reconcile'}</Button></>}>
+      footer={<><Button variant="secondary" onClick={onClose} disabled={close.isPending}>Cancel</Button><Button onClick={submit} disabled={close.isPending || needsExtra}>{close.isPending ? 'Closing…' : 'Close & reconcile'}</Button></>}>
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div><Label>Expected cash sales</Label><Input type="number" value={expectedSales} onChange={(e) => setExpectedSales(e.target.value)} placeholder="0" /></div>
@@ -181,12 +183,21 @@ function CloseDrawerDialog({ session, onClose }: { session: CashSession; onClose
               Variance explanation
               {overThreshold && <span className="text-danger-500 ml-0.5">*</span>}
             </Label>
-            <Textarea value={explanation} onChange={(e) => setExplanation(e.target.value)} placeholder="Why is there a discrepancy?" aria-invalid={needsExplanation} />
+            <Textarea value={explanation} onChange={(e) => setExplanation(e.target.value)} placeholder="Why is there a discrepancy?" aria-invalid={overThreshold && !explanation.trim()} />
             {overThreshold && (
               <p className="mt-1 text-tiny text-danger-700">
-                Variance exceeds the {ksh(threshold)} threshold — an explanation is required to close.
+                Variance exceeds the {ksh(threshold)} threshold — explanation and a supervisor witness are required (dual control).
               </p>
             )}
+          </div>
+        )}
+        {overThreshold && (
+          <div>
+            <Label>Supervisor witness<span className="text-danger-500 ml-0.5">*</span></Label>
+            <Select value={witness} onChange={(e) => setWitness(e.target.value)} aria-invalid={!witness}>
+              <option value="">Select a witness…</option>
+              {(options?.cashiers ?? []).map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </Select>
           </div>
         )}
       </div>

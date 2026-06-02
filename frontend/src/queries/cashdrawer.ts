@@ -63,6 +63,7 @@ export function useCloseDrawer() {
       cash_drops?: number
       cash_pickups?: number
       variance_explanation?: string
+      supervisor_witness?: string
     }) =>
       api.callMethod<{ ok: boolean; variance: number; variance_acceptable: boolean }>(
         `${CDS}.close_session`,
