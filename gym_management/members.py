@@ -18,7 +18,7 @@ that once and fan out from there.
 from __future__ import annotations
 
 import frappe
-from frappe.utils import flt, get_first_day, getdate, today
+from frappe.utils import add_days, flt, get_first_day, getdate, today
 
 
 # ---------------------------------------------------------------------------
@@ -209,6 +209,10 @@ def member_overview(member: str) -> dict:
 		"joined_on": str(mp.joined_on) if mp.joined_on else None,
 		"gender": mp.gender,
 		"date_of_birth": str(mp.date_of_birth) if mp.date_of_birth else None,
+		"source": mp.source,
+		"emergency_contact_name": mp.emergency_contact_name,
+		"emergency_contact_phone": mp.emergency_contact_phone,
+		"emergency_contact_relationship": mp.emergency_contact_relationship,
 		"subscription": subscription,
 		"at_a_glance": {
 			"total_visits": int(mp.total_visits or 0),
@@ -469,3 +473,262 @@ def create_member(
 	frappe.db.commit()
 
 	return {"member": member.name, "customer": customer.name}
+
+
+# ---------------------------------------------------------------------------
+# Edit
+# ---------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+def update_member(member: str, **fields) -> dict:
+	"""Edit a Member Profile. Accepts phone, email, gender, date_of_birth,
+	home_branch, source, emergency_contact_name/phone/relationship, national_id
+	fields. If full_name is given, the linked Customer is renamed too."""
+	allowed = {
+		"phone",
+		"email",
+		"gender",
+		"date_of_birth",
+		"home_branch",
+		"source",
+		"emergency_contact_name",
+		"emergency_contact_phone",
+		"emergency_contact_relationship",
+		"national_id_type",
+		"national_id_number",
+		"physical_address",
+		"city",
+	}
+	doc = frappe.get_doc("Member Profile", member)
+	for k, v in fields.items():
+		if k in allowed:
+			doc.set(k, v)
+	full_name = (fields.get("full_name") or "").strip()
+	if full_name and full_name != doc.member_full_name:
+		frappe.db.set_value("Customer", doc.customer, "customer_name", full_name)
+		doc.member_full_name = full_name
+	doc.save(ignore_permissions=True)
+	frappe.db.commit()
+	return {"ok": True, "member": member}
+
+
+# ---------------------------------------------------------------------------
+# Member 360 — subscriptions + classes tabs
+# ---------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+def member_subscriptions(member: str) -> list[dict]:
+	"""All subscriptions for a member (newest first)."""
+	customer = frappe.db.get_value("Member Profile", member, "customer")
+	if not customer:
+		return []
+	rows = frappe.get_all(
+		"Member Subscription",
+		filters={"customer": customer, "docstatus": ["<", 2]},
+		fields=[
+			"name",
+			"membership_plan",
+			"status",
+			"start_date",
+			"end_date",
+			"price",
+			"payment_status",
+			"auto_renew",
+			"branch",
+		],
+		order_by="start_date desc, creation desc",
+	)
+	out = []
+	for r in rows:
+		out.append(
+			{
+				"name": r.name,
+				"membership_plan": r.membership_plan,
+				"status": r.status,
+				"start_date": str(r.start_date) if r.start_date else None,
+				"end_date": str(r.end_date) if r.end_date else None,
+				"price": flt(r.price),
+				"payment_status": r.payment_status,
+				"auto_renew": int(r.auto_renew or 0),
+				"branch": r.branch,
+			}
+		)
+	return out
+
+
+@frappe.whitelist()
+def member_classes(member: str, limit: int = 50) -> list[dict]:
+	"""A member's class bookings with the session's type + time."""
+	customer = frappe.db.get_value("Member Profile", member, "customer")
+	if not customer:
+		return []
+	bookings = frappe.get_all(
+		"Class Booking",
+		filters={"customer": customer, "docstatus": 1},
+		fields=["name", "class_session", "status", "booked_at", "check_in_time"],
+		order_by="booked_at desc",
+		limit=int(limit),
+	)
+	session_ids = list({b.class_session for b in bookings if b.class_session})
+	sessions = (
+		{
+			s.name: s
+			for s in frappe.get_all(
+				"Class Session",
+				filters={"name": ["in", session_ids]},
+				fields=["name", "class_type", "start_time", "trainer"],
+			)
+		}
+		if session_ids
+		else {}
+	)
+	out = []
+	for b in bookings:
+		sess = sessions.get(b.class_session)
+		out.append(
+			{
+				"name": b.name,
+				"class_type": sess.class_type if sess else None,
+				"start_time": str(sess.start_time) if sess and sess.start_time else None,
+				"status": b.status,
+				"checked_in": bool(b.check_in_time),
+				"booked_at": str(b.booked_at) if b.booked_at else None,
+			}
+		)
+	return out
+
+
+# ---------------------------------------------------------------------------
+# Subscription lifecycle: freeze / unfreeze / renew / upgrade
+# ---------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+def freeze_subscription(
+	subscription: str,
+	freeze_start_date: str,
+	freeze_end_date: str,
+	reason: str = "Other",
+	reason_notes: str | None = None,
+) -> dict:
+	"""Freeze a subscription by creating + submitting a Subscription Freeze
+	(its on_submit flips the subscription to Frozen)."""
+	doc = frappe.get_doc(
+		{
+			"doctype": "Subscription Freeze",
+			"member_subscription": subscription,
+			"freeze_start_date": freeze_start_date,
+			"freeze_end_date": freeze_end_date,
+			"reason": reason,
+			"reason_notes": reason_notes,
+		}
+	)
+	doc.insert(ignore_permissions=True)
+	doc.submit()
+	frappe.db.commit()
+	return {"ok": True, "freeze": doc.name, "freeze_days": int(doc.freeze_days or 0)}
+
+
+@frappe.whitelist()
+def unfreeze_subscription(subscription: str) -> dict:
+	"""Resume a frozen subscription early by cancelling its active freeze
+	(on_cancel flips the subscription back to Active)."""
+	freeze = frappe.db.get_value(
+		"Subscription Freeze",
+		{"member_subscription": subscription, "docstatus": 1, "status": "Active"},
+		"name",
+	)
+	if not freeze:
+		frappe.throw(frappe._("No active freeze found for this subscription"))
+	frappe.get_doc("Subscription Freeze", freeze).cancel()
+	frappe.db.commit()
+	return {"ok": True, "subscription": subscription, "status": "Active"}
+
+
+def _new_subscription(customer, plan, branch, start):
+	"""Build + submit a Member Subscription; end_date from the plan duration."""
+	duration = frappe.db.get_value("Membership Plan", plan, "duration_days") or 30
+	doc = frappe.get_doc(
+		{
+			"doctype": "Member Subscription",
+			"customer": customer,
+			"membership_plan": plan,
+			"branch": branch,
+			"start_date": start,
+			"end_date": add_days(getdate(start), int(duration) - 1),
+		}
+	)
+	doc.insert(ignore_permissions=True)
+	doc.submit()
+	return doc
+
+
+@frappe.whitelist()
+def renew_subscription(subscription: str) -> dict:
+	"""Renew: create a new subscription on the same plan, starting the day
+	after the current one ends (or today, whichever is later)."""
+	cur = frappe.db.get_value(
+		"Member Subscription",
+		subscription,
+		["customer", "membership_plan", "branch", "end_date"],
+		as_dict=True,
+	)
+	if not cur:
+		frappe.throw(frappe._("Subscription not found"))
+	start = getdate(today())
+	if cur.end_date and getdate(cur.end_date) >= start:
+		start = add_days(getdate(cur.end_date), 1)
+	doc = _new_subscription(cur.customer, cur.membership_plan, cur.branch, start)
+	frappe.db.commit()
+	return {"ok": True, "subscription": doc.name, "status": doc.status}
+
+
+@frappe.whitelist()
+def upgrade_subscription(subscription: str, new_plan: str) -> dict:
+	"""Upgrade/downgrade: cancel the current subscription, then start a new one
+	on `new_plan` today. (Cancel first — the controller blocks overlapping
+	active subscriptions.)"""
+	cur = frappe.get_doc("Member Subscription", subscription)
+	customer, branch = cur.customer, cur.branch
+	if cur.docstatus == 1 and cur.status in ("Active", "Frozen"):
+		cur.cancel()
+	new_doc = _new_subscription(customer, new_plan, branch, today())
+	frappe.db.commit()
+	return {"ok": True, "subscription": new_doc.name, "status": new_doc.status}
+
+
+@frappe.whitelist()
+def create_subscription(member: str, membership_plan: str, branch: str | None = None) -> dict:
+	"""Start a brand-new subscription for a member (e.g. their first one)."""
+	customer = frappe.db.get_value("Member Profile", member, "customer")
+	if not customer:
+		frappe.throw(frappe._("Member not found"))
+	branch = (
+		branch
+		or frappe.db.get_value("Member Profile", member, "home_branch")
+		or frappe.db.get_value("Branch", {}, "name")
+	)
+	doc = _new_subscription(customer, membership_plan, branch, today())
+	frappe.db.commit()
+	return {"ok": True, "subscription": doc.name, "status": doc.status}
+
+
+@frappe.whitelist()
+def list_membership_plans() -> list[dict]:
+	"""Active non-PT membership plans (for subscribe/upgrade pickers)."""
+	return [
+		{
+			"name": p.name,
+			"plan_type": p.plan_type,
+			"price": flt(p.price),
+			"duration_days": int(p.duration_days or 0),
+		}
+		for p in frappe.get_all(
+			"Membership Plan",
+			filters={"is_active": 1, "plan_type": ["!=", "PT Package"]},
+			fields=["name", "plan_type", "price", "duration_days"],
+			order_by="price asc",
+		)
+	]

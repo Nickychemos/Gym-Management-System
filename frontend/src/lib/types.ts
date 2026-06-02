@@ -141,8 +141,40 @@ export interface MemberOverview {
   joined_on: string | null
   gender: string | null
   date_of_birth: string | null
+  source: string | null
+  emergency_contact_name: string | null
+  emergency_contact_phone: string | null
+  emergency_contact_relationship: string | null
   subscription: MemberSubscriptionSummary | null
   at_a_glance: MemberAtAGlance
+}
+
+export interface MemberSubscriptionRow {
+  name: string
+  membership_plan: string
+  status: SubscriptionStatus
+  start_date: string | null
+  end_date: string | null
+  price: number
+  payment_status: PaymentStatus | null
+  auto_renew: 0 | 1
+  branch: string | null
+}
+
+export interface MemberClassRow {
+  name: string
+  class_type: string | null
+  start_time: string | null
+  status: BookingStatus
+  checked_in: boolean
+  booked_at: string | null
+}
+
+export interface MembershipPlanOption {
+  name: string
+  plan_type: string
+  price: number
+  duration_days: number
 }
 
 export type ActivityType =

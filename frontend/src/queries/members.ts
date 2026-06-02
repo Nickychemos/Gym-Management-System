@@ -8,9 +8,24 @@ import {
 import { api } from '@/lib/api'
 import {
   type ActivityItem,
+  type MemberClassRow,
   type MemberListResult,
   type MemberOverview,
+  type MemberSubscriptionRow,
+  type MembershipPlanOption,
 } from '@/lib/types'
+
+function useMemberInvalidation(member?: string) {
+  const qc = useQueryClient()
+  return () => {
+    qc.invalidateQueries({ queryKey: ['members', 'list'] })
+    if (member) {
+      qc.invalidateQueries({ queryKey: ['members', 'overview', member] })
+      qc.invalidateQueries({ queryKey: ['members', 'subscriptions', member] })
+      qc.invalidateQueries({ queryKey: ['members', 'activity', member] })
+    }
+  }
+}
 
 export interface MemberListParams {
   search?: string
@@ -68,6 +83,113 @@ export function useMemberActivity(member: string | undefined, limit = 20) {
         { member, limit },
       ),
     enabled: !!member,
+  })
+}
+
+/** All subscriptions for a member (Subscriptions tab). */
+export function useMemberSubscriptions(member: string | undefined) {
+  return useQuery({
+    queryKey: ['members', 'subscriptions', member],
+    queryFn: () =>
+      api.callMethodGet<MemberSubscriptionRow[]>(
+        'gym_management.members.member_subscriptions',
+        { member },
+      ),
+    enabled: !!member,
+  })
+}
+
+/** A member's class bookings (Classes tab). */
+export function useMemberClasses(member: string | undefined) {
+  return useQuery({
+    queryKey: ['members', 'classes', member],
+    queryFn: () =>
+      api.callMethodGet<MemberClassRow[]>(
+        'gym_management.members.member_classes',
+        { member },
+      ),
+    enabled: !!member,
+  })
+}
+
+/** Active non-PT plans for subscribe/upgrade pickers. */
+export function useMembershipPlans() {
+  return useQuery({
+    queryKey: ['membership-plans'],
+    queryFn: () =>
+      api.callMethodGet<MembershipPlanOption[]>(
+        'gym_management.members.list_membership_plans',
+      ),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useUpdateMember(member?: string) {
+  const invalidate = useMemberInvalidation(member)
+  return useMutation({
+    mutationFn: (fields: Record<string, unknown>) =>
+      api.callMethod('gym_management.members.update_member', {
+        member,
+        ...fields,
+      }),
+    onSuccess: invalidate,
+  })
+}
+
+export function useFreezeSubscription(member?: string) {
+  const invalidate = useMemberInvalidation(member)
+  return useMutation({
+    mutationFn: (vars: {
+      subscription: string
+      freeze_start_date: string
+      freeze_end_date: string
+      reason: string
+      reason_notes?: string
+    }) =>
+      api.callMethod<{ ok: boolean; freeze: string; freeze_days: number }>(
+        'gym_management.members.freeze_subscription',
+        vars,
+      ),
+    onSuccess: invalidate,
+  })
+}
+
+export function useUnfreezeSubscription(member?: string) {
+  const invalidate = useMemberInvalidation(member)
+  return useMutation({
+    mutationFn: (subscription: string) =>
+      api.callMethod('gym_management.members.unfreeze_subscription', { subscription }),
+    onSuccess: invalidate,
+  })
+}
+
+export function useRenewSubscription(member?: string) {
+  const invalidate = useMemberInvalidation(member)
+  return useMutation({
+    mutationFn: (subscription: string) =>
+      api.callMethod<{ ok: boolean; subscription: string; status: string }>(
+        'gym_management.members.renew_subscription',
+        { subscription },
+      ),
+    onSuccess: invalidate,
+  })
+}
+
+export function useUpgradeSubscription(member?: string) {
+  const invalidate = useMemberInvalidation(member)
+  return useMutation({
+    mutationFn: (vars: { subscription: string; new_plan: string }) =>
+      api.callMethod('gym_management.members.upgrade_subscription', vars),
+    onSuccess: invalidate,
+  })
+}
+
+export function useCreateSubscription(member?: string) {
+  const invalidate = useMemberInvalidation(member)
+  return useMutation({
+    mutationFn: (vars: { member: string; membership_plan: string }) =>
+      api.callMethod('gym_management.members.create_subscription', vars),
+    onSuccess: invalidate,
   })
 }
 

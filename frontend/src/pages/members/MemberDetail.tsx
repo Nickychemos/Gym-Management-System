@@ -1,4 +1,5 @@
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
   CalendarClock,
@@ -6,6 +7,7 @@ import {
   Dumbbell,
   type LucideIcon,
   MessageSquare,
+  Pencil,
   Smile,
   Wallet,
 } from 'lucide-react'
@@ -17,11 +19,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, type TabDef } from '@/components/ui/tabs'
-import { dateTime, fullDate, ksh, monthYear } from '@/lib/format'
-import { paymentVariant, subscriptionVariant } from '@/lib/status'
+import { dateTime, fullDate, ksh, monthYear, relativeDay } from '@/lib/format'
+import { bookingVariant, paymentVariant, subscriptionVariant } from '@/lib/status'
 import { type ActivityType } from '@/lib/types'
-import { useMemberActivity, useMemberOverview } from '@/queries/members'
+import {
+  useMemberActivity,
+  useMemberClasses,
+  useMemberOverview,
+  useMemberSubscriptions,
+} from '@/queries/members'
 import { useMemberPayments } from '@/queries/payments'
+import { EditMemberDrawer } from './EditMemberDrawer'
+import { SubscribeButton, SubscriptionLifecycle } from './SubscriptionActions'
 
 const TABS: TabDef[] = [
   { value: 'overview', label: 'Overview' },
@@ -34,8 +43,10 @@ const TABS: TabDef[] = [
 
 export default function MemberDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const tab = params.get('tab') ?? 'overview'
+  const [editOpen, setEditOpen] = useState(false)
 
   const { data, isLoading, isError, error, refetch } = useMemberOverview(id)
 
@@ -104,20 +115,34 @@ export default function MemberDetailPage() {
                 {data.branch ? ` · ${data.branch}` : ''}
               </p>
             </div>
-            <Button variant="secondary">
-              <Wallet className="size-4" strokeWidth={2} />
-              Record Payment
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" onClick={() => setEditOpen(true)}>
+                <Pencil className="size-4" strokeWidth={2} />
+                Edit
+              </Button>
+              <Button onClick={() => navigate('/payments')}>
+                <Wallet className="size-4" strokeWidth={2} />
+                Record Payment
+              </Button>
+            </div>
           </div>
 
           <Tabs tabs={TABS} value={tab} onValueChange={setTab} className="mb-6" />
 
           {tab === 'overview' ? (
             <OverviewTab member={id!} overview={data} />
+          ) : tab === 'subscriptions' ? (
+            <SubscriptionsTab member={id!} />
+          ) : tab === 'classes' ? (
+            <ClassesTab member={id!} />
           ) : tab === 'payments' ? (
             <PaymentsTab member={id!} />
           ) : (
             <TabComingSoon tab={tab} />
+          )}
+
+          {editOpen && (
+            <EditMemberDrawer member={data} onClose={() => setEditOpen(false)} />
           )}
         </>
       )}
@@ -161,22 +186,21 @@ function OverviewTab({
                 <p className="text-body text-neutral-900 tabular-nums mt-2">
                   {ksh(sub.price)}
                 </p>
-                <div className="flex gap-2 mt-4">
-                  <Button variant="secondary" size="sm" disabled>
-                    Freeze
-                  </Button>
-                  <Button variant="secondary" size="sm" disabled>
-                    Renew
-                  </Button>
-                  <Button variant="secondary" size="sm" disabled>
-                    Upgrade
-                  </Button>
+                <div className="mt-4">
+                  <SubscriptionLifecycle
+                    subscription={sub.name}
+                    status={sub.status}
+                    member={member}
+                  />
                 </div>
               </div>
             ) : (
-              <p className="text-small text-neutral-500 py-2">
-                No subscription on file.
-              </p>
+              <div className="py-2">
+                <p className="text-small text-neutral-500 mb-3">
+                  No subscription on file.
+                </p>
+                <SubscribeButton member={member} />
+              </div>
             )}
           </CardContent>
         </Card>
@@ -320,6 +344,114 @@ function PaymentsTab({ member }: { member: string }) {
                 <span className="text-small font-medium tabular-nums text-neutral-900">
                   {ksh(p.amount)}
                 </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function SubscriptionsTab({ member }: { member: string }) {
+  const { data, isLoading } = useMemberSubscriptions(member)
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Subscriptions</CardTitle>
+        <SubscribeButton member={member} />
+      </CardHeader>
+      <CardContent className="px-0 py-0">
+        {isLoading ? (
+          <div className="px-5 py-4 space-y-3">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        ) : !data || data.length === 0 ? (
+          <EmptyState
+            icon={Wallet}
+            title="No subscriptions"
+            description="Start this member on a membership plan."
+          />
+        ) : (
+          <ul className="divide-y divide-neutral-100">
+            {data.map((s) => {
+              const live = s.status === 'Active' || s.status === 'Frozen'
+              return (
+                <li key={s.name} className="px-5 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-body font-medium text-neutral-900">
+                          {s.membership_plan}
+                        </span>
+                        <Badge variant={subscriptionVariant(s.status)}>
+                          {s.status}
+                        </Badge>
+                      </div>
+                      <div className="text-tiny text-neutral-500 mt-0.5">
+                        {fullDate(s.start_date)} – {fullDate(s.end_date)} ·{' '}
+                        <span className="tabular-nums">{ksh(s.price)}</span>
+                        {s.auto_renew ? ' · auto-renew' : ''}
+                      </div>
+                    </div>
+                    {live && (
+                      <SubscriptionLifecycle
+                        subscription={s.name}
+                        status={s.status}
+                        member={member}
+                      />
+                    )}
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function ClassesTab({ member }: { member: string }) {
+  const { data, isLoading } = useMemberClasses(member)
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Class Bookings</CardTitle>
+        {data && data.length > 0 && (
+          <span className="text-small text-neutral-500">{data.length}</span>
+        )}
+      </CardHeader>
+      <CardContent className="px-0 py-0">
+        {isLoading ? (
+          <div className="px-5 py-4 space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-8 w-full" />
+            ))}
+          </div>
+        ) : !data || data.length === 0 ? (
+          <EmptyState
+            icon={CalendarClock}
+            title="No class bookings"
+            description="Bookings show up here once this member books a class."
+          />
+        ) : (
+          <ul className="divide-y divide-neutral-100">
+            {data.map((c) => (
+              <li key={c.name} className="flex items-center gap-3 px-5 py-3">
+                <div className="flex-1 min-w-0">
+                  <div className="text-small text-neutral-900">
+                    {c.class_type ?? 'Class'}
+                  </div>
+                  <div className="text-tiny text-neutral-400">
+                    {c.start_time ? dateTime(c.start_time) : relativeDay(c.booked_at)}
+                  </div>
+                </div>
+                <Badge variant={bookingVariant(c.status)}>{c.status}</Badge>
               </li>
             ))}
           </ul>
