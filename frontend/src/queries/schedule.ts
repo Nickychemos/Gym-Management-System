@@ -96,26 +96,13 @@ export function useNoShow(session?: string) {
   })
 }
 
-/** Class Type catalog, via the generic REST list endpoint. */
+/** Class Type catalog, via a whitelisted method so non-System gym staff
+ *  (Website Users, e.g. Trainers) can read it — the generic REST list endpoint
+ *  enforces DocType read permission they don't have. */
 export function useClassTypes() {
   return useQuery({
     queryKey: ['class-types'],
     queryFn: () =>
-      api.getList<ClassType>('Class Type', {
-        fields: [
-          'name',
-          'class_type_name',
-          'short_code',
-          'default_duration_minutes',
-          'default_capacity',
-          'is_active',
-          'display_color',
-          'intensity_level',
-          'description',
-          'equipment_required',
-        ],
-        order_by: 'class_type_name asc',
-        limit_page_length: 0,
-      }),
+      api.callMethodGet<ClassType[]>('gym_management.classes.list_class_types'),
   })
 }

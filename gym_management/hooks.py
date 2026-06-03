@@ -92,7 +92,10 @@ website_route_rules = [
 # ------------
 
 # before_install = "gym_management.install.before_install"
-# after_install = "gym_management.install.after_install"
+after_install = "gym_management.users.seed_gym_roles"
+
+# Seed the gym roles on every migrate (idempotent).
+after_migrate = "gym_management.users.seed_gym_roles"
 
 # Uninstallation
 # ------------

@@ -6,7 +6,8 @@ Lets gym admins set up their class offering without touching Frappe Desk:
     that the daily generator turns into bookable Class Sessions.
 
 Public API:
-  Types:     create_class_type, update_class_type, set_class_type_active
+  Types:     list_class_types, create_class_type, update_class_type,
+             set_class_type_active
   Schedules: list_class_schedules, create_class_schedule,
              update_class_schedule, set_class_schedule_active
   Options:   class_form_options (trainers + branches + active types)
@@ -18,10 +19,38 @@ import frappe
 
 DAY_FIELDS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 
+CLASS_TYPE_FIELDS = (
+	"name",
+	"class_type_name",
+	"short_code",
+	"default_duration_minutes",
+	"default_capacity",
+	"is_active",
+	"display_color",
+	"intensity_level",
+	"description",
+	"equipment_required",
+)
+
 
 # ---------------------------------------------------------------------------
 # Class Type
 # ---------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+def list_class_types() -> list[dict]:
+	"""The full Class Type catalog (active + inactive).
+
+	Whitelisted + frappe.get_all so non-System gym staff (Website Users with
+	desk_access=0, e.g. Trainers) can read the catalog without DocType-level
+	read permission on Class Type — the generic REST list endpoint can't.
+	"""
+	return frappe.get_all(
+		"Class Type",
+		fields=list(CLASS_TYPE_FIELDS),
+		order_by="class_type_name asc",
+	)
 
 
 @frappe.whitelist()

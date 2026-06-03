@@ -93,6 +93,35 @@ export const authApi = {
       '/api/method/frappe.auth.get_logged_user',
     )
   },
+
+  /** Identity + roles for the logged-in user (drives role-based gating). */
+  async currentUser() {
+    const res = await request<{
+      message: {
+        user: string
+        full_name: string
+        roles: string[]
+        is_admin: boolean
+      }
+    }>('/api/method/gym_management.users.current_user')
+    return res.message
+  },
+
+  /** Set a password from an invite/reset key — also logs the user in. */
+  async updatePassword(key: string, new_password: string) {
+    return request<{ message: string }>(
+      '/api/method/frappe.core.doctype.user.user.update_password',
+      { method: 'POST', body: JSON.stringify({ key, new_password }) },
+    )
+  },
+
+  /** Trigger Frappe's self-serve password reset email (needs SMTP). */
+  async forgotPassword(user: string) {
+    return request<unknown>(
+      '/api/method/frappe.core.doctype.user.user.reset_password',
+      { method: 'POST', body: JSON.stringify({ user }) },
+    )
+  },
 }
 
 // ---------- Generic doc helpers (used as we build out pages) ----------

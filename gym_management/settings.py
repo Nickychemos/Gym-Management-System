@@ -94,11 +94,17 @@ def _update_single(doctype: str, allowed: list[str], fields: dict) -> dict:
 
 @frappe.whitelist()
 def update_gym_settings(**fields) -> dict:
+	from gym_management.users import MANAGER_ROLES, _require_role
+
+	_require_role(*MANAGER_ROLES)
 	return _update_single("Gym Settings", _GYM_FIELDS, fields)
 
 
 @frappe.whitelist()
 def update_brand_settings(**fields) -> dict:
+	from gym_management.users import MANAGER_ROLES, _require_role
+
+	_require_role(*MANAGER_ROLES)
 	return _update_single("Brand Settings", _BRAND_FIELDS, fields)
 
 

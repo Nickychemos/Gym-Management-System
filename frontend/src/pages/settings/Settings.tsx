@@ -1,6 +1,13 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { CheckCircle2, Plus, UserPlus, XCircle } from 'lucide-react'
+import {
+  CheckCircle2,
+  Copy,
+  Plus,
+  RefreshCw,
+  UserPlus,
+  XCircle,
+} from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -14,17 +21,22 @@ import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TBody, TD, TH, THead, TR, Table } from '@/components/ui/table'
 import { Tabs } from '@/components/ui/tabs'
+import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
 import { ApiError } from '@/lib/api'
 import { ksh, relativeDay } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { type PlanRow } from '@/lib/types'
+import { type InviteResult, type PlanRow, type StaffUser } from '@/lib/types'
 import {
-  useAddStaff,
+  useInviteUser,
   useIntegrationsStatus,
   usePlans,
+  useRemoveUser,
+  useResendInvite,
   useRoles,
   useSetPlanActive,
+  useSetUserEnabled,
+  useSetUserRole,
   useSettings,
   useStaff,
   useUpdateBrandSettings,
@@ -293,66 +305,174 @@ function IntegrationCard({ title, ok, detail }: { title: string; ok: boolean; de
 
 // ---------------- Users ----------------
 
+function userStatus(u: StaffUser): { label: string; variant: 'success' | 'warning' | 'neutral' } {
+  if (!u.enabled) return { label: 'Disabled', variant: 'neutral' }
+  if (u.pending ?? u.last_login === null) return { label: 'Pending', variant: 'warning' }
+  return { label: 'Active', variant: 'success' }
+}
+
 function UsersTab() {
   const { data, isLoading } = useStaff()
-  const [addOpen, setAddOpen] = useState(false)
+  const { state } = useAuth()
+  const me = state.status === 'authenticated' ? state.user : ''
+  const [inviteOpen, setInviteOpen] = useState(false)
 
   return (
     <Card className="overflow-hidden">
       <CardHeader>
         <CardTitle>Staff & Users</CardTitle>
-        <Button size="sm" onClick={() => setAddOpen(true)}>
+        <Button size="sm" onClick={() => setInviteOpen(true)}>
           <UserPlus className="size-4" strokeWidth={2} />
-          Add user
+          Invite user
         </Button>
       </CardHeader>
       <CardContent className="px-0 py-0">
         {isLoading ? (
           <div className="px-5 py-4 space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}</div>
         ) : !data || data.length === 0 ? (
-          <EmptyState title="No staff users yet" description="Add receptionists, trainers and managers." action={<Button onClick={() => setAddOpen(true)}><UserPlus className="size-4" strokeWidth={2} />Add user</Button>} />
+          <EmptyState title="No staff users yet" description="Invite receptionists, trainers and managers." action={<Button onClick={() => setInviteOpen(true)}><UserPlus className="size-4" strokeWidth={2} />Invite user</Button>} />
         ) : (
           <Table>
-            <THead><TR><TH>Name</TH><TH>Email</TH><TH>Roles</TH><TH>Last login</TH><TH>Status</TH></TR></THead>
+            <THead><TR><TH>Name</TH><TH>Email</TH><TH>Roles</TH><TH>Last login</TH><TH>Status</TH><TH className="text-right">Actions</TH></TR></THead>
             <TBody>
-              {data.map((u) => (
-                <TR key={u.name}>
-                  <TD className="text-neutral-900">{u.full_name ?? '—'}</TD>
-                  <TD className="text-neutral-500">{u.name}</TD>
-                  <TD>
-                    <div className="flex flex-wrap gap-1">
-                      {u.roles.slice(0, 3).map((r) => <Badge key={r} variant="neutral">{r}</Badge>)}
-                      {u.roles.length > 3 && <span className="text-tiny text-neutral-400">+{u.roles.length - 3}</span>}
-                    </div>
-                  </TD>
-                  <TD className="text-neutral-500">{u.last_login ? relativeDay(u.last_login) : 'Never'}</TD>
-                  <TD><Badge variant={u.enabled ? 'success' : 'neutral'}>{u.enabled ? 'Active' : 'Disabled'}</Badge></TD>
-                </TR>
-              ))}
+              {data.map((u) => {
+                const status = userStatus(u)
+                return (
+                  <TR key={u.name}>
+                    <TD className="text-neutral-900">{u.full_name ?? '—'}</TD>
+                    <TD className="text-neutral-500">{u.name}</TD>
+                    <TD>
+                      <div className="flex flex-wrap gap-1">
+                        {u.roles.slice(0, 3).map((r) => <Badge key={r} variant="neutral">{r}</Badge>)}
+                        {u.roles.length > 3 && <span className="text-tiny text-neutral-400">+{u.roles.length - 3}</span>}
+                      </div>
+                    </TD>
+                    <TD className="text-neutral-500">{u.last_login ? relativeDay(u.last_login) : 'Never'}</TD>
+                    <TD><Badge variant={status.variant}>{status.label}</Badge></TD>
+                    <TD className="text-right"><RowActions user={u} isSelf={u.name === me} /></TD>
+                  </TR>
+                )
+              })}
             </TBody>
           </Table>
         )}
       </CardContent>
-      {addOpen && <AddUserDialog onClose={() => setAddOpen(false)} />}
+      {inviteOpen && <InviteUserDialog onClose={() => setInviteOpen(false)} />}
     </Card>
   )
 }
 
-function AddUserDialog({ onClose }: { onClose: () => void }) {
+function RowActions({ user, isSelf }: { user: StaffUser; isSelf: boolean }) {
   const { toast } = useToast()
-  const add = useAddStaff()
+  const setEnabled = useSetUserEnabled()
+  const remove = useRemoveUser()
+  const resend = useResendInvite()
+  const [roleOpen, setRoleOpen] = useState(false)
+  const [removeOpen, setRemoveOpen] = useState(false)
+  const [result, setResult] = useState<InviteResult | null>(null)
+  const isPending = user.pending ?? user.last_login === null
+
+  function onError(err: unknown, title: string) {
+    toast({ variant: 'error', title, description: err instanceof ApiError ? err.message : undefined })
+  }
+
+  return (
+    <div className="inline-flex items-center gap-1">
+      {isPending && (
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={resend.isPending}
+          onClick={() =>
+            resend.mutate(user.name, {
+              onSuccess: (r) => setResult(r),
+              onError: (err) => onError(err, 'Could not resend invite'),
+            })
+          }
+        >
+          <RefreshCw className="size-3.5" strokeWidth={2} />
+          Resend
+        </Button>
+      )}
+      <Button variant="ghost" size="sm" disabled={isSelf} onClick={() => setRoleOpen(true)}>
+        Role
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled={isSelf || setEnabled.isPending}
+        onClick={() =>
+          setEnabled.mutate(
+            { email: user.name, enabled: !user.enabled },
+            {
+              onSuccess: () => toast({ variant: 'success', title: user.enabled ? 'User disabled' : 'User enabled' }),
+              onError: (err) => onError(err, 'Could not update user'),
+            },
+          )
+        }
+      >
+        {user.enabled ? 'Disable' : 'Enable'}
+      </Button>
+      <Button variant="ghost" size="sm" disabled={isSelf} onClick={() => setRemoveOpen(true)}>
+        <span className="text-danger-700">Remove</span>
+      </Button>
+
+      {roleOpen && <ChangeRoleDialog user={user} onClose={() => setRoleOpen(false)} />}
+
+      {removeOpen && (
+        <Dialog
+          open
+          onClose={() => setRemoveOpen(false)}
+          title={`Remove ${user.full_name ?? user.name}?`}
+          description="They'll be disabled and won't be able to sign in. Their history is kept."
+          widthClassName="max-w-md"
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setRemoveOpen(false)} disabled={remove.isPending}>Cancel</Button>
+              <Button
+                variant="danger"
+                disabled={remove.isPending}
+                onClick={() =>
+                  remove.mutate(user.name, {
+                    onSuccess: () => { toast({ variant: 'success', title: 'User removed' }); setRemoveOpen(false) },
+                    onError: (err) => onError(err, 'Could not remove user'),
+                  })
+                }
+              >
+                {remove.isPending ? 'Removing…' : 'Remove user'}
+              </Button>
+            </>
+          }
+        >
+          <p className="text-small text-neutral-600">Email: {user.name}</p>
+        </Dialog>
+      )}
+
+      {result && (
+        <InviteResultDialog
+          result={result}
+          title="Invite resent"
+          onClose={() => setResult(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+function ChangeRoleDialog({ user, onClose }: { user: StaffUser; onClose: () => void }) {
+  const { toast } = useToast()
   const { data: roles } = useRoles()
-  const [email, setEmail] = useState('')
-  const [name, setName] = useState('')
-  const [role, setRole] = useState('')
+  const setRole = useSetUserRole()
+  const current = (roles ?? []).find((r) => user.roles.includes(r)) ?? ''
+  const [role, setRole_] = useState(current)
 
   function submit() {
-    if (!email.trim() || !name.trim()) return toast({ variant: 'error', title: 'Name and email required' })
-    add.mutate(
-      { email, full_name: name, role: role || undefined },
+    if (!role) return toast({ variant: 'error', title: 'Pick a role' })
+    setRole.mutate(
+      { email: user.name, role },
       {
-        onSuccess: () => { toast({ variant: 'success', title: 'User added' }); onClose() },
-        onError: (err) => toast({ variant: 'error', title: 'Could not add user', description: err instanceof ApiError ? err.message : undefined }),
+        onSuccess: () => { toast({ variant: 'success', title: 'Role updated' }); onClose() },
+        onError: (err) => toast({ variant: 'error', title: 'Could not change role', description: err instanceof ApiError ? err.message : undefined }),
       },
     )
   }
@@ -361,13 +481,107 @@ function AddUserDialog({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title="Add staff user"
-      description="They'll set a password via 'Forgot password' to sign in."
+      title="Change role"
+      description={user.full_name ?? user.name}
       widthClassName="max-w-md"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose} disabled={add.isPending}>Cancel</Button>
-          <Button onClick={submit} disabled={add.isPending}>{add.isPending ? 'Adding…' : 'Add user'}</Button>
+          <Button variant="secondary" onClick={onClose} disabled={setRole.isPending}>Cancel</Button>
+          <Button onClick={submit} disabled={setRole.isPending}>{setRole.isPending ? 'Saving…' : 'Save'}</Button>
+        </>
+      }
+    >
+      <div>
+        <Label>Role</Label>
+        <Select value={role} onChange={(e) => setRole_(e.target.value)}>
+          <option value="">Select a role…</option>
+          {(roles ?? []).map((r) => <option key={r}>{r}</option>)}
+        </Select>
+      </div>
+    </Dialog>
+  )
+}
+
+function InviteResultDialog({ result, title, onClose }: { result: InviteResult; title: string; onClose: () => void }) {
+  const { toast } = useToast()
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(result.invite_link)
+      toast({ variant: 'success', title: 'Invite link copied' })
+    } catch {
+      toast({ variant: 'error', title: 'Could not copy — select the link manually' })
+    }
+  }
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title={title}
+      description={result.user}
+      widthClassName="max-w-md"
+      footer={<Button onClick={onClose}>Done</Button>}
+    >
+      <div className="space-y-4">
+        <div
+          className={cn(
+            'rounded-md px-3 py-2 text-small',
+            result.email_sent ? 'bg-success-50 text-success-700' : 'bg-warning-50 text-warning-700',
+          )}
+        >
+          {result.email_sent
+            ? 'An invite email has been sent. You can also share the link below.'
+            : 'Email is not configured, so no email was sent. Share this link with them directly.'}
+        </div>
+        <div>
+          <Label>Invite link</Label>
+          <div className="flex gap-2">
+            <Input readOnly value={result.invite_link} onFocus={(e) => e.currentTarget.select()} className="font-mono text-tiny" />
+            <Button variant="secondary" onClick={copy}><Copy className="size-4" strokeWidth={2} />Copy</Button>
+          </div>
+          <p className="mt-1.5 text-tiny text-neutral-500">The link lets them set a password and sign in. It expires after use or when a new invite is sent.</p>
+        </div>
+      </div>
+    </Dialog>
+  )
+}
+
+function InviteUserDialog({ onClose }: { onClose: () => void }) {
+  const { toast } = useToast()
+  const invite = useInviteUser()
+  const { data: roles } = useRoles()
+  const [email, setEmail] = useState('')
+  const [name, setName] = useState('')
+  const [role, setRole] = useState('')
+  const [result, setResult] = useState<InviteResult | null>(null)
+
+  function submit() {
+    if (!email.trim() || !name.trim()) return toast({ variant: 'error', title: 'Name and email required' })
+    if (!role) return toast({ variant: 'error', title: 'Pick a role' })
+    invite.mutate(
+      { email, full_name: name, role },
+      {
+        onSuccess: (r) => setResult(r),
+        onError: (err) => toast({ variant: 'error', title: 'Could not invite user', description: err instanceof ApiError ? err.message : undefined }),
+      },
+    )
+  }
+
+  // After a successful invite, swap the form for the link/copy result panel.
+  if (result) {
+    return <InviteResultDialog result={result} title="Invite sent" onClose={onClose} />
+  }
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title="Invite staff user"
+      description="They'll get a link to set a password and sign in with their role."
+      widthClassName="max-w-md"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={invite.isPending}>Cancel</Button>
+          <Button onClick={submit} disabled={invite.isPending}>{invite.isPending ? 'Inviting…' : 'Send invite'}</Button>
         </>
       }
     >
@@ -377,7 +591,7 @@ function AddUserDialog({ onClose }: { onClose: () => void }) {
         <div>
           <Label>Role</Label>
           <Select value={role} onChange={(e) => setRole(e.target.value)}>
-            <option value="">No role (basic access)</option>
+            <option value="">Select a role…</option>
             {(roles ?? []).map((r) => <option key={r}>{r}</option>)}
           </Select>
         </div>

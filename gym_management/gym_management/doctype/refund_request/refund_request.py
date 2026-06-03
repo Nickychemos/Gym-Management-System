@@ -120,6 +120,9 @@ def submit_for_approval(refund_request: str) -> dict:
 @frappe.whitelist(allow_guest=False)
 def approve_as_manager(refund_request: str) -> dict:
 	"""Manager-level approval. Next state depends on dual-control setting."""
+	from gym_management.users import MANAGER_ROLES, _require_role
+
+	_require_role(*MANAGER_ROLES)
 	doc = frappe.get_doc("Refund Request", refund_request)
 	if doc.status != "Pending Manager":
 		frappe.throw(
@@ -141,6 +144,9 @@ def approve_as_manager(refund_request: str) -> dict:
 @frappe.whitelist(allow_guest=False)
 def approve_as_owner(refund_request: str) -> dict:
 	"""Owner-level second approval (only used when dual control is on)."""
+	from gym_management.users import _require_role
+
+	_require_role("System Manager", "Gym Owner")
 	doc = frappe.get_doc("Refund Request", refund_request)
 	if doc.status != "Pending Owner":
 		frappe.throw(
@@ -155,6 +161,9 @@ def approve_as_owner(refund_request: str) -> dict:
 @frappe.whitelist(allow_guest=False)
 def reject(refund_request: str, reason: str) -> dict:
 	"""Reject from any Pending state."""
+	from gym_management.users import MANAGER_ROLES, _require_role
+
+	_require_role(*MANAGER_ROLES)
 	doc = frappe.get_doc("Refund Request", refund_request)
 	if doc.status not in ("Pending Manager", "Pending Owner"):
 		frappe.throw(

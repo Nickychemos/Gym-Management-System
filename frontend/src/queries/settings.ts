@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import {
   type IntegrationsStatus,
+  type InviteResult,
   type PlanRow,
   type SettingsData,
   type StaffUser,
@@ -117,7 +118,7 @@ export function useStaff() {
   return useQuery({
     queryKey: ['settings', 'staff'],
     queryFn: () =>
-      api.callMethodGet<StaffUser[]>('gym_management.settings.list_staff'),
+      api.callMethodGet<StaffUser[]>('gym_management.users.list_staff'),
   })
 }
 
@@ -125,16 +126,63 @@ export function useRoles() {
   return useQuery({
     queryKey: ['settings', 'roles'],
     queryFn: () =>
-      api.callMethodGet<string[]>('gym_management.settings.list_roles'),
+      api.callMethodGet<string[]>('gym_management.users.list_roles'),
     staleTime: 10 * 60 * 1000,
   })
 }
 
-export function useAddStaff() {
+/** Shared invalidation for any staff mutation. */
+function useStaffInvalidation() {
   const qc = useQueryClient()
+  return () => qc.invalidateQueries({ queryKey: ['settings', 'staff'] })
+}
+
+export function useInviteUser() {
+  const invalidate = useStaffInvalidation()
   return useMutation({
-    mutationFn: (vars: { email: string; full_name: string; role?: string }) =>
-      api.callMethod('gym_management.settings.add_staff', vars),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['settings', 'staff'] }),
+    mutationFn: (vars: { email: string; full_name: string; role: string }) =>
+      api.callMethod<InviteResult>('gym_management.users.invite_user', vars),
+    onSuccess: invalidate,
+  })
+}
+
+export function useResendInvite() {
+  const invalidate = useStaffInvalidation()
+  return useMutation({
+    mutationFn: (email: string) =>
+      api.callMethod<InviteResult>('gym_management.users.resend_invite', {
+        email,
+      }),
+    onSuccess: invalidate,
+  })
+}
+
+export function useSetUserEnabled() {
+  const invalidate = useStaffInvalidation()
+  return useMutation({
+    mutationFn: (vars: { email: string; enabled: boolean }) =>
+      api.callMethod('gym_management.users.set_user_enabled', {
+        email: vars.email,
+        enabled: vars.enabled ? 1 : 0,
+      }),
+    onSuccess: invalidate,
+  })
+}
+
+export function useSetUserRole() {
+  const invalidate = useStaffInvalidation()
+  return useMutation({
+    mutationFn: (vars: { email: string; role: string }) =>
+      api.callMethod('gym_management.users.set_user_role', vars),
+    onSuccess: invalidate,
+  })
+}
+
+export function useRemoveUser() {
+  const invalidate = useStaffInvalidation()
+  return useMutation({
+    mutationFn: (email: string) =>
+      api.callMethod('gym_management.users.remove_user', { email }),
+    onSuccess: invalidate,
   })
 }

@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -8,47 +9,57 @@ import {
 
 import { authApi } from '@/lib/api'
 
+interface Identity {
+  user: string
+  fullName: string
+  roles: string[]
+  isAdmin: boolean
+}
+
 type AuthState =
   | { status: 'loading' }
   | { status: 'unauthenticated' }
-  | { status: 'authenticated'; user: string }
+  | ({ status: 'authenticated' } & Identity)
 
 interface AuthContextValue {
   state: AuthState
   login: (usr: string, pwd: string) => Promise<void>
   logout: () => Promise<void>
+  /** Re-read identity + roles (e.g. after accept-invite logs the user in). */
+  refresh: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+function toState(id: Identity): AuthState {
+  if (!id.user || id.user === 'Guest') return { status: 'unauthenticated' }
+  return { status: 'authenticated', ...id }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ status: 'loading' })
 
-  // On boot: ask Frappe who we are. If 403/401 → unauthenticated.
-  useEffect(() => {
-    let cancelled = false
-    authApi
-      .getCurrentUser()
-      .then((res) => {
-        if (cancelled) return
-        // Frappe returns 'Guest' for unauthenticated sessions
-        if (!res.message || res.message === 'Guest') {
-          setState({ status: 'unauthenticated' })
-        } else {
-          setState({ status: 'authenticated', user: res.message })
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setState({ status: 'unauthenticated' })
-      })
-    return () => {
-      cancelled = true
+  const hydrate = useCallback(async () => {
+    try {
+      const id = await authApi.currentUser()
+      setState(toState(id))
+    } catch {
+      setState({ status: 'unauthenticated' })
     }
   }, [])
 
+  // On boot: ask Frappe who we are (identity + roles).
+  useEffect(() => {
+    // hydrate() only setState()s after an awaited fetch (async, not sync), so
+    // this doesn't cascade renders — the lint rule can't see across the await.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void hydrate()
+  }, [hydrate])
+
   const login = async (usr: string, pwd: string) => {
     await authApi.login(usr, pwd)
-    setState({ status: 'authenticated', user: usr })
+    // login response lacks roles — hydrate identity right after.
+    await hydrate()
   }
 
   const logout = async () => {
@@ -60,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ state, login, logout }}>
+    <AuthContext.Provider value={{ state, login, logout, refresh: hydrate }}>
       {children}
     </AuthContext.Provider>
   )

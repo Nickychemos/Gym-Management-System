@@ -933,6 +933,16 @@ export interface StaffUser {
   enabled: 0 | 1
   last_login: string | null
   roles: string[]
+  /** True when the user has never logged in (invite not yet accepted). */
+  pending?: boolean
+}
+
+/** Result of inviting/resending — carries the copy-link fallback for no-SMTP. */
+export interface InviteResult {
+  ok: boolean
+  user: string
+  invite_link: string
+  email_sent: boolean
 }
 
 // ---- Class catalog (Class Type DocType, via REST) ----

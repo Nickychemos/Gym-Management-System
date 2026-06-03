@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/context/AuthContext'
+import { authApi } from '@/lib/api'
 
 export default function LoginPage() {
   const { state, login } = useAuth()
@@ -13,8 +14,27 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Forgot-password sub-flow (inline panel).
+  const [forgotOpen, setForgotOpen] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [forgotSent, setForgotSent] = useState(false)
+  const [forgotBusy, setForgotBusy] = useState(false)
+
   if (state.status === 'authenticated') {
     return <Navigate to="/" replace />
+  }
+
+  async function handleForgot(e: FormEvent) {
+    e.preventDefault()
+    setForgotBusy(true)
+    try {
+      await authApi.forgotPassword(forgotEmail)
+    } catch {
+      // Swallow — never reveal whether the account exists (anti-enumeration).
+    } finally {
+      setForgotBusy(false)
+      setForgotSent(true)
+    }
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -47,6 +67,20 @@ export default function LoginPage() {
         </div>
 
         <div className="rounded-lg border border-neutral-200 bg-white shadow-[var(--shadow-card)] p-6">
+          {forgotOpen ? (
+            <ForgotPanel
+              email={forgotEmail}
+              setEmail={setForgotEmail}
+              sent={forgotSent}
+              busy={forgotBusy}
+              onSubmit={handleForgot}
+              onBack={() => {
+                setForgotOpen(false)
+                setForgotSent(false)
+              }}
+            />
+          ) : (
+            <>
           <h1 className="text-h3 font-semibold mb-1">Sign in</h1>
           <p className="text-small text-neutral-600 mb-6">
             Use your gym admin credentials.
@@ -96,6 +130,19 @@ export default function LoginPage() {
               {submitting ? 'Signing in…' : 'Sign in'}
             </Button>
           </form>
+
+          <button
+            type="button"
+            onClick={() => {
+              setForgotEmail(usr)
+              setForgotOpen(true)
+            }}
+            className="mt-4 w-full text-center text-small text-brand-600 hover:text-brand-700"
+          >
+            Forgot password?
+          </button>
+            </>
+          )}
         </div>
 
         <p className="mt-6 text-center text-small text-neutral-500">
@@ -103,5 +150,74 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+function ForgotPanel({
+  email,
+  setEmail,
+  sent,
+  busy,
+  onSubmit,
+  onBack,
+}: {
+  email: string
+  setEmail: (v: string) => void
+  sent: boolean
+  busy: boolean
+  onSubmit: (e: FormEvent) => void
+  onBack: () => void
+}) {
+  if (sent) {
+    return (
+      <div className="text-center py-2">
+        <h1 className="text-h3 font-semibold mb-2">Check your email</h1>
+        <p className="text-small text-neutral-600 mb-6">
+          If an account exists for that address, we've sent a link to reset your
+          password.
+        </p>
+        <Button variant="secondary" className="w-full" onClick={onBack}>
+          Back to sign in
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <h1 className="text-h3 font-semibold mb-1">Reset password</h1>
+      <p className="text-small text-neutral-600 mb-6">
+        Enter your email and we'll send you a reset link.
+      </p>
+      <form onSubmit={onSubmit} noValidate>
+        <div className="mb-4">
+          <Label htmlFor="forgot-email">Email</Label>
+          <Input
+            id="forgot-email"
+            type="email"
+            autoComplete="username"
+            autoFocus
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full"
+          disabled={busy || !email}
+        >
+          {busy ? 'Sending…' : 'Send reset link'}
+        </Button>
+      </form>
+      <button
+        type="button"
+        onClick={onBack}
+        className="mt-4 w-full text-center text-small text-brand-600 hover:text-brand-700"
+      >
+        Back to sign in
+      </button>
+    </>
   )
 }

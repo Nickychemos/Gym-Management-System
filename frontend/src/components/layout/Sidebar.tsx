@@ -16,6 +16,8 @@ import {
 } from 'lucide-react'
 import { type LucideIcon } from 'lucide-react'
 
+import { useAuth } from '@/context/AuthContext'
+import { canAccess } from '@/lib/roles'
 import { cn } from '@/lib/utils'
 
 interface NavItem {
@@ -63,6 +65,19 @@ const groups: NavGroup[] = [
 ]
 
 export function Sidebar() {
+  const { state } = useAuth()
+  const roles = state.status === 'authenticated' ? state.roles : []
+  const isAdmin = state.status === 'authenticated' ? state.isAdmin : false
+
+  // Hide nav items the current role can't reach, then drop now-empty groups
+  // (so e.g. the "Admin" header disappears when Settings is filtered out).
+  const visibleGroups = groups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => canAccess(item.to, roles, isAdmin)),
+    }))
+    .filter((group) => group.items.length > 0)
+
   return (
     <aside className="w-60 shrink-0 border-r border-neutral-200 bg-white">
       <div className="h-14 flex items-center gap-2 px-5 border-b border-neutral-200">
@@ -73,7 +88,7 @@ export function Sidebar() {
       </div>
 
       <nav className="px-3 py-4 space-y-6">
-        {groups.map((group, gi) => (
+        {visibleGroups.map((group, gi) => (
           <div key={gi}>
             {group.label && (
               <div className="px-2 mb-2 text-tiny font-medium uppercase tracking-wide text-neutral-400">
