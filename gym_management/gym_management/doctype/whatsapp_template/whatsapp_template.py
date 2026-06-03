@@ -4,6 +4,7 @@
 import re
 
 import frappe
+from gym_management.rbac import MANAGER, requires
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now_datetime
@@ -253,6 +254,7 @@ def find_by_category(category: str, language: str = "en") -> list[dict]:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def submit(template_name: str) -> dict:
 	"""Whitelisted endpoint for the UI 'Submit to Meta' button.
 
@@ -334,6 +336,7 @@ def sync_all_statuses() -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def sync_status_from_meta(template_name: str) -> dict:
 	"""Whitelisted endpoint for the per-template 'Sync from Meta' button.
 

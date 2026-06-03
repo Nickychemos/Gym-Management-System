@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from gym_management.rbac import FRONTDESK, requires
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import get_datetime, now_datetime
@@ -50,6 +51,7 @@ def get_open_visit(customer: str) -> str | None:
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(FRONTDESK)
 def close_visit(visit_log: str, exit_reader: str | None = None) -> dict:
 	"""Mark a visit as checked-out. Called by the reception UI or an Exit
 	reader. Uses db_set to update fields on a submitted document."""

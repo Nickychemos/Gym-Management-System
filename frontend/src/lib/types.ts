@@ -32,9 +32,10 @@ export interface DashboardKpis {
   active_members: number
   new_this_month: number
   renewals_due: number
-  todays_revenue: number
-  todays_payment_count: number
-  mtd_revenue: number
+  // Financial KPIs are omitted for non-manager roles (see can_see_financials).
+  todays_revenue?: number
+  todays_payment_count?: number
+  mtd_revenue?: number
 }
 
 export interface DashboardClass {
@@ -76,6 +77,8 @@ export interface NpsResult {
 export interface DashboardSummary {
   as_of: string
   branch: string | null
+  /** Manager/Owner only — gates revenue KPIs, recent payments, NPS. */
+  can_see_financials: boolean
   kpis: DashboardKpis
   todays_classes: DashboardClass[]
   recent_payments: DashboardPayment[]

@@ -17,12 +17,15 @@ from __future__ import annotations
 import frappe
 from frappe.utils import flt, today
 
+from gym_management.rbac import FRONTDESK, MANAGER, requires
+
 # Stages that still need someone to act, grouped for the header KPIs.
 _AWAITING_APPROVAL = ("Pending Manager", "Pending Owner")
 _AWAITING_PAYOUT = ("Approved", "Refund Initiated")
 
 
 @frappe.whitelist()
+@requires(FRONTDESK)
 def list_refunds(
 	status: str | None = None,
 	search: str | None = None,
@@ -83,6 +86,7 @@ def list_refunds(
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def summary() -> dict:
 	"""Counts per workflow stage for the page header."""
 	rows = frappe.db.sql(
@@ -133,6 +137,7 @@ def _resolve_branch(branch: str | None, customer: str) -> str | None:
 
 
 @frappe.whitelist()
+@requires(FRONTDESK)
 def create_refund(
 	customer: str,
 	refund_reason: str,

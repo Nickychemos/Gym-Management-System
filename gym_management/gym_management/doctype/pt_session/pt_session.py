@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from gym_management.rbac import ANY_STAFF, requires
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import get_datetime
@@ -93,6 +94,7 @@ class PTSession(Document):
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(ANY_STAFF)
 def mark_completed(pt_session: str, actual_start: str | None = None, actual_end: str | None = None) -> dict:
 	"""Trainer marks the session completed after it happens. Optionally stamps
 	actual_start_time and actual_end_time so duration_minutes computes."""
@@ -125,6 +127,7 @@ def mark_completed(pt_session: str, actual_start: str | None = None, actual_end:
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(ANY_STAFF)
 def mark_no_show(pt_session: str) -> dict:
 	"""Trainer / receptionist marks the member as no-show. Session still counts
 	against the package (default policy)."""

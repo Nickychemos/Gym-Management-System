@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import frappe
 
+from gym_management.rbac import ANY_STAFF, MANAGER, requires
+
 DAY_FIELDS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 
 CLASS_TYPE_FIELDS = (
@@ -39,6 +41,7 @@ CLASS_TYPE_FIELDS = (
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def list_class_types() -> list[dict]:
 	"""The full Class Type catalog (active + inactive).
 
@@ -54,6 +57,7 @@ def list_class_types() -> list[dict]:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def create_class_type(
 	class_type_name: str,
 	default_duration_minutes: int = 60,
@@ -84,6 +88,7 @@ def create_class_type(
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def update_class_type(name: str, **fields) -> dict:
 	allowed = {
 		"default_duration_minutes",
@@ -105,6 +110,7 @@ def update_class_type(name: str, **fields) -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def set_class_type_active(name: str, active: int | str) -> dict:
 	frappe.db.set_value(
 		"Class Type", name, "is_active", 1 if str(active) in ("1", "true", "True") else 0
@@ -119,6 +125,7 @@ def set_class_type_active(name: str, active: int | str) -> dict:
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def list_class_schedules(branch: str | None = None) -> list[dict]:
 	filters = {}
 	if branch:
@@ -185,6 +192,7 @@ def _apply_days(doc, days):
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def create_class_schedule(
 	class_type: str,
 	trainer: str,
@@ -251,6 +259,7 @@ def create_class_schedule(
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def update_class_schedule(name: str, **fields) -> dict:
 	allowed = {
 		"trainer",
@@ -277,6 +286,7 @@ def update_class_schedule(name: str, **fields) -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def set_class_schedule_active(name: str, active: int | str) -> dict:
 	frappe.db.set_value(
 		"Class Schedule", name, "is_active", 1 if str(active) in ("1", "true", "True") else 0
@@ -291,6 +301,7 @@ def set_class_schedule_active(name: str, active: int | str) -> dict:
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def class_form_options() -> dict:
 	trainers = [
 		{"value": e.name, "label": e.employee_name or e.name}

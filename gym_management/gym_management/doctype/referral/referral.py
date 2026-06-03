@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from gym_management.rbac import MANAGER, requires
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import add_days, getdate, today
@@ -59,6 +60,7 @@ class Referral(Document):
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(MANAGER)
 def mark_signed_up(referral: str, customer: str | None = None) -> dict:
 	"""Pending → Signed Up. Called when the referred Lead converts to a Customer.
 	Optionally captures the new Customer name."""
@@ -75,6 +77,7 @@ def mark_signed_up(referral: str, customer: str | None = None) -> dict:
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(MANAGER)
 def mark_first_payment(referral: str, linked_subscription: str | None = None) -> dict:
 	"""Signed Up → First Payment. Called when the referred member's first paid
 	subscription is submitted. Most gyms reward only after first payment to
@@ -96,6 +99,7 @@ def mark_first_payment(referral: str, linked_subscription: str | None = None) ->
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(MANAGER)
 def mark_reward_paid(
 	referral: str,
 	reward_type: str,

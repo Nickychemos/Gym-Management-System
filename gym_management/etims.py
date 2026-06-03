@@ -22,6 +22,8 @@ from __future__ import annotations
 import frappe
 from frappe.utils import add_to_date, now_datetime
 
+from gym_management.rbac import MANAGER, requires
+
 
 NAVARI_APP = "kenya_compliance_via_slade"
 # Navari's actual DocType naming is inconsistent across the app — settings
@@ -67,6 +69,7 @@ def is_configured() -> bool:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def status() -> dict:
 	"""Whitelisted endpoint — returns eTIMS readiness for the current site.
 

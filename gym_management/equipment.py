@@ -26,6 +26,7 @@ Public API:
 from __future__ import annotations
 
 import frappe
+from gym_management.rbac import MANAGER, requires
 from frappe.utils import add_days, flt, getdate, now_datetime, today
 
 _OPEN_STATES = ("Open", "Acknowledged", "In Progress", "Awaiting Parts")
@@ -160,6 +161,7 @@ def _derive_status(open_tickets: list[dict], schedules: list[dict]) -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def list_equipment(
 	search: str | None = None,
 	op_status: str | None = None,
@@ -238,6 +240,7 @@ def list_equipment(
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def equipment_summary(branch: str | None = None) -> dict:
 	res = list_equipment(branch=branch, limit_page_length=10000)
 	rows = res["rows"]
@@ -250,6 +253,7 @@ def equipment_summary(branch: str | None = None) -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def equipment_detail(asset: str) -> dict:
 	"""Machine header + open/recent tickets + maintenance schedules."""
 	a = frappe.db.get_value(
@@ -312,6 +316,7 @@ def equipment_detail(asset: str) -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def list_categories() -> list[str]:
 	"""Gym equipment categories (existing Asset Categories + defaults)."""
 	existing = [
@@ -327,6 +332,7 @@ def list_categories() -> list[str]:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def create_equipment(
 	asset_name: str,
 	category: str = "Other",
@@ -371,6 +377,7 @@ def create_equipment(
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def create_schedule(
 	asset: str,
 	frequency: str,
@@ -403,6 +410,7 @@ def create_schedule(
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def mark_serviced(schedule: str, performed_on: str | None = None) -> dict:
 	"""Record that a scheduled service was performed; recomputes next_due_on."""
 	doc = frappe.get_doc("Equipment Maintenance Schedule", schedule)
@@ -418,6 +426,7 @@ def mark_serviced(schedule: str, performed_on: str | None = None) -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def list_tickets(
 	status: str | None = None,
 	search: str | None = None,
@@ -477,6 +486,7 @@ def list_tickets(
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def ticket_summary(branch: str | None = None) -> dict:
 	base = {"docstatus": 1}
 	if branch:
@@ -504,6 +514,7 @@ def ticket_summary(branch: str | None = None) -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def list_assets(search: str | None = None) -> list[dict]:
 	filters = {"docstatus": ["<", 2]}
 	if search:
@@ -521,6 +532,7 @@ def list_assets(search: str | None = None) -> list[dict]:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def create_ticket(
 	title: str,
 	asset: str,
@@ -557,6 +569,7 @@ def create_ticket(
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def set_ticket_status(ticket: str, status: str) -> dict:
 	if status not in _NUDGE_STATES:
 		frappe.throw(

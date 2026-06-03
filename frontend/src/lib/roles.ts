@@ -2,9 +2,11 @@
  * Role-based navigation access (soft, frontend gating).
  *
  * "Full access" roles see everything. Restricted roles see only the union of
- * their allow-lists. Settings is full-access-only regardless. This mirrors the
- * light backend guard in gym_management/users.py — the backend is the real
- * boundary; this just hides what a role can't use.
+ * their allow-lists. Settings is full-access-only regardless. This is the UI
+ * mirror of the backend capability matrix in gym_management/rbac.py — the
+ * backend `@requires(...)` guards are the real boundary; this just hides what a
+ * role can't use. ⚠️ Keep the two in sync: if you change a role's reach here,
+ * update the method tiers in rbac.py (and vice-versa).
  */
 
 export type NavKey =

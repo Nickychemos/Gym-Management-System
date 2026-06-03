@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from gym_management.rbac import FRONTDESK, MANAGER, requires
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, now_datetime
@@ -108,6 +109,7 @@ class RefundRequest(Document):
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(FRONTDESK)
 def submit_for_approval(refund_request: str) -> dict:
 	"""Receptionist / requester moves Draft → Pending Manager."""
 	doc = frappe.get_doc("Refund Request", refund_request)
@@ -177,6 +179,7 @@ def reject(refund_request: str, reason: str) -> dict:
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(MANAGER)
 def initiate_refund(refund_request: str) -> dict:
 	"""Approved → Refund Initiated.
 
@@ -195,6 +198,7 @@ def initiate_refund(refund_request: str) -> dict:
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(MANAGER)
 def mark_refund_completed(
 	refund_request: str,
 	payment_entry: str | None = None,
@@ -218,6 +222,7 @@ def mark_refund_completed(
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(MANAGER)
 def mark_failed(refund_request: str, reason: str | None = None) -> dict:
 	"""Refund Initiated → Failed — when M-Pesa B2C callback returns failure
 	OR a bank transfer is rejected."""

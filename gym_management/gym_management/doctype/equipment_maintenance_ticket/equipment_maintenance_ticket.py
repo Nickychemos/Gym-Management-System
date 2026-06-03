@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from gym_management.rbac import MANAGER, requires
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now_datetime, today
@@ -76,6 +77,7 @@ class EquipmentMaintenanceTicket(Document):
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(MANAGER)
 def mark_resolved(
 	ticket: str,
 	resolution_notes: str | None = None,

@@ -20,6 +20,8 @@ from __future__ import annotations
 import frappe
 from frappe.utils import add_days, flt, get_first_day, getdate, today
 
+from gym_management.rbac import ANY_STAFF, FRONTDESK, requires
+
 
 # ---------------------------------------------------------------------------
 # List
@@ -27,6 +29,7 @@ from frappe.utils import add_days, flt, get_first_day, getdate, today
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def list_members(
 	search: str | None = None,
 	status: str | None = None,
@@ -143,6 +146,7 @@ def _outstanding_balances(customers: list[str]) -> dict:
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def member_overview(member: str) -> dict:
 	"""Header + current subscription + at-a-glance stats for Member 360."""
 	mp = frappe.get_doc("Member Profile", member)
@@ -230,6 +234,7 @@ def member_overview(member: str) -> dict:
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def member_activity(member: str, limit: int = 20) -> list[dict]:
 	"""Unified, reverse-chronological activity feed across the member's records.
 
@@ -407,6 +412,7 @@ def _default_territory() -> str:
 
 
 @frappe.whitelist()
+@requires(FRONTDESK)
 def create_member(
 	full_name: str,
 	phone: str,
@@ -481,6 +487,7 @@ def create_member(
 
 
 @frappe.whitelist()
+@requires(FRONTDESK)
 def update_member(member: str, **fields) -> dict:
 	"""Edit a Member Profile. Accepts phone, email, gender, date_of_birth,
 	home_branch, source, emergency_contact_name/phone/relationship, national_id
@@ -519,6 +526,7 @@ def update_member(member: str, **fields) -> dict:
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def member_subscriptions(member: str) -> list[dict]:
 	"""All subscriptions for a member (newest first)."""
 	customer = frappe.db.get_value("Member Profile", member, "customer")
@@ -559,6 +567,7 @@ def member_subscriptions(member: str) -> list[dict]:
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def member_classes(member: str, limit: int = 50) -> list[dict]:
 	"""A member's class bookings with the session's type + time."""
 	customer = frappe.db.get_value("Member Profile", member, "customer")
@@ -606,6 +615,7 @@ def member_classes(member: str, limit: int = 50) -> list[dict]:
 
 
 @frappe.whitelist()
+@requires(FRONTDESK)
 def freeze_subscription(
 	subscription: str,
 	freeze_start_date: str,
@@ -632,6 +642,7 @@ def freeze_subscription(
 
 
 @frappe.whitelist()
+@requires(FRONTDESK)
 def unfreeze_subscription(subscription: str) -> dict:
 	"""Resume a frozen subscription early by cancelling its active freeze
 	(on_cancel flips the subscription back to Active)."""
@@ -666,6 +677,7 @@ def _new_subscription(customer, plan, branch, start):
 
 
 @frappe.whitelist()
+@requires(FRONTDESK)
 def renew_subscription(subscription: str) -> dict:
 	"""Renew: create a new subscription on the same plan, starting the day
 	after the current one ends (or today, whichever is later)."""
@@ -686,6 +698,7 @@ def renew_subscription(subscription: str) -> dict:
 
 
 @frappe.whitelist()
+@requires(FRONTDESK)
 def upgrade_subscription(subscription: str, new_plan: str) -> dict:
 	"""Upgrade/downgrade: cancel the current subscription, then start a new one
 	on `new_plan` today. (Cancel first — the controller blocks overlapping
@@ -700,6 +713,7 @@ def upgrade_subscription(subscription: str, new_plan: str) -> dict:
 
 
 @frappe.whitelist()
+@requires(FRONTDESK)
 def create_subscription(member: str, membership_plan: str, branch: str | None = None) -> dict:
 	"""Start a brand-new subscription for a member (e.g. their first one)."""
 	customer = frappe.db.get_value("Member Profile", member, "customer")
@@ -716,6 +730,7 @@ def create_subscription(member: str, membership_plan: str, branch: str | None = 
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def list_membership_plans() -> list[dict]:
 	"""Active non-PT membership plans (for subscribe/upgrade pickers)."""
 	return [

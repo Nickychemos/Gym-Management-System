@@ -17,6 +17,8 @@ from __future__ import annotations
 import frappe
 from frappe.utils import add_days, get_first_day, now_datetime, today
 
+from gym_management.rbac import ANY_STAFF, MANAGER, has_tier, requires
+
 
 def _money(value) -> float:
 	"""Coerce a possibly-None SQL SUM result to a float."""
@@ -277,30 +279,44 @@ def _nps() -> dict | None:
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def summary(branch: str | None = None) -> dict:
 	"""Everything the admin dashboard renders, in one round-trip.
+
+	Role-trimmed: only Manager/Owner see financial figures (revenue KPIs, recent
+	payments, NPS). Receptionist/Trainer get the operational view (member counts,
+	today's classes, alerts) and `can_see_financials: False` — they land on the
+	dashboard but never see money, so the method returns a filtered payload rather
+	than 403-ing them.
 
 	Returns:
 	    {
 	        "as_of": "<datetime>",
 	        "branch": "<branch or None>",
+	        "can_see_financials": bool,
 	        "kpis": {active_members, new_this_month, renewals_due,
-	                 todays_revenue, todays_payment_count, mtd_revenue},
-	        "todays_classes": [{name, class_type, trainer, start_time,
-	                            booked, capacity, status}],
-	        "recent_payments": [{name, customer, customer_name, amount,
-	                             status, at}],
-	        "alerts": [{kind, text, link, ref}],
-	        "nps": {nps_score, promoters, passives, detractors, ...} | None,
+	                 [todays_revenue, todays_payment_count, mtd_revenue]},
+	        "todays_classes": [...],
+	        "recent_payments": [...]  # [] for non-managers,
+	        "alerts": [...],
+	        "nps": {...} | None,      # None for non-managers
 	    }
 	"""
 	branch = branch or None
+	can_finance = has_tier(MANAGER)
+
+	kpis = _kpis(branch)
+	if not can_finance:
+		for k in ("todays_revenue", "todays_payment_count", "mtd_revenue"):
+			kpis.pop(k, None)
+
 	return {
 		"as_of": str(now_datetime()),
 		"branch": branch,
-		"kpis": _kpis(branch),
+		"can_see_financials": can_finance,
+		"kpis": kpis,
 		"todays_classes": _todays_classes(branch),
-		"recent_payments": _recent_payments(branch),
+		"recent_payments": _recent_payments(branch) if can_finance else [],
 		"alerts": _alerts(branch),
-		"nps": _nps(),
+		"nps": _nps() if can_finance else None,
 	}

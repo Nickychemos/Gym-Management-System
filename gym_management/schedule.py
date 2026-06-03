@@ -15,6 +15,7 @@ through these thin wrappers rather than poking at /api/resource directly.
 from __future__ import annotations
 
 import frappe
+from gym_management.rbac import ANY_STAFF, requires
 from frappe.utils import add_days, get_datetime, getdate, today
 
 # Mon..Sun — matches Class Schedule DAY_FIELDS and Python's date.weekday().
@@ -30,6 +31,7 @@ def _monday_of(date_str: str | None) -> "datetime.date":
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def week(branch: str | None = None, week_start: str | None = None) -> dict:
 	"""Sessions for the Mon–Sun week containing `week_start` (default: this week).
 
@@ -139,6 +141,7 @@ def week(branch: str | None = None, week_start: str | None = None) -> dict:
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def session_detail(class_session: str) -> dict:
 	"""One session's header plus its active bookings (for the booking modal)."""
 	s = frappe.db.get_value(
@@ -217,6 +220,7 @@ def session_detail(class_session: str) -> dict:
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def book_class(
 	class_session: str,
 	customer: str,
@@ -241,6 +245,7 @@ def book_class(
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def cancel_booking(class_booking: str, reason: str | None = None) -> dict:
 	"""Cancel a submitted booking. on_cancel rolls back counters and promotes
 	the next waitlisted member."""

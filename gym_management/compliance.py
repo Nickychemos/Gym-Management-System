@@ -13,6 +13,7 @@ module computes `days_to_expiry` + a severity bucket fresh on every read.
 from __future__ import annotations
 
 import frappe
+from gym_management.rbac import MANAGER, requires
 from frappe.utils import date_diff, flt, getdate, today
 
 # Placeholder used when a renewal/cert is recorded without a file upload yet.
@@ -35,6 +36,7 @@ def _severity(expires_on) -> tuple[int | None, str]:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def list_compliance(
 	bucket: str | None = None,
 	category: str | None = None,
@@ -95,6 +97,7 @@ def list_compliance(
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def list_certifications(
 	bucket: str | None = None, search: str | None = None
 ) -> list[dict]:
@@ -142,6 +145,7 @@ def list_certifications(
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def summary() -> dict:
 	"""Expiring-soon / expired counts across compliance items and certs."""
 	def buckets(doctype, date_field):
@@ -171,6 +175,7 @@ def summary() -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def list_authorities() -> list[str]:
 	"""Compliance authorities for the item form."""
 	return [
@@ -182,6 +187,7 @@ def list_authorities() -> list[str]:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def create_authority(authority_name: str) -> dict:
 	"""Register a new compliance authority on the fly."""
 	authority_name = (authority_name or "").strip()
@@ -196,6 +202,7 @@ def create_authority(authority_name: str) -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def list_employees() -> list[dict]:
 	"""Active employees for the certification form."""
 	return [
@@ -216,6 +223,7 @@ def list_employees() -> list[dict]:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def create_compliance_item(
 	compliance_name: str,
 	compliance_authority: str,
@@ -246,6 +254,7 @@ def create_compliance_item(
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def update_compliance_item(name: str, **fields) -> dict:
 	"""Edit a compliance item. Accepts any of: compliance_name,
 	compliance_authority, compliance_category, branch, issued_on, expires_on,
@@ -270,6 +279,7 @@ def update_compliance_item(name: str, **fields) -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def renew_compliance(
 	compliance_item: str,
 	new_expiry_date: str,
@@ -312,6 +322,7 @@ def renew_compliance(
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def create_certification(
 	employee: str,
 	certification_name: str,
@@ -342,6 +353,7 @@ def create_certification(
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def update_certification(name: str, **fields) -> dict:
 	"""Edit a certification. Accepts certification_name, issuing_body,
 	certification_number, issued_on, expires_on, verified_by_hr."""

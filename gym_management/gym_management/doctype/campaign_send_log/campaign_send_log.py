@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from gym_management.rbac import MANAGER, requires
 from frappe.model.document import Document
 from frappe.utils import flt
 
@@ -109,6 +110,7 @@ def record_complaint(campaign_name: str, delta: int = 1):
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(MANAGER)
 def start_campaign(
 	campaign_name: str,
 	channel: str,
@@ -134,6 +136,7 @@ def start_campaign(
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(MANAGER)
 def finalize_campaign(campaign_name: str, actual_cost: float | None = None) -> dict:
 	"""Flip a Sending campaign to Sent and stamp the actual cost. Called once
 	the sender has queued all messages (delivery events keep arriving for hours

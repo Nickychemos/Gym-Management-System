@@ -52,6 +52,7 @@ export default function DashboardPage() {
 
 function DashboardContent({ data }: { data: DashboardSummary }) {
   const k = data.kpis
+  const canFinance = data.can_see_financials
   const kpis = [
     { label: 'Active Members', value: k.active_members.toLocaleString() },
     { label: 'New This Month', value: k.new_this_month.toLocaleString() },
@@ -60,18 +61,27 @@ function DashboardContent({ data }: { data: DashboardSummary }) {
       value: k.renewals_due.toLocaleString(),
       hint: 'Next 7 days',
     },
-    {
-      label: "Today's Revenue",
-      value: kshCompact(k.todays_revenue),
-      hint: `${k.todays_payment_count} paid`,
-    },
-    { label: 'MTD Revenue', value: kshCompact(k.mtd_revenue) },
+    ...(canFinance
+      ? [
+          {
+            label: "Today's Revenue",
+            value: kshCompact(k.todays_revenue ?? 0),
+            hint: `${k.todays_payment_count ?? 0} paid`,
+          },
+          { label: 'MTD Revenue', value: kshCompact(k.mtd_revenue ?? 0) },
+        ]
+      : []),
   ]
 
   return (
     <>
       {/* KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div
+        className={cn(
+          'grid grid-cols-2 gap-4 mb-6',
+          canFinance ? 'lg:grid-cols-5' : 'lg:grid-cols-3',
+        )}
+      >
         {kpis.map((kpi) => (
           <Card
             key={kpi.label}
@@ -91,7 +101,12 @@ function DashboardContent({ data }: { data: DashboardSummary }) {
       </div>
 
       {/* Classes + payments */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div
+        className={cn(
+          'grid grid-cols-1 gap-4 mb-4',
+          canFinance && 'lg:grid-cols-2',
+        )}
+      >
         <Card>
           <CardHeader>
             <CardTitle>Today's Classes</CardTitle>
@@ -154,6 +169,7 @@ function DashboardContent({ data }: { data: DashboardSummary }) {
           </CardContent>
         </Card>
 
+        {canFinance && (
         <Card>
           <CardHeader>
             <CardTitle>Recent Payments</CardTitle>
@@ -196,10 +212,16 @@ function DashboardContent({ data }: { data: DashboardSummary }) {
             )}
           </CardContent>
         </Card>
+        )}
       </div>
 
       {/* Alerts + NPS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div
+        className={cn(
+          'grid grid-cols-1 gap-4',
+          canFinance && 'lg:grid-cols-2',
+        )}
+      >
         <Card>
           <CardHeader>
             <CardTitle>Alerts</CardTitle>
@@ -232,6 +254,7 @@ function DashboardContent({ data }: { data: DashboardSummary }) {
           </CardContent>
         </Card>
 
+        {canFinance && (
         <Card>
           <CardHeader>
             <CardTitle>Net Promoter Score</CardTitle>
@@ -261,6 +284,7 @@ function DashboardContent({ data }: { data: DashboardSummary }) {
             )}
           </CardContent>
         </Card>
+        )}
       </div>
     </>
   )

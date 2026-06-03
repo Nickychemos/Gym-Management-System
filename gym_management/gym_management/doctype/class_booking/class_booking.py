@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from gym_management.rbac import ANY_STAFF, requires
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import add_to_date, get_datetime, now_datetime, today
@@ -261,6 +262,7 @@ class ClassBooking(Document):
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(ANY_STAFF)
 def mark_checked_in(class_booking: str) -> dict:
 	doc = frappe.get_doc("Class Booking", class_booking)
 	if doc.docstatus != 1 or doc.status not in ("Booked", "Waitlisted"):
@@ -275,6 +277,7 @@ def mark_checked_in(class_booking: str) -> dict:
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(ANY_STAFF)
 def mark_no_show(class_booking: str) -> dict:
 	"""Apply no-show penalty from Gym Settings and flip status."""
 	doc = frappe.get_doc("Class Booking", class_booking)

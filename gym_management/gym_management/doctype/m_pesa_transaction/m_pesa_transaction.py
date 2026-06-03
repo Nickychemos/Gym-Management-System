@@ -4,6 +4,7 @@
 import json
 
 import frappe
+from gym_management.rbac import FRONTDESK, requires
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, now_datetime, today
@@ -199,6 +200,7 @@ def stk_callback(**kwargs) -> dict:
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(FRONTDESK)
 def initiate_stk_push(
 	customer: str,
 	amount: float,

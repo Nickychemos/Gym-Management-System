@@ -20,6 +20,7 @@ Public API:
 from __future__ import annotations
 
 import frappe
+from gym_management.rbac import MANAGER, requires
 from frappe.utils import flt, today
 
 
@@ -36,6 +37,7 @@ def _customer_names(ids: list[str]) -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def marketing_summary() -> dict:
 	return {
 		"campaigns_sent": frappe.db.count("Campaign Send Log", {"status": "Sent"}),
@@ -53,6 +55,7 @@ def marketing_summary() -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def list_campaigns(limit: int = 50) -> list[dict]:
 	rows = frappe.get_all(
 		"Campaign Send Log",
@@ -72,6 +75,7 @@ def list_campaigns(limit: int = 50) -> list[dict]:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def create_campaign(
 	campaign_name: str,
 	channel: str = "WhatsApp",
@@ -98,6 +102,7 @@ def create_campaign(
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def run_renewal_reminders() -> dict:
 	"""Trigger the renewal-reminder campaign (also a daily scheduled task).
 	Guarded so a missing WhatsApp channel in dev returns a reason, not a 500."""
@@ -117,6 +122,7 @@ def run_renewal_reminders() -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def list_templates() -> list[dict]:
 	rows = frappe.get_all(
 		"WhatsApp Template",
@@ -136,6 +142,7 @@ def list_templates() -> list[dict]:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def create_template(
 	template_name: str,
 	body_text: str,
@@ -170,6 +177,7 @@ def create_template(
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def list_chatbot_flows() -> list[dict]:
 	rows = frappe.get_all(
 		"Chatbot Flow",
@@ -183,6 +191,7 @@ def list_chatbot_flows() -> list[dict]:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def flow_detail(flow: str) -> dict:
 	doc = frappe.get_doc("Chatbot Flow", flow)
 	nodes = [
@@ -208,6 +217,7 @@ def flow_detail(flow: str) -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def list_chatbot_sessions(limit: int = 50) -> list[dict]:
 	rows = frappe.get_all(
 		"Chatbot Session",
@@ -233,6 +243,7 @@ def list_chatbot_sessions(limit: int = 50) -> list[dict]:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def list_referrals(limit: int = 100) -> list[dict]:
 	rows = frappe.get_all(
 		"Referral",
@@ -271,6 +282,7 @@ def list_referrals(limit: int = 100) -> list[dict]:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def create_referral(
 	referrer_customer: str,
 	referred_name: str | None = None,

@@ -28,8 +28,11 @@ import frappe
 from frappe import _
 from frappe.utils import get_url
 
-GYM_ROLES = ["Gym Owner", "Gym Manager", "Receptionist", "Trainer"]
-MANAGER_ROLES = ("System Manager", "Gym Owner", "Gym Manager")
+# Role constants + the role guard now live in rbac.py (the central RBAC module).
+# Re-exported here so existing `from gym_management.users import ...` call sites
+# (settings.py, refund_request.py) keep working unchanged.
+from gym_management.rbac import ADMIN, GYM_ROLES, MANAGER_ROLES, _require_role, requires
+
 INVITE_ROUTE = "/gym/accept-invite"
 _SYSTEM_USERS = ("Administrator", "Guest")
 _HIDDEN_ROLES = {"Administrator", "All", "Guest", "Desk User", "Report Manager"}
@@ -38,14 +41,6 @@ _HIDDEN_ROLES = {"Administrator", "All", "Guest", "Desk User", "Report Manager"}
 # ---------------------------------------------------------------------------
 # Helpers (not whitelisted)
 # ---------------------------------------------------------------------------
-
-
-def _require_role(*roles: str) -> None:
-	"""Light guard: pass if the current user has any of `roles` or is a System
-	Manager. Used on sensitive endpoints (full backend RBAC is a later phase)."""
-	allowed = set(roles) | {"System Manager"}
-	if not (allowed & set(frappe.get_roles())):
-		frappe.throw(_("You are not permitted to perform this action"), frappe.PermissionError)
 
 
 def _is_email_configured() -> bool:
@@ -134,6 +129,7 @@ def current_user() -> dict:
 
 
 @frappe.whitelist()
+@requires(ADMIN)
 def seed_gym_roles() -> dict:
 	"""Create the gym roles (app-only: desk_access=0). Idempotent; also wired to
 	the after_migrate hook so fresh sites get them automatically."""

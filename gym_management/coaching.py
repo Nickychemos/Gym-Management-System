@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 
 import frappe
+from gym_management.rbac import TRAINER, requires
 from frappe.utils import flt, now_datetime, today
 
 
@@ -39,6 +40,7 @@ def _names(doctype: str, ids: list[str], field: str) -> dict:
 
 
 @frappe.whitelist()
+@requires(TRAINER)
 def coaching_trainers() -> list[dict]:
 	return [
 		{"value": e.name, "label": e.employee_name or e.name}
@@ -54,6 +56,7 @@ def coaching_trainers() -> list[dict]:
 
 
 @frappe.whitelist()
+@requires(TRAINER)
 def list_diet_plans(member: str | None = None) -> list[dict]:
 	filters = {"docstatus": ["<", 2]}
 	if member:
@@ -77,6 +80,7 @@ def list_diet_plans(member: str | None = None) -> list[dict]:
 
 
 @frappe.whitelist()
+@requires(TRAINER)
 def get_diet_plan(name: str) -> dict:
 	doc = frappe.get_doc("Diet Plan", name)
 	meals = [
@@ -112,6 +116,7 @@ def get_diet_plan(name: str) -> dict:
 
 
 @frappe.whitelist()
+@requires(TRAINER)
 def save_diet_plan(plan) -> dict:
 	"""Create or update a diet plan from the builder payload."""
 	p = _parse(plan)
@@ -150,6 +155,7 @@ def save_diet_plan(plan) -> dict:
 
 
 @frappe.whitelist()
+@requires(TRAINER)
 def list_training_plans(member: str | None = None) -> list[dict]:
 	filters = {"docstatus": ["<", 2]}
 	if member:
@@ -173,6 +179,7 @@ def list_training_plans(member: str | None = None) -> list[dict]:
 
 
 @frappe.whitelist()
+@requires(TRAINER)
 def get_training_plan(name: str) -> dict:
 	doc = frappe.get_doc("Training Prescription", name)
 	sets = [
@@ -193,6 +200,7 @@ def get_training_plan(name: str) -> dict:
 
 
 @frappe.whitelist()
+@requires(TRAINER)
 def save_training_plan(plan) -> dict:
 	p = _parse(plan)
 	member = p.get("member")
@@ -240,6 +248,7 @@ def save_training_plan(plan) -> dict:
 
 
 @frappe.whitelist()
+@requires(TRAINER)
 def list_coaching_notes(member: str | None = None, limit: int = 50) -> list[dict]:
 	filters = {}
 	if member:
@@ -262,6 +271,7 @@ def list_coaching_notes(member: str | None = None, limit: int = 50) -> list[dict
 
 
 @frappe.whitelist()
+@requires(TRAINER)
 def create_coaching_note(
 	member: str,
 	note_text: str,

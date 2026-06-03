@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from gym_management.rbac import FRONTDESK, requires
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, now_datetime
@@ -96,6 +97,7 @@ class CashDrawerSession(Document):
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(FRONTDESK)
 def open_session(
 	branch: str,
 	cashier: str,
@@ -134,6 +136,7 @@ def open_session(
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(FRONTDESK)
 def close_session(
 	session_name: str,
 	actual_cash_counted: float,

@@ -16,6 +16,8 @@ from __future__ import annotations
 import frappe
 from frappe.utils import flt
 
+from gym_management.rbac import ADMIN, ANY_STAFF, MANAGER, requires
+
 # Fields the UI may edit on each Single (allow-listed so nothing else leaks).
 _GYM_FIELDS = [
 	"default_grace_period_days",
@@ -73,6 +75,7 @@ _PLAN_FIELDS = [
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def get_settings() -> dict:
 	gym = frappe.get_cached_doc("Gym Settings")
 	brand = frappe.get_cached_doc("Brand Settings")
@@ -93,18 +96,14 @@ def _update_single(doctype: str, allowed: list[str], fields: dict) -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def update_gym_settings(**fields) -> dict:
-	from gym_management.users import MANAGER_ROLES, _require_role
-
-	_require_role(*MANAGER_ROLES)
 	return _update_single("Gym Settings", _GYM_FIELDS, fields)
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def update_brand_settings(**fields) -> dict:
-	from gym_management.users import MANAGER_ROLES, _require_role
-
-	_require_role(*MANAGER_ROLES)
 	return _update_single("Brand Settings", _BRAND_FIELDS, fields)
 
 
@@ -114,6 +113,7 @@ def update_brand_settings(**fields) -> dict:
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def list_plans() -> list[dict]:
 	rows = frappe.get_all(
 		"Membership Plan",
@@ -128,6 +128,7 @@ def list_plans() -> list[dict]:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def create_plan(
 	plan_name: str,
 	plan_type: str,
@@ -160,6 +161,7 @@ def create_plan(
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def update_plan(name: str, **fields) -> dict:
 	doc = frappe.get_doc("Membership Plan", name)
 	for k, v in fields.items():
@@ -171,6 +173,7 @@ def update_plan(name: str, **fields) -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def set_plan_active(name: str, active: int | str) -> dict:
 	frappe.db.set_value(
 		"Membership Plan",
@@ -188,6 +191,7 @@ def set_plan_active(name: str, active: int | str) -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def integrations_status() -> dict:
 	conf = frappe.local.conf
 
@@ -226,6 +230,7 @@ _SYSTEM_USERS = ("Administrator", "Guest")
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def list_staff() -> list[dict]:
 	users = frappe.get_all(
 		"User",
@@ -247,6 +252,7 @@ def list_staff() -> list[dict]:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def list_roles() -> list[str]:
 	rows = frappe.get_all(
 		"Role",
@@ -261,6 +267,7 @@ def list_roles() -> list[str]:
 
 
 @frappe.whitelist()
+@requires(ADMIN)
 def add_staff(email: str, full_name: str, role: str | None = None) -> dict:
 	"""Create a staff (System User) with an optional role. No welcome email is
 	sent (dev-safe); the user resets their password to sign in."""

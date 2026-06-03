@@ -20,6 +20,8 @@ from __future__ import annotations
 import frappe
 from frappe.utils import add_days, flt, today
 
+from gym_management.rbac import ANY_STAFF, FRONTDESK, requires
+
 _ACTIVE_SESSION_STATES = ["Scheduled", "Completed", "No-Show", "Rescheduled"]
 
 
@@ -48,6 +50,7 @@ def _customer_names(ids: list[str]) -> dict:
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def list_packages(
 	status: str | None = None,
 	search: str | None = None,
@@ -136,6 +139,7 @@ def list_packages(
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def package_detail(pt_package: str) -> dict:
 	"""Package header + its sessions, for the burndown view."""
 	p = frappe.db.get_value(
@@ -198,6 +202,7 @@ def package_detail(pt_package: str) -> dict:
 
 
 @frappe.whitelist()
+@requires(FRONTDESK)
 def sell_package(
 	customer: str,
 	trainer: str,
@@ -248,6 +253,7 @@ def sell_package(
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def schedule_session(
 	pt_package: str,
 	scheduled_at: str,
@@ -273,6 +279,7 @@ def schedule_session(
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def cancel_session(pt_session: str) -> dict:
 	"""Cancel a PT Session. If it had decremented the package, on_cancel
 	reverses that."""
@@ -283,6 +290,7 @@ def cancel_session(pt_session: str) -> dict:
 
 
 @frappe.whitelist()
+@requires(ANY_STAFF)
 def form_options() -> dict:
 	"""Trainers + PT-type plans to populate the sell form.
 

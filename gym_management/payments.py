@@ -17,6 +17,8 @@ from __future__ import annotations
 import frappe
 from frappe.utils import flt, get_first_day, today
 
+from gym_management.rbac import FRONTDESK, MANAGER, requires
+
 _TXN_FIELDS = [
 	"name",
 	"transaction_type",
@@ -34,6 +36,7 @@ _TXN_FIELDS = [
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def stream(
 	status: str | None = None,
 	direction: str | None = None,
@@ -105,6 +108,7 @@ def stream(
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def summary(branch: str | None = None) -> dict:
 	"""Payment KPIs for the page header: today's collected total + counts by
 	state, and month-to-date collected."""
@@ -142,6 +146,7 @@ def summary(branch: str | None = None) -> dict:
 
 
 @frappe.whitelist()
+@requires(FRONTDESK)
 def member_payments(member: str, limit: int = 50) -> list[dict]:
 	"""A single member's transactions for the Member 360 Payments tab.
 	`member` is a Member Profile name; resolved to its Customer."""
@@ -173,6 +178,7 @@ def member_payments(member: str, limit: int = 50) -> list[dict]:
 
 
 @frappe.whitelist()
+@requires(FRONTDESK)
 def send_stk_push(
 	customer: str,
 	amount: float,

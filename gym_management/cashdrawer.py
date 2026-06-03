@@ -14,10 +14,13 @@ from __future__ import annotations
 import frappe
 from frappe.utils import flt, today
 
+from gym_management.rbac import MANAGER, requires
+
 _OPEN = "Open"
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def list_sessions(branch: str | None = None, status: str | None = None, limit: int = 50) -> list[dict]:
 	filters: dict = {"docstatus": ["<", 2]}
 	if branch:
@@ -54,6 +57,7 @@ def list_sessions(branch: str | None = None, status: str | None = None, limit: i
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def drawer_summary(branch: str | None = None) -> dict:
 	base: dict = {"docstatus": ["<", 2]}
 	if branch:
@@ -70,6 +74,7 @@ def drawer_summary(branch: str | None = None) -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def drawer_options() -> dict:
 	cashiers = [
 		{"value": e.name, "label": e.employee_name or e.name}
@@ -85,6 +90,7 @@ def drawer_options() -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def expected_cash(session_name: str) -> dict:
 	"""Best-guess expected cash for the close form (opening float + cash sales)."""
 	from gym_management.gym_management.doctype.cash_drawer_session.cash_drawer_session import (

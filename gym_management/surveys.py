@@ -21,10 +21,12 @@ from __future__ import annotations
 import json
 
 import frappe
+from gym_management.rbac import MANAGER, requires
 from frappe.utils import add_to_date, now_datetime
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def compute_nps_score(survey_template: str, days: int = 30) -> dict:
 	"""Rolling NPS for a survey over the last N days.
 
@@ -141,6 +143,7 @@ def _customer_names(ids):
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def list_templates() -> list[dict]:
 	rows = frappe.get_all(
 		"Survey Template",
@@ -155,6 +158,7 @@ def list_templates() -> list[dict]:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def create_template(
 	survey_name: str,
 	survey_type: str = "NPS",
@@ -198,6 +202,7 @@ def create_template(
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def set_template_active(name: str, active) -> dict:
 	frappe.db.set_value("Survey Template", name, "is_active", 1 if str(active) in ("1", "true", "True") else 0)
 	frappe.db.commit()
@@ -216,6 +221,7 @@ def _active_nps_template():
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def list_responses(survey_template: str | None = None, limit: int = 50) -> list[dict]:
 	filters = {}
 	if survey_template:
@@ -235,6 +241,7 @@ def list_responses(survey_template: str | None = None, limit: int = 50) -> list[
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def nps_dashboard(survey_template: str | None = None, days: int = 30) -> dict:
 	template = survey_template or _active_nps_template()
 	if not template:
@@ -245,6 +252,7 @@ def nps_dashboard(survey_template: str | None = None, days: int = 30) -> dict:
 
 
 @frappe.whitelist()
+@requires(MANAGER)
 def record_response(
 	survey_template: str,
 	member: str,
