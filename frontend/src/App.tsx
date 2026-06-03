@@ -3,8 +3,10 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import { Layout } from '@/components/layout/Layout'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
+import { RoleGuard } from '@/components/layout/RoleGuard'
 import { AuthProvider } from '@/context/AuthContext'
 import { ToastProvider } from '@/context/ToastContext'
+import AcceptInvitePage from '@/pages/AcceptInvite'
 import ClassesPage from '@/pages/classes/Classes'
 import CoachingPage from '@/pages/coaching/Coaching'
 import DietPlanBuilderPage from '@/pages/coaching/DietPlanBuilder'
@@ -46,11 +48,14 @@ function App() {
           <ToastProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/accept-invite" element={<AcceptInvitePage />} />
 
             <Route
               element={
                 <ProtectedRoute>
-                  <Layout />
+                  <RoleGuard>
+                    <Layout />
+                  </RoleGuard>
                 </ProtectedRoute>
               }
             >
