@@ -28,6 +28,11 @@ import requests
 import frappe
 from frappe import _
 
+from gym_management.mpesa_security import (
+	append_callback_token,
+	verify_callback_source,
+)
+
 
 # Daraja endpoints
 SANDBOX_BASE = "https://sandbox.safaricom.co.ke"
@@ -437,31 +442,31 @@ class MPesaClient:
 	# ----------------------------------------------------------------------
 
 	def _stk_callback_url(self) -> str:
-		return (
+		return append_callback_token(
 			f"{self.callback_base_url.rstrip('/')}"
 			f"/api/method/gym_management.gym_management.doctype.m_pesa_transaction.m_pesa_transaction.stk_callback"
 		)
 
 	def _b2c_result_url(self) -> str:
-		return (
+		return append_callback_token(
 			f"{self.callback_base_url.rstrip('/')}"
 			f"/api/method/gym_management.mpesa_client.b2c_result_callback"
 		)
 
 	def _b2c_timeout_url(self) -> str:
-		return (
+		return append_callback_token(
 			f"{self.callback_base_url.rstrip('/')}"
 			f"/api/method/gym_management.mpesa_client.b2c_timeout_callback"
 		)
 
 	def _c2b_confirmation_url(self) -> str:
-		return (
+		return append_callback_token(
 			f"{self.callback_base_url.rstrip('/')}"
 			f"/api/method/gym_management.mpesa_client.c2b_confirmation"
 		)
 
 	def _c2b_validation_url(self) -> str:
-		return (
+		return append_callback_token(
 			f"{self.callback_base_url.rstrip('/')}"
 			f"/api/method/gym_management.mpesa_client.c2b_validation"
 		)
@@ -476,6 +481,9 @@ class MPesaClient:
 def b2c_result_callback(**kwargs) -> dict:
 	"""Daraja B2C result callback — fires after a refund disbursement completes."""
 	try:
+		if not verify_callback_source("b2c_result_callback"):
+			return {"ResultCode": 1, "ResultDesc": "Unauthorized"}
+
 		raw = frappe.request.get_data(as_text=True) if frappe.request else ""
 		payload = json.loads(raw) if raw else kwargs
 
@@ -552,6 +560,9 @@ def b2c_timeout_callback(**_kwargs) -> dict:
 	"""Daraja B2C queue timeout — fires when the disbursement queue stalls.
 	Frappe's whitelist passes form data as kwargs; we read from raw body only."""
 	try:
+		if not verify_callback_source("b2c_timeout_callback"):
+			return {"ResultCode": 1, "ResultDesc": "Unauthorized"}
+
 		raw = frappe.request.get_data(as_text=True) if frappe.request else ""
 		frappe.log_error(
 			f"B2C timeout callback received: {raw[:1000]}",
@@ -568,14 +579,42 @@ def c2b_confirmation(**kwargs) -> dict:
 
 	Records the payment as an inbound M-Pesa Transaction (matching by AccountReference
 	to a linked Sales Invoice / Member Subscription is left to a reconciliation
-	task; for v1 we just log the row)."""
+	task; for v1 we just log the row).
+
+	C2B is genuinely create-on-callback (the customer pays our paybill with no
+	prior intent row), so there is nothing to reconcile against. The defenses
+	are: source authentication (token/IP), a positive amount, and confirming the
+	payment was made to OUR configured shortcode (rejects forged/misrouted rows)."""
 	try:
+		if not verify_callback_source("c2b_confirmation"):
+			return {"ResultCode": 1, "ResultDesc": "Unauthorized"}
+
 		raw = frappe.request.get_data(as_text=True) if frappe.request else ""
 		payload = json.loads(raw) if raw else kwargs
 
 		trans_id = payload.get("TransID")
 		if not trans_id:
 			return {"ResultCode": 1, "ResultDesc": "Missing TransID"}
+
+		# Amount sanity — never record a non-positive C2B payment.
+		amount = float(payload.get("TransAmount") or 0)
+		if amount <= 0:
+			frappe.log_error(
+				f"c2b_confirmation: non-positive amount {amount!r} for TransID {trans_id}",
+				"mpesa_client.c2b_confirmation",
+			)
+			return {"ResultCode": 1, "ResultDesc": "Invalid amount"}
+
+		# The payment must be to our own shortcode. Reject anything else.
+		our_shortcode = str(frappe.local.conf.get("mpesa_shortcode") or "").strip()
+		payload_shortcode = str(payload.get("BusinessShortCode") or "").strip()
+		if our_shortcode and payload_shortcode and payload_shortcode != our_shortcode:
+			frappe.log_error(
+				f"c2b_confirmation: shortcode mismatch — got {payload_shortcode!r}, "
+				f"expected {our_shortcode!r} (TransID {trans_id})",
+				"mpesa_client.c2b_confirmation",
+			)
+			return {"ResultCode": 1, "ResultDesc": "Shortcode mismatch"}
 
 		# Idempotency: dedupe on TransID
 		existing = frappe.db.get_value(
@@ -590,10 +629,10 @@ def c2b_confirmation(**kwargs) -> dict:
 		doc.status = "Success"
 		doc.transaction_id = trans_id
 		doc.mpesa_receipt_number = payload.get("TransID")  # C2B uses TransID as receipt
-		doc.amount = float(payload.get("TransAmount") or 0)
+		doc.amount = amount
 		doc.phone_number = str(payload.get("MSISDN") or "")
 		doc.account_reference = payload.get("BillRefNumber") or ""
-		doc.shortcode = str(payload.get("BusinessShortCode") or "")
+		doc.shortcode = payload_shortcode
 		doc.callback_payload = json.dumps(payload, indent=2)
 		doc.insert(ignore_permissions=True)
 		doc.submit()
@@ -611,6 +650,9 @@ def c2b_validation(**form_data) -> dict:
 
 	For v1, accept everything (logged for debugging). Phase 4 polish can add
 	rule-based rejection (unknown member, blocked customer, etc.)."""
+	if not verify_callback_source("c2b_validation"):
+		# C2B: a non-zero ResultCode here tells Daraja to REJECT the payment.
+		return {"ResultCode": 1, "ResultDesc": "Unauthorized"}
 	frappe.logger().debug(
 		f"c2b_validation incoming keys: {sorted(form_data.keys())}"
 	)

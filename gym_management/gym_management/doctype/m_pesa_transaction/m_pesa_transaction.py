@@ -5,6 +5,7 @@ import json
 
 import frappe
 from gym_management.rbac import FRONTDESK, requires
+from gym_management.mpesa_security import verify_callback_source
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, now_datetime, today
@@ -119,10 +120,21 @@ def stk_callback(**kwargs) -> dict:
 	Idempotency: dedupes by CheckoutRequestID — the same callback firing
 	twice updates the existing row instead of creating a duplicate.
 
-	allow_guest=True because Safaricom doesn't authenticate; we rely on the
-	shortcode + AccountReference for routing + verification.
+	Security: Daraja does not authenticate its callbacks, so this endpoint is
+	hardened three ways:
+	  1. Source auth — a shared-secret token in the callback URL and/or an IP
+	     allow-list (verify_callback_source / mpesa_security).
+	  2. Reconcile-only — we ONLY update a Pending row that we created when we
+	     initiated the push (matched by CheckoutRequestID). A callback for an
+	     unknown CheckoutRequestID is rejected, never created. This kills the
+	     "forge a brand-new paid transaction" vector.
+	  3. Amount match — the paid amount must equal the amount we requested
+	     (an STK push customer cannot alter it), else we reject without mutating.
 	"""
 	try:
+		if not verify_callback_source("stk_callback"):
+			return {"ResultCode": 1, "ResultDesc": "Unauthorized"}
+
 		# Get the raw request body
 		raw_body = frappe.request.get_data(as_text=True) if frappe.request else ""
 		if raw_body:
@@ -154,39 +166,56 @@ def stk_callback(**kwargs) -> dict:
 			if name:
 				meta[name] = value
 
-		# Idempotency: find by CheckoutRequestID
+		# Reconcile-only: the push handler (mpesa_client.stk_push) always creates
+		# a Pending row stamped with this CheckoutRequestID BEFORE Daraja can call
+		# back. No matching row => this is not a payment we initiated; reject it.
 		existing = frappe.db.get_value(
 			"M-Pesa Transaction",
 			{"checkout_request_id": checkout_id},
 			"name",
 		)
-		if existing:
-			doc = frappe.get_doc("M-Pesa Transaction", existing)
-			# If already submitted with a terminal status, refuse to overwrite
-			if doc.docstatus == 1 and doc.status in TERMINAL_STATUSES:
-				return {"ResultCode": 0, "ResultDesc": "Already recorded"}
-		else:
-			doc = frappe.new_doc("M-Pesa Transaction")
-			doc.transaction_type = "STK Push"
-			doc.direction = "Inbound"
-			doc.checkout_request_id = checkout_id
+		if not existing:
+			frappe.log_error(
+				f"stk_callback for unknown CheckoutRequestID {checkout_id} "
+				f"(no initiated push) — rejected. Body: {raw_body[:500]}",
+				"mpesa_transaction.stk_callback",
+			)
+			return {"ResultCode": 1, "ResultDesc": "Unknown CheckoutRequestID"}
+
+		doc = frappe.get_doc("M-Pesa Transaction", existing)
+		# If already submitted with a terminal status, refuse to overwrite
+		if doc.docstatus == 1 and doc.status in TERMINAL_STATUSES:
+			return {"ResultCode": 0, "ResultDesc": "Already recorded"}
+
+		# Amount match: a successful STK push pays exactly what we requested. A
+		# mismatch means a tampered/replayed payload — reject without mutating.
+		callback_amount = meta.get("Amount")
+		if (
+			result_code in DARAJA_SUCCESS_CODES
+			and callback_amount is not None
+			and flt(doc.amount)
+			and abs(flt(callback_amount) - flt(doc.amount)) > 0.01
+		):
+			frappe.log_error(
+				f"stk_callback amount mismatch for {existing}: requested "
+				f"{flt(doc.amount)}, callback {flt(callback_amount)} — rejected.",
+				"mpesa_transaction.stk_callback",
+			)
+			return {"ResultCode": 1, "ResultDesc": "Amount mismatch"}
 
 		doc.merchant_request_id = merchant_id
 		doc.result_code = str(result_code) if result_code is not None else None
 		doc.result_description = result_desc
 		doc.callback_payload = json.dumps(payload, indent=2)
-		if meta.get("Amount"):
-			doc.amount = flt(meta["Amount"])
+		if callback_amount is not None:
+			doc.amount = flt(callback_amount)
 		if meta.get("MpesaReceiptNumber"):
 			doc.mpesa_receipt_number = meta["MpesaReceiptNumber"]
 		if meta.get("PhoneNumber"):
 			doc.phone_number = str(meta["PhoneNumber"])
 		# status will be inferred in validate()
 
-		if not doc.name:
-			doc.insert(ignore_permissions=True)
-		else:
-			doc.save(ignore_permissions=True)
+		doc.save(ignore_permissions=True)
 
 		# Auto-submit on terminal status
 		if doc.status in TERMINAL_STATUSES and doc.docstatus == 0:
