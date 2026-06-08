@@ -25,6 +25,7 @@ from __future__ import annotations
 from urllib.parse import parse_qs, urlparse
 
 import frappe
+import requests
 from frappe import _
 from frappe.utils import get_url
 
@@ -121,6 +122,73 @@ def current_user() -> dict:
 		"roles": roles,
 		"is_admin": "System Manager" in roles or user == "Administrator",
 	}
+
+
+# ---------------------------------------------------------------------------
+# Login (optional reCAPTCHA v3) + public auth config
+# ---------------------------------------------------------------------------
+
+
+def _verify_recaptcha(token: str | None, action: str = "login") -> None:
+	"""Verify a reCAPTCHA v3 token server-side.
+
+	No-op when no secret is configured, so dev / not-yet-enabled sites sign in
+	normally. Fails CLOSED on an explicit verification failure (bad token or low
+	score), but fails OPEN on a network error reaching Google, so an outage on
+	Google's side cannot lock staff out. Config (site_config.json):
+	recaptcha_secret_key, recaptcha_min_score (default 0.5)."""
+	secret = frappe.conf.get("recaptcha_secret_key")
+	if not secret:
+		return
+	if not token:
+		frappe.throw(
+			_("Please retry the security check and sign in again."),
+			title=_("Verification failed"),
+		)
+	try:
+		resp = requests.post(
+			"https://www.google.com/recaptcha/api/siteverify",
+			data={
+				"secret": secret,
+				"response": token,
+				"remoteip": getattr(frappe.local, "request_ip", None),
+			},
+			timeout=10,
+		)
+		result = resp.json()
+	except Exception:
+		# Google unreachable: log and allow rather than lock everyone out.
+		frappe.log_error(frappe.get_traceback(), "reCAPTCHA verify request failed")
+		return
+	min_score = float(frappe.conf.get("recaptcha_min_score") or 0.5)
+	ok = bool(result.get("success")) and float(result.get("score") or 0) >= min_score
+	if result.get("action") and result.get("action") != action:
+		ok = False
+	if not ok:
+		frappe.throw(
+			_("Security check failed. Please try again."),
+			title=_("Verification failed"),
+		)
+
+
+@frappe.whitelist(allow_guest=True)
+def auth_config() -> dict:
+	"""Public config the login screen needs before authenticating. Exposes only
+	the reCAPTCHA *site* key (public by design); the secret never leaves the server."""
+	return {"recaptcha_site_key": frappe.conf.get("recaptcha_site_key") or None}
+
+
+@frappe.whitelist(allow_guest=True)
+def login_with_captcha(usr: str, pwd: str, token: str | None = None) -> dict:
+	"""Sign in after verifying the reCAPTCHA token. A drop-in for
+	/api/method/login; when reCAPTCHA isn't configured it behaves like a normal
+	login."""
+	_verify_recaptcha(token, action="login")
+	login_manager = frappe.local.login_manager
+	login_manager.authenticate(user=usr, pwd=pwd)
+	login_manager.post_login()
+	full_name = frappe.db.get_value("User", frappe.session.user, "full_name")
+	return {"message": "Logged In", "full_name": full_name or frappe.session.user}
 
 
 # ---------------------------------------------------------------------------

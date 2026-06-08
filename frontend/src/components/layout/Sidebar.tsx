@@ -111,46 +111,75 @@ export function Sidebar() {
         collapsed ? 'w-16' : 'w-60',
       )}
     >
-      {/* Brand — clickable, returns to the dashboard */}
+      {/* Brand + collapse toggle. Collapsed: the logo doubles as the expand
+          control, swapping to a panel icon on hover (no labels anywhere). */}
       <div
         className={cn(
           'h-14 flex items-center border-b border-neutral-200 shrink-0',
-          collapsed ? 'justify-center px-0' : 'px-4',
+          collapsed ? 'justify-center px-0' : 'px-4 gap-2',
         )}
       >
-        <Link
-          to="/"
-          title="Benisho home"
-          className={cn(
-            'flex items-center min-w-0 rounded-md',
-            collapsed ? '' : 'gap-2.5',
-          )}
-        >
-          <BrandMark />
-          {!collapsed && (
-            <span className="font-semibold text-neutral-900 tracking-tight truncate">
-              Benisho
-            </span>
-          )}
-        </Link>
+        {collapsed ? (
+          <button
+            type="button"
+            onClick={toggle}
+            title="Expand sidebar"
+            aria-label="Expand sidebar"
+            className="group grid size-9 place-items-center rounded-md hover:bg-neutral-100 transition-colors"
+          >
+            <BrandMark className="group-hover:hidden" />
+            <PanelLeft
+              className="hidden size-4 text-neutral-600 group-hover:block"
+              strokeWidth={1.75}
+            />
+          </button>
+        ) : (
+          <>
+            <Link
+              to="/"
+              title="Benisho home"
+              className="flex items-center gap-2.5 min-w-0 flex-1 rounded-md"
+            >
+              <BrandMark />
+              <span className="font-semibold text-neutral-900 tracking-tight truncate">
+                Benisho
+              </span>
+            </Link>
+            <button
+              type="button"
+              onClick={toggle}
+              title="Collapse sidebar"
+              aria-label="Collapse sidebar"
+              className="grid size-8 place-items-center rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
+            >
+              <PanelLeftClose className="size-4" strokeWidth={1.75} />
+            </button>
+          </>
+        )}
       </div>
 
-      {/* Nav */}
+      {/* Nav — grouped sections separated by hairlines, with quiet section
+          labels and soft rounded item pills. */}
       <nav
         className={cn(
-          'flex-1 overflow-y-auto py-4 space-y-4',
+          'flex-1 overflow-y-auto py-3',
           collapsed ? 'px-2' : 'px-3',
         )}
       >
         {visibleGroups.map((group, gi) => (
           <div key={gi}>
+            {gi > 0 && (
+              <div
+                className={cn(
+                  'border-t border-neutral-100',
+                  collapsed ? 'mx-2 my-2' : 'mx-3 my-3',
+                )}
+              />
+            )}
             {!collapsed && group.label && (
-              <div className="px-2 mb-1.5 text-tiny font-medium uppercase tracking-wide text-neutral-400">
+              <div className="px-3 mb-1 text-tiny font-semibold uppercase tracking-wider text-neutral-400">
                 {group.label}
               </div>
-            )}
-            {collapsed && gi > 0 && (
-              <div className="mx-2 mb-3 border-t border-neutral-100" />
             )}
             <ul className="space-y-0.5">
               {group.items.map((item) => (
@@ -161,18 +190,29 @@ export function Sidebar() {
                     title={collapsed ? item.label : undefined}
                     className={({ isActive }) =>
                       cn(
-                        'flex items-center rounded-md text-body transition-colors duration-100',
+                        'group/nav flex items-center rounded-lg transition-colors duration-100',
                         collapsed
                           ? 'justify-center size-9 mx-auto'
-                          : 'gap-2.5 px-2.5 py-1.5',
+                          : 'gap-3 px-3 py-2 text-small font-medium',
                         isActive
-                          ? 'bg-accent-50 text-accent-700 font-medium'
-                          : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900',
+                          ? 'bg-accent-50 text-accent-700'
+                          : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900',
                       )
                     }
                   >
-                    <item.icon className="size-4 shrink-0" strokeWidth={1.75} />
-                    {!collapsed && <span>{item.label}</span>}
+                    {({ isActive }) => (
+                      <>
+                        <item.icon
+                          className={cn(
+                            'size-[18px] shrink-0 transition-colors',
+                            !isActive &&
+                              'text-neutral-400 group-hover/nav:text-neutral-500',
+                          )}
+                          strokeWidth={1.75}
+                        />
+                        {!collapsed && <span>{item.label}</span>}
+                      </>
+                    )}
                   </NavLink>
                 </li>
               ))}
@@ -180,35 +220,18 @@ export function Sidebar() {
           </div>
         ))}
       </nav>
-
-      {/* Collapse toggle */}
-      <div className="border-t border-neutral-200 p-2 shrink-0">
-        <button
-          type="button"
-          onClick={toggle}
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className={cn(
-            'flex items-center w-full rounded-md text-small text-neutral-500',
-            'hover:bg-neutral-100 hover:text-neutral-900 transition-colors',
-            collapsed ? 'justify-center h-9' : 'gap-2.5 px-2.5 py-2',
-          )}
-        >
-          {collapsed ? (
-            <PanelLeft className="size-4 shrink-0" strokeWidth={1.75} />
-          ) : (
-            <PanelLeftClose className="size-4 shrink-0" strokeWidth={1.75} />
-          )}
-          {!collapsed && <span>Collapse</span>}
-        </button>
-      </div>
     </aside>
   )
 }
 
-function BrandMark() {
+function BrandMark({ className }: { className?: string }) {
   return (
-    <span className="grid size-7 shrink-0 place-items-center rounded-md bg-neutral-900">
+    <span
+      className={cn(
+        'grid size-7 shrink-0 place-items-center rounded-md bg-neutral-900',
+        className,
+      )}
+    >
       <svg
         width="16"
         height="16"

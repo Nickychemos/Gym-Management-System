@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 
 import { AuthShell } from '@/components/auth/AuthShell'
@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
 import { useAuth } from '@/context/AuthContext'
 import { authApi } from '@/lib/api'
+import { getRecaptchaToken, initRecaptcha } from '@/lib/recaptcha'
 
 // Auth screens use an ink-black primary and a neutral focus ring instead of the
 // app's indigo. Kept local for now; this is the blueprint we roll out elsewhere.
@@ -29,6 +30,26 @@ export default function LoginPage() {
   const [forgotEmail, setForgotEmail] = useState('')
   const [forgotSent, setForgotSent] = useState(false)
   const [forgotBusy, setForgotBusy] = useState(false)
+  const [recaptchaOn, setRecaptchaOn] = useState(false)
+
+  // Load the reCAPTCHA site key (if configured) once, on mount.
+  useEffect(() => {
+    let active = true
+    authApi
+      .authConfig()
+      .then((cfg) => {
+        if (active && cfg.recaptcha_site_key) {
+          initRecaptcha(cfg.recaptcha_site_key)
+          setRecaptchaOn(true)
+        }
+      })
+      .catch(() => {
+        // No config or network issue: sign in without the extra check.
+      })
+    return () => {
+      active = false
+    }
+  }, [])
 
   if (state.status === 'authenticated') {
     return <Navigate to="/" replace />
@@ -61,7 +82,8 @@ export default function LoginPage() {
     setError(null)
     setSubmitting(true)
     try {
-      await login(u, p)
+      const token = await getRecaptchaToken('login')
+      await login(u, p, token)
     } catch (err) {
       setError(
         err instanceof Error
@@ -160,9 +182,37 @@ export default function LoginPage() {
               {submitting ? 'Signing in' : 'Sign in'}
             </Button>
           </form>
+
+          {recaptchaOn && <RecaptchaNotice />}
         </>
       )}
     </AuthShell>
+  )
+}
+
+function RecaptchaNotice() {
+  return (
+    <p className="mt-5 text-tiny leading-relaxed text-neutral-400">
+      This site is protected by reCAPTCHA and the Google{' '}
+      <a
+        href="https://policies.google.com/privacy"
+        target="_blank"
+        rel="noreferrer"
+        className="underline hover:text-neutral-600"
+      >
+        Privacy Policy
+      </a>{' '}
+      and{' '}
+      <a
+        href="https://policies.google.com/terms"
+        target="_blank"
+        rel="noreferrer"
+        className="underline hover:text-neutral-600"
+      >
+        Terms of Service
+      </a>{' '}
+      apply.
+    </p>
   )
 }
 

@@ -144,3 +144,9 @@
     background: var(--color-neutral-300);
   }
 }
+
+/* Hide the floating reCAPTCHA v3 badge — Google's terms allow this as long as
+   the required disclosure text is shown (we render it under the login form). */
+.grecaptcha-badge {
+  visibility: hidden;
+}

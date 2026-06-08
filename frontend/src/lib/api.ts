@@ -78,7 +78,8 @@ async function request<T>(
   if (!res.ok) {
     // Surface session-expiry centrally — but never for the login call itself,
     // where a 401 just means "wrong credentials" and the form shows the error.
-    const isLogin = path.includes('/api/method/login')
+    const isLogin =
+      path.includes('/api/method/login') || path.includes('login_with_captcha')
     if (!isLogin && isAuthError(res.status, body)) {
       unauthorizedHandler?.()
     }
@@ -106,15 +107,27 @@ export interface FrappeUser {
 }
 
 export const authApi = {
-  /** POST /api/method/login — sets session cookie on success */
-  async login(usr: string, pwd: string) {
-    return request<{ message: string; full_name: string }>(
-      '/api/method/login',
+  /**
+   * Sign in. Goes through our login_with_captcha wrapper so the reCAPTCHA token
+   * (when enabled) is verified server-side before authenticating. Behaves like a
+   * normal login when reCAPTCHA isn't configured. Sets the session cookie on success.
+   */
+  async login(usr: string, pwd: string, recaptchaToken?: string | null) {
+    return request<{ message: { message: string; full_name: string } }>(
+      '/api/method/gym_management.users.login_with_captcha',
       {
         method: 'POST',
-        body: JSON.stringify({ usr, pwd }),
+        body: JSON.stringify({ usr, pwd, token: recaptchaToken ?? null }),
       },
     )
+  },
+
+  /** Public pre-login config (e.g. the reCAPTCHA site key). */
+  async authConfig() {
+    const res = await request<{
+      message: { recaptcha_site_key: string | null }
+    }>('/api/method/gym_management.users.auth_config')
+    return res.message
   },
 
   /** POST /api/method/logout */

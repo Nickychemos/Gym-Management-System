@@ -214,7 +214,7 @@ def _alerts(branch: str | None) -> list[dict]:
 		alerts.append(
 			{
 				"kind": "danger" if t.priority == "Critical" else "warning",
-				"text": f"{t.title} — out of service",
+				"text": f"{t.title}: out of service",
 				"link": f"equipment",
 				"ref": t.name,
 			}
@@ -236,7 +236,7 @@ def _alerts(branch: str | None) -> list[dict]:
 		alerts.append(
 			{
 				"kind": "danger" if c.status == "Expired" else "warning",
-				"text": f"{c.compliance_name} — {when}",
+				"text": f"{c.compliance_name}: {when}",
 				"link": "compliance",
 				"ref": c.name,
 			}
