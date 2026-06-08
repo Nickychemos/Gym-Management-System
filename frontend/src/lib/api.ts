@@ -112,12 +112,22 @@ export const authApi = {
    * (when enabled) is verified server-side before authenticating. Behaves like a
    * normal login when reCAPTCHA isn't configured. Sets the session cookie on success.
    */
-  async login(usr: string, pwd: string, recaptchaToken?: string | null) {
+  async login(
+    usr: string,
+    pwd: string,
+    recaptchaToken?: string | null,
+    remember = true,
+  ) {
     return request<{ message: { message: string; full_name: string } }>(
       '/api/method/gym_management.users.login_with_captcha',
       {
         method: 'POST',
-        body: JSON.stringify({ usr, pwd, token: recaptchaToken ?? null }),
+        body: JSON.stringify({
+          usr,
+          pwd,
+          token: recaptchaToken ?? null,
+          remember,
+        }),
       },
     )
   },

@@ -23,7 +23,12 @@ type AuthState =
 
 interface AuthContextValue {
   state: AuthState
-  login: (usr: string, pwd: string, token?: string | null) => Promise<void>
+  login: (
+    usr: string,
+    pwd: string,
+    token?: string | null,
+    remember?: boolean,
+  ) => Promise<void>
   logout: () => Promise<void>
   /** Re-read identity + roles (e.g. after accept-invite logs the user in). */
   refresh: () => Promise<void>
@@ -76,8 +81,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => setUnauthorizedHandler(null)
   }, [])
 
-  const login = async (usr: string, pwd: string, token?: string | null) => {
-    await authApi.login(usr, pwd, token)
+  const login = async (
+    usr: string,
+    pwd: string,
+    token?: string | null,
+    remember = true,
+  ) => {
+    await authApi.login(usr, pwd, token, remember)
     // login response lacks roles — hydrate identity right after.
     await hydrate()
   }

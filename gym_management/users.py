@@ -178,15 +178,30 @@ def auth_config() -> dict:
 	return {"recaptcha_site_key": frappe.conf.get("recaptcha_site_key") or None}
 
 
+def _make_login_ephemeral() -> None:
+	"""Downgrade the session cookie to a browser-session cookie (no max-age) so it
+	is cleared when the browser closes. This is the 'Keep me signed in = off'
+	behaviour; when it is on we leave Frappe's default persistent cookie in place."""
+	cookie_manager = getattr(frappe.local, "cookie_manager", None)
+	sid = frappe.session.sid
+	if cookie_manager and sid and sid != "Guest":
+		cookie_manager.set_cookie("sid", sid, max_age=None, expires=None, httponly=True)
+
+
 @frappe.whitelist(allow_guest=True)
-def login_with_captcha(usr: str, pwd: str, token: str | None = None) -> dict:
+def login_with_captcha(
+	usr: str, pwd: str, token: str | None = None, remember: bool = True
+) -> dict:
 	"""Sign in after verifying the reCAPTCHA token. A drop-in for
 	/api/method/login; when reCAPTCHA isn't configured it behaves like a normal
-	login."""
+	login. `remember` is 'Keep me signed in': when false the session cookie is
+	cleared on browser close; when true Frappe's persistent cookie stands."""
 	_verify_recaptcha(token, action="login")
 	login_manager = frappe.local.login_manager
 	login_manager.authenticate(user=usr, pwd=pwd)
 	login_manager.post_login()
+	if str(remember).lower() not in ("1", "true", "yes"):
+		_make_login_ephemeral()
 	full_name = frappe.db.get_value("User", frappe.session.user, "full_name")
 	return {"message": "Logged In", "full_name": full_name or frappe.session.user}
 

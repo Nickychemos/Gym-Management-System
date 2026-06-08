@@ -83,7 +83,7 @@ export default function LoginPage() {
     setSubmitting(true)
     try {
       const token = await getRecaptchaToken('login')
-      await login(u, p, token)
+      await login(u, p, token, remember)
     } catch (err) {
       setError(
         err instanceof Error
