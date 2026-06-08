@@ -1,15 +1,39 @@
-import { Bell, ChevronDown, LogOut, Search } from 'lucide-react'
+import { Bell, ChevronDown, LogOut, Search, Settings, User } from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import {
+  DropdownItem,
+  DropdownLabel,
+  DropdownMenu,
+  DropdownSeparator,
+} from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/context/AuthContext'
+import { canAccess } from '@/lib/roles'
+
+/** Friendly label for the caller's top role, for the account menu header. */
+function primaryRole(roles: string[], isAdmin: boolean): string {
+  if (isAdmin) return 'Administrator'
+  const known = [
+    'Gym Owner',
+    'Gym Manager',
+    'Receptionist',
+    'Trainer',
+  ]
+  return known.find((r) => roles.includes(r)) ?? 'Staff'
+}
 
 export function Topbar() {
   const { state, logout } = useAuth()
-  const userLabel =
-    state.status === 'authenticated' ? state.user : 'Loading…'
+  const authed = state.status === 'authenticated'
+  const fullName = authed ? state.fullName || state.user : 'Loading'
+  const email = authed ? state.user : ''
+  const roles = authed ? state.roles : []
+  const isAdmin = authed ? state.isAdmin : false
+  const canSettings = canAccess('/settings', roles, isAdmin)
+  const initial = (fullName || 'U').slice(0, 1).toUpperCase()
 
   return (
-    <header className="h-14 shrink-0 border-b border-neutral-200 bg-white flex items-center px-5 gap-4">
+    <header className="h-14 shrink-0 border-b border-neutral-200/80 bg-white shadow-[0_1px_2px_rgb(15_17_21/0.03)] flex items-center px-5 gap-4">
       {/* Branch switcher placeholder */}
       <button
         type="button"
@@ -20,7 +44,7 @@ export function Topbar() {
         <ChevronDown className="size-3.5 text-neutral-400" strokeWidth={2} />
       </button>
 
-      {/* ⌘K search — visually present, command palette wires up in week 16 */}
+      {/* ⌘K search — visually present, command palette wires up later */}
       <button
         type="button"
         className="flex items-center gap-2 max-w-md flex-1 rounded-md border border-neutral-200 px-3 h-8 text-small text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 transition-colors"
@@ -43,20 +67,55 @@ export function Topbar() {
           <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-danger-500" />
         </button>
 
-        <div className="ml-1 flex items-center gap-2 pl-3 border-l border-neutral-200">
-          <div className="size-7 rounded-full bg-brand-100 text-brand-700 grid place-items-center text-small font-medium">
-            {userLabel.slice(0, 1).toUpperCase()}
-          </div>
-          <span className="text-small text-neutral-700">{userLabel}</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => logout()}
-            aria-label="Sign out"
-            className="ml-1"
+        <div className="ml-1 pl-2 border-l border-neutral-200">
+          <DropdownMenu
+            triggerLabel="Account menu"
+            className="flex items-center gap-2 rounded-md py-1 pl-1 pr-2 hover:bg-neutral-100 transition-colors"
+            trigger={
+              <>
+                <span className="size-7 rounded-full bg-neutral-900 text-white grid place-items-center text-small font-medium">
+                  {initial}
+                </span>
+                <span className="text-small text-neutral-700 max-w-[14ch] truncate">
+                  {fullName}
+                </span>
+                <ChevronDown className="size-3.5 text-neutral-400" strokeWidth={2} />
+              </>
+            }
           >
-            <LogOut className="size-3.5" strokeWidth={2} />
-          </Button>
+            <DropdownLabel>
+              <div className="flex items-center gap-2">
+                <span className="size-9 rounded-full bg-neutral-900 text-white grid place-items-center text-body font-medium">
+                  {initial}
+                </span>
+                <div className="min-w-0">
+                  <div className="text-small font-medium text-neutral-900 truncate">
+                    {fullName}
+                  </div>
+                  <div className="text-tiny text-neutral-500 truncate">{email}</div>
+                </div>
+              </div>
+              <div className="mt-2">
+                <Badge variant="brand">{primaryRole(roles, isAdmin)}</Badge>
+              </div>
+            </DropdownLabel>
+            <DropdownSeparator />
+            {/* Profile page is deferred; for now it lands on the Settings hub. */}
+            {canSettings && (
+              <DropdownItem to="/settings" icon={User}>
+                Your profile
+              </DropdownItem>
+            )}
+            {canSettings && (
+              <DropdownItem to="/settings" icon={Settings}>
+                Company settings
+              </DropdownItem>
+            )}
+            {canSettings && <DropdownSeparator />}
+            <DropdownItem onClick={() => logout()} icon={LogOut} danger>
+              Sign out
+            </DropdownItem>
+          </DropdownMenu>
         </div>
       </div>
     </header>

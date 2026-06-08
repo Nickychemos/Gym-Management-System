@@ -140,7 +140,7 @@ function DashboardContent({ data }: { data: DashboardSummary }) {
                           {c.class_type}
                         </div>
                         <div className="text-tiny text-neutral-500">
-                          {c.trainer ?? '—'}
+                          {c.trainer ?? 'No trainer'}
                         </div>
                       </div>
                       <div className="text-right">
@@ -155,7 +155,7 @@ function DashboardContent({ data }: { data: DashboardSummary }) {
                                 ? 'bg-danger-500'
                                 : pct >= 75
                                   ? 'bg-warning-500'
-                                  : 'bg-brand-500',
+                                  : 'bg-neutral-900',
                             )}
                             style={{ width: `${Math.min(100, pct)}%` }}
                           />
@@ -175,7 +175,7 @@ function DashboardContent({ data }: { data: DashboardSummary }) {
             <CardTitle>Recent Payments</CardTitle>
             <Link
               to="/payments"
-              className="text-small text-brand-600 hover:text-brand-700"
+              className="text-small font-medium text-neutral-700 hover:text-neutral-900"
             >
               View all
             </Link>

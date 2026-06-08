@@ -129,7 +129,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                         t.onUndo?.()
                         dismiss(t.id)
                       }}
-                      className="mt-1.5 text-small font-medium text-brand-600 hover:text-brand-700"
+                      className="mt-1.5 text-small font-medium text-neutral-700 hover:text-neutral-900"
                     >
                       Undo
                     </button>

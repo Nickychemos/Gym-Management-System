@@ -14,7 +14,7 @@ export const Input = forwardRef<
       'px-3 text-body text-neutral-900 placeholder:text-neutral-400',
       'transition-colors duration-100',
       'hover:border-neutral-300',
-      'focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30',
+      'focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900/10',
       'disabled:cursor-not-allowed disabled:opacity-50',
       'aria-invalid:border-danger-500 aria-invalid:ring-danger-500/30',
       className,

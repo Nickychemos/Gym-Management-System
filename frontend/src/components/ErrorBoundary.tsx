@@ -65,7 +65,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <div className="mt-6 flex items-center justify-center gap-3">
             <button
               onClick={this.reset}
-              className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
+              className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
             >
               Try again
             </button>
