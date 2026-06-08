@@ -115,6 +115,15 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Interactive elements show the hand cursor so it is clear they are
+     clickable. Disabled controls keep the default arrow. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  summary,
+  a[href] {
+    cursor: pointer;
+  }
+
   /* Focus ring — brand-colored, always visible for keyboard users */
   :focus-visible {
     outline: 2px solid var(--color-brand-500);

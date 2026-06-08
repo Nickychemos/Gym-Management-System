@@ -47,12 +47,21 @@ export default function LoginPage() {
     }
   }
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    // Read from the form, not just React state, so values the browser
+    // autofilled are picked up even if they never fired an onChange.
+    const data = new FormData(e.currentTarget)
+    const u = ((data.get('usr') as string | null) ?? usr).trim()
+    const p = (data.get('pwd') as string | null) ?? pwd
+    if (!u || !p) {
+      setError('Enter your email and password to continue.')
+      return
+    }
     setError(null)
     setSubmitting(true)
     try {
-      await login(usr, pwd)
+      await login(u, p)
     } catch (err) {
       setError(
         err instanceof Error
@@ -89,10 +98,10 @@ export default function LoginPage() {
               <Label htmlFor="usr">Email or username</Label>
               <Input
                 id="usr"
+                name="usr"
                 type="text"
                 autoComplete="username"
                 autoFocus
-                required
                 value={usr}
                 onChange={(e) => setUsr(e.target.value)}
                 className={FIELD}
@@ -103,8 +112,8 @@ export default function LoginPage() {
               <Label htmlFor="pwd">Password</Label>
               <PasswordInput
                 id="pwd"
+                name="pwd"
                 autoComplete="current-password"
-                required
                 value={pwd}
                 onChange={(e) => setPwd(e.target.value)}
                 className={FIELD}
@@ -145,7 +154,7 @@ export default function LoginPage() {
               type="submit"
               size="lg"
               className={`w-full ${PRIMARY_BTN}`}
-              disabled={submitting || !usr || !pwd}
+              disabled={submitting}
             >
               {submitting && <Spinner />}
               {submitting ? 'Signing in' : 'Sign in'}
