@@ -21,7 +21,7 @@ from __future__ import annotations
 import json
 
 import frappe
-from gym_management.rbac import MANAGER, requires
+from gym_management.rbac import ANY_STAFF, MANAGER, requires
 from frappe.utils import add_to_date, now_datetime
 
 
@@ -84,6 +84,7 @@ def compute_nps_score(survey_template: str, days: int = 30) -> dict:
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(ANY_STAFF)
 def submit_response(
 	survey_template: str,
 	member: str,
@@ -92,8 +93,15 @@ def submit_response(
 	comment: str | None = None,
 	answers: dict | str | None = None,
 ) -> str:
-	"""Create a Survey Response from an external channel (chatbot, portal,
-	WhatsApp interactive form, etc.). Returns the Survey Response name.
+	"""Create a Survey Response on a member's behalf. Returns the response name.
+
+	Guarded as a staff endpoint: it takes an arbitrary `member`, so leaving it
+	unguarded let any authenticated user file a response against any member
+	(IDOR). Members have no login accounts today, so staff are the only callers.
+
+	If a token-authenticated member self-service portal is added later, expose a
+	SEPARATE guest endpoint that derives `member` from a signed magic-link token
+	— never from a caller-supplied parameter.
 
 	`answers` accepts a dict (JSON-serializable) or a JSON string.
 	"""

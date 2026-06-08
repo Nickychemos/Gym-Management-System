@@ -1,16 +1,26 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 
+import { AuthShell } from '@/components/auth/AuthShell'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PasswordInput } from '@/components/ui/password-input'
 import { useAuth } from '@/context/AuthContext'
 import { authApi } from '@/lib/api'
+
+// Auth screens use an ink-black primary and a neutral focus ring instead of the
+// app's indigo. Kept local for now; this is the blueprint we roll out elsewhere.
+const PRIMARY_BTN =
+  'bg-neutral-900 text-white hover:bg-neutral-800 active:bg-neutral-900 focus-visible:ring-accent-500'
+const FIELD = 'focus:border-neutral-400 focus:ring-neutral-900/10'
 
 export default function LoginPage() {
   const { state, login } = useAuth()
   const [usr, setUsr] = useState('')
   const [pwd, setPwd] = useState('')
+  const [remember, setRemember] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -30,7 +40,7 @@ export default function LoginPage() {
     try {
       await authApi.forgotPassword(forgotEmail)
     } catch {
-      // Swallow — never reveal whether the account exists (anti-enumeration).
+      // Swallow: never reveal whether the account exists (anti-enumeration).
     } finally {
       setForgotBusy(false)
       setForgotSent(true)
@@ -47,46 +57,34 @@ export default function LoginPage() {
       setError(
         err instanceof Error
           ? err.message
-          : 'Login failed — please check your credentials.',
+          : 'That email or password did not match. Try again.',
       )
       setSubmitting(false)
     }
   }
 
   return (
-    <div className="min-h-screen grid place-items-center bg-neutral-50 px-4">
-      <div className="w-full max-w-sm">
-        {/* Logo / wordmark */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center gap-2">
-            <div className="size-8 rounded-md bg-brand-500" />
-            <span className="text-h2 font-semibold tracking-tight text-neutral-900">
-              Gym Management
-            </span>
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-neutral-200 bg-white shadow-[var(--shadow-card)] p-6">
-          {forgotOpen ? (
-            <ForgotPanel
-              email={forgotEmail}
-              setEmail={setForgotEmail}
-              sent={forgotSent}
-              busy={forgotBusy}
-              onSubmit={handleForgot}
-              onBack={() => {
-                setForgotOpen(false)
-                setForgotSent(false)
-              }}
-            />
-          ) : (
-            <>
-          <h1 className="text-h3 font-semibold mb-1">Sign in</h1>
-          <p className="text-small text-neutral-600 mb-6">
-            Use your gym admin credentials.
+    <AuthShell footer={<>Trouble signing in? Contact your gym administrator.</>}>
+      {forgotOpen ? (
+        <ForgotPanel
+          email={forgotEmail}
+          setEmail={setForgotEmail}
+          sent={forgotSent}
+          busy={forgotBusy}
+          onSubmit={handleForgot}
+          onBack={() => {
+            setForgotOpen(false)
+            setForgotSent(false)
+          }}
+        />
+      ) : (
+        <>
+          <h1 className="text-h2 font-semibold tracking-tight">Welcome back</h1>
+          <p className="mt-1.5 text-body text-neutral-600">
+            Sign in to your gym account.
           </p>
 
-          <form onSubmit={handleSubmit} noValidate>
+          <form onSubmit={handleSubmit} noValidate className="mt-8">
             <div className="mb-4">
               <Label htmlFor="usr">Email or username</Label>
               <Input
@@ -97,19 +95,41 @@ export default function LoginPage() {
                 required
                 value={usr}
                 onChange={(e) => setUsr(e.target.value)}
+                className={FIELD}
               />
             </div>
 
             <div className="mb-4">
               <Label htmlFor="pwd">Password</Label>
-              <Input
+              <PasswordInput
                 id="pwd"
-                type="password"
                 autoComplete="current-password"
                 required
                 value={pwd}
                 onChange={(e) => setPwd(e.target.value)}
+                className={FIELD}
               />
+            </div>
+
+            <div className="mb-5 flex items-center justify-between">
+              <label className="flex cursor-pointer items-center gap-2 text-small text-neutral-600">
+                <Checkbox
+                  className="accent-neutral-900"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                />
+                Keep me signed in
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setForgotEmail(usr)
+                  setForgotOpen(true)
+                }}
+                className="text-small font-medium text-neutral-700 hover:text-neutral-900"
+              >
+                Forgot password?
+              </button>
             </div>
 
             {error && (
@@ -124,32 +144,41 @@ export default function LoginPage() {
             <Button
               type="submit"
               size="lg"
-              className="w-full"
+              className={`w-full ${PRIMARY_BTN}`}
               disabled={submitting || !usr || !pwd}
             >
-              {submitting ? 'Signing in…' : 'Sign in'}
+              {submitting && <Spinner />}
+              {submitting ? 'Signing in' : 'Sign in'}
             </Button>
           </form>
+        </>
+      )}
+    </AuthShell>
+  )
+}
 
-          <button
-            type="button"
-            onClick={() => {
-              setForgotEmail(usr)
-              setForgotOpen(true)
-            }}
-            className="mt-4 w-full text-center text-small text-brand-600 hover:text-brand-700"
-          >
-            Forgot password?
-          </button>
-            </>
-          )}
-        </div>
-
-        <p className="mt-6 text-center text-small text-neutral-500">
-          Trouble signing in? Contact your gym administrator.
-        </p>
-      </div>
-    </div>
+function Spinner() {
+  return (
+    <svg
+      className="size-4 animate-spin"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-90"
+        fill="currentColor"
+        d="M4 12a8 8 0 0 1 8-8V0C5.4 0 0 5.4 0 12h4Z"
+      />
+    </svg>
   )
 }
 
@@ -170,13 +199,20 @@ function ForgotPanel({
 }) {
   if (sent) {
     return (
-      <div className="text-center py-2">
-        <h1 className="text-h3 font-semibold mb-2">Check your email</h1>
-        <p className="text-small text-neutral-600 mb-6">
-          If an account exists for that address, we've sent a link to reset your
-          password.
+      <div className="py-2">
+        <h1 className="text-h2 font-semibold tracking-tight">
+          Check your email
+        </h1>
+        <p className="mt-1.5 mb-8 text-body text-neutral-600">
+          If an account exists for that address, a link to reset your password
+          is on its way.
         </p>
-        <Button variant="secondary" className="w-full" onClick={onBack}>
+        <Button
+          variant="secondary"
+          size="lg"
+          className="w-full"
+          onClick={onBack}
+        >
           Back to sign in
         </Button>
       </div>
@@ -185,12 +221,12 @@ function ForgotPanel({
 
   return (
     <>
-      <h1 className="text-h3 font-semibold mb-1">Reset password</h1>
-      <p className="text-small text-neutral-600 mb-6">
-        Enter your email and we'll send you a reset link.
+      <h1 className="text-h2 font-semibold tracking-tight">Reset password</h1>
+      <p className="mt-1.5 text-body text-neutral-600">
+        Enter your email and we will send you a reset link.
       </p>
-      <form onSubmit={onSubmit} noValidate>
-        <div className="mb-4">
+      <form onSubmit={onSubmit} noValidate className="mt-8">
+        <div className="mb-5">
           <Label htmlFor="forgot-email">Email</Label>
           <Input
             id="forgot-email"
@@ -200,21 +236,22 @@ function ForgotPanel({
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            className={FIELD}
           />
         </div>
         <Button
           type="submit"
           size="lg"
-          className="w-full"
+          className={`w-full ${PRIMARY_BTN}`}
           disabled={busy || !email}
         >
-          {busy ? 'Sending…' : 'Send reset link'}
+          {busy ? 'Sending' : 'Send reset link'}
         </Button>
       </form>
       <button
         type="button"
         onClick={onBack}
-        className="mt-4 w-full text-center text-small text-brand-600 hover:text-brand-700"
+        className="mt-4 w-full text-center text-small font-medium text-neutral-700 hover:text-neutral-900"
       >
         Back to sign in
       </button>

@@ -20,8 +20,6 @@ import unittest
 # (allow_guest=True) are auto-exempt and need not be listed here.
 EXEMPT_NAMES = {
     "current_user",        # returns only the caller's own identity
-    "submit_response",     # member/integration survey submission
-    "update_preferences",  # member-portal comms preferences (self-serve)
     "resolve_scan",        # hardware reader endpoint (device-token auth)
 }
 

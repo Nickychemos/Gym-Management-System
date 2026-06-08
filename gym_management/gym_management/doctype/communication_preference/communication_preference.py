@@ -6,6 +6,8 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now_datetime
 
+from gym_management.rbac import FRONTDESK, requires
+
 
 # Topics that fire regardless of opt-in state (statutory / legal / financial)
 ALWAYS_ON_TOPICS = ("legal", "kra", "data_protection", "payment_receipt")
@@ -147,6 +149,7 @@ def get_or_create(customer: str) -> str:
 
 
 @frappe.whitelist(allow_guest=False)
+@requires(FRONTDESK)
 def update_preferences(
 	customer: str,
 	sms_opt_in: int | None = None,
@@ -162,8 +165,14 @@ def update_preferences(
 	preferred_language: str | None = None,
 	preferred_contact_time: str | None = None,
 ) -> dict:
-	"""Member-portal endpoint — let members edit their own preferences.
-	Auto-creates the preference row if missing."""
+	"""Front-desk endpoint to update a member's comms preferences (auto-creates
+	the row if missing).
+
+	Guarded: it takes an arbitrary `customer`, so leaving it unguarded let any
+	authenticated user edit any member's preferences (IDOR). Members have no
+	login accounts today, so front-desk staff are the only callers. If a member
+	self-service portal is added later, expose a SEPARATE token-authenticated
+	guest endpoint that derives `customer` from a signed token — not a parameter."""
 	name = get_or_create(customer)
 	doc = frappe.get_doc("Communication Preference", name)
 	for field, value in {

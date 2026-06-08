@@ -81,9 +81,29 @@ export function Sidebar() {
   return (
     <aside className="w-60 shrink-0 border-r border-neutral-200 bg-white">
       <div className="h-14 flex items-center gap-2 px-5 border-b border-neutral-200">
-        <div className="size-7 rounded-md bg-brand-500" />
+        <div className="grid size-7 place-items-center rounded-md bg-neutral-900">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--color-accent-500)"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m6.5 6.5 11 11" />
+            <path d="m21 21-1-1" />
+            <path d="m3 3 1 1" />
+            <path d="m18 22 4-4" />
+            <path d="m2 6 4-4" />
+            <path d="m3 10 7-7" />
+            <path d="m14 21 7-7" />
+          </svg>
+        </div>
         <span className="font-semibold text-neutral-900 tracking-tight">
-          Gym Management
+          Benisho
         </span>
       </div>
 

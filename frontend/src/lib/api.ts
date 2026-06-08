@@ -24,6 +24,35 @@ export class ApiError extends Error {
   }
 }
 
+// --- Centralized auth-error handling --------------------------------------
+// A single place to react when the server says "you are not (or no longer)
+// authenticated". AuthProvider registers a handler that flips auth state to
+// unauthenticated, so an expired session anywhere redirects to /login instead
+// of every page showing a cryptic error.
+
+type UnauthorizedHandler = () => void
+let unauthorizedHandler: UnauthorizedHandler | null = null
+
+export function setUnauthorizedHandler(fn: UnauthorizedHandler | null) {
+  unauthorizedHandler = fn
+}
+
+/**
+ * Distinguish "session expired / not logged in" from "logged in but forbidden".
+ * A 401 is always an auth error. A 403 is only an auth error when Frappe signals
+ * an authentication/session/CSRF failure — a plain PermissionError (e.g. our
+ * @requires RBAC guard) is NOT, and must not log the user out.
+ */
+function isAuthError(status: number, body: unknown): boolean {
+  if (status === 401) return true
+  if (status !== 403) return false
+  const b = body as { exc_type?: string; exception?: string } | null
+  const signal = `${b?.exc_type ?? ''} ${b?.exception ?? ''}`
+  return /AuthenticationError|SessionExpired|CSRFTokenError|InvalidAuthorizationToken/i.test(
+    signal,
+  )
+}
+
 async function request<T>(
   path: string,
   init: RequestInit = {},
@@ -47,6 +76,12 @@ async function request<T>(
   }
 
   if (!res.ok) {
+    // Surface session-expiry centrally — but never for the login call itself,
+    // where a 401 just means "wrong credentials" and the form shows the error.
+    const isLogin = path.includes('/api/method/login')
+    if (!isLogin && isAuthError(res.status, body)) {
+      unauthorizedHandler?.()
+    }
     const message =
       (body as { message?: string; exception?: string } | null)?.message ??
       (body as { exception?: string } | null)?.exception ??

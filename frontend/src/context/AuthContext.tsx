@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 
-import { authApi } from '@/lib/api'
+import { authApi, setUnauthorizedHandler } from '@/lib/api'
 
 interface Identity {
   user: string
@@ -41,8 +41,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hydrate = useCallback(async () => {
     try {
-      const id = await authApi.currentUser()
-      setState(toState(id))
+      // currentUser() returns Frappe's snake_case shape; map to our Identity.
+      const u = await authApi.currentUser()
+      setState(
+        toState({
+          user: u.user,
+          fullName: u.full_name,
+          roles: u.roles,
+          isAdmin: u.is_admin,
+        }),
+      )
     } catch {
       setState({ status: 'unauthenticated' })
     }
@@ -55,6 +63,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void hydrate()
   }, [hydrate])
+
+  // Any API call that hits an auth error (expired session, lost CSRF) flips us
+  // to unauthenticated; ProtectedRoute then redirects to /login. Registered
+  // once for the app's lifetime.
+  useEffect(() => {
+    setUnauthorizedHandler(() =>
+      setState((prev) =>
+        prev.status === 'unauthenticated' ? prev : { status: 'unauthenticated' },
+      ),
+    )
+    return () => setUnauthorizedHandler(null)
+  }, [])
 
   const login = async (usr: string, pwd: string) => {
     await authApi.login(usr, pwd)

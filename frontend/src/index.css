@@ -23,6 +23,16 @@
   --color-brand-800: #313c87;
   --color-brand-900: #2b3372;
 
+  /* Accent: warm energetic orange. Used sparingly for athletic emphasis
+     (auth screens today; the rest of the UI as we roll out the new look). */
+  --color-accent-50: #fff5ed;
+  --color-accent-100: #ffe8d4;
+  --color-accent-200: #ffd0a8;
+  --color-accent-400: #ff9a4d;
+  --color-accent-500: #f97316;
+  --color-accent-600: #ea580c;
+  --color-accent-700: #c2410c;
+
   /* Neutrals (warm gray) */
   --color-neutral-50: #f7f7f8;
   --color-neutral-100: #eeefef;
