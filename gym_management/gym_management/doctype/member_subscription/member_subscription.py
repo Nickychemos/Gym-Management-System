@@ -30,8 +30,10 @@ class MemberSubscription(Document):
 	# ---------- validations ----------
 
 	def _check_dates(self):
-		if getdate(self.end_date) <= getdate(self.start_date):
-			frappe.throw(_("End Date must be after Start Date"))
+		# A same-day pass (e.g. a 1-day Day Pass) is valid, so end may equal
+		# start; only an end strictly before start is wrong.
+		if getdate(self.end_date) < getdate(self.start_date):
+			frappe.throw(_("End Date cannot be before Start Date"))
 
 	def _check_no_overlap(self):
 		overlap = frappe.db.exists(

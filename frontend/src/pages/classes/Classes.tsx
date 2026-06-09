@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TBody, TD, TH, THead, TR, Table } from '@/components/ui/table'
 import { Tabs } from '@/components/ui/tabs'
+import { useBranch } from '@/context/BranchContext'
 import { useToast } from '@/context/ToastContext'
 import { ApiError } from '@/lib/api'
 import { type ClassScheduleRow, type ClassType } from '@/lib/types'
@@ -120,7 +121,8 @@ function TypesTab({ onEdit, onAdd }: { onEdit: (t: ClassType) => void; onAdd: ()
 
 function SchedulesTab({ onEdit, onAdd }: { onEdit: (s: ClassScheduleRow) => void; onAdd: () => void }) {
   const { toast } = useToast()
-  const { data, isLoading, isError, refetch } = useClassSchedules()
+  const { branchParam } = useBranch()
+  const { data, isLoading, isError, refetch } = useClassSchedules(branchParam)
   const setActive = useSetClassScheduleActive()
 
   return (

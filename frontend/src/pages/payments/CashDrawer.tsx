@@ -12,6 +12,7 @@ import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TBody, TD, TH, THead, TR, Table } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
+import { useBranch } from '@/context/BranchContext'
 import { useToast } from '@/context/ToastContext'
 import { ApiError } from '@/lib/api'
 import { fullDate, ksh } from '@/lib/format'
@@ -26,8 +27,9 @@ import {
 } from '@/queries/cashdrawer'
 
 export function CashDrawerTab() {
-  const summary = useDrawerSummary()
-  const { data, isLoading } = useCashSessions()
+  const { branchParam } = useBranch()
+  const summary = useDrawerSummary(branchParam)
+  const { data, isLoading } = useCashSessions(branchParam)
   const [openDlg, setOpenDlg] = useState(false)
   const [closing, setClosing] = useState<CashSession | null>(null)
   const s = summary.data

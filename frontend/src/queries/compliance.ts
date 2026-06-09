@@ -17,14 +17,18 @@ function useComplianceInvalidation() {
   return () => qc.invalidateQueries({ queryKey: ['compliance'] })
 }
 
-export function useCompliance(params: { bucket?: string; search?: string }) {
-  const { bucket, search } = params
+export function useCompliance(params: {
+  bucket?: string
+  search?: string
+  branch?: string
+}) {
+  const { bucket, search, branch } = params
   return useQuery({
-    queryKey: ['compliance', 'items', { bucket, search }],
+    queryKey: ['compliance', 'items', { bucket, search, branch }],
     queryFn: () =>
       api.callMethodGet<ComplianceListResult>(
         'gym_management.compliance.list_compliance',
-        { bucket, search },
+        { bucket, search, branch },
       ),
   })
 }
@@ -41,11 +45,13 @@ export function useCertifications(params: { bucket?: string; search?: string }) 
   })
 }
 
-export function useComplianceSummary() {
+export function useComplianceSummary(branch?: string) {
   return useQuery({
-    queryKey: ['compliance', 'summary'],
+    queryKey: ['compliance', 'summary', branch ?? null],
     queryFn: () =>
-      api.callMethodGet<ComplianceSummary>('gym_management.compliance.summary'),
+      api.callMethodGet<ComplianceSummary>('gym_management.compliance.summary', {
+        branch,
+      }),
   })
 }
 

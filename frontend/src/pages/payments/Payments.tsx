@@ -17,6 +17,7 @@ import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TBody, TD, TH, THead, TR, Table } from '@/components/ui/table'
 import { Tabs } from '@/components/ui/tabs'
+import { useBranch } from '@/context/BranchContext'
 import { useDebounce } from '@/hooks/useDebounce'
 import { dateTime, ksh, kshCompact } from '@/lib/format'
 import { paymentVariant } from '@/lib/status'
@@ -45,12 +46,14 @@ export default function PaymentsPage() {
   const [searchInput, setSearchInput] = useState(params.get('q') ?? '')
   const search = useDebounce(searchInput, 250)
 
-  const summary = usePaymentSummary()
+  const { branchParam } = useBranch()
+  const summary = usePaymentSummary(branchParam)
   const { data, isLoading, isError, error, refetch, isFetching } =
     usePaymentStream({
       status: status || undefined,
       direction: direction || undefined,
       search: search || undefined,
+      branch: branchParam,
       page,
       pageLength: PAGE_LENGTH,
     })

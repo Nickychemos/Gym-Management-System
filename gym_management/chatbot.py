@@ -29,7 +29,12 @@ import re
 from typing import Callable
 
 import frappe
+from frappe import _
 from frappe.utils import now_datetime
+
+# Direct-call flood guard for the public inbound endpoint (see _enforce_inbound_rate_limit).
+_INBOUND_RL_LIMIT = 20      # max direct requests...
+_INBOUND_RL_WINDOW = 60     # ...per IP per this many seconds
 
 
 # ============================================================================
@@ -214,6 +219,31 @@ ACTION_REGISTRY: dict[str, Callable] = {
 # ============================================================================
 
 
+def _enforce_inbound_rate_limit() -> None:
+	"""Throttle DIRECT, unauthenticated HTTP hits on this endpoint so an abuser
+	can't flood Lead/Member/Session creation. Buckets per source IP.
+
+	Exempts internal dispatch from whatsapp_webhook.receive() (already HMAC
+	verified): that path calls handle_inbound() as a Python function, so
+	frappe.form_dict.cmd is the webhook's cmd, not this method — and legit
+	WhatsApp traffic all shares the provider's IP, which we must not throttle.
+	"""
+	if not frappe.request:
+		return  # server-side / test invocation
+	cmd = frappe.form_dict.get("cmd") or ""
+	if not cmd.endswith("handle_inbound"):
+		return  # invoked internally (e.g. from whatsapp_webhook.receive)
+	ip = getattr(frappe.local, "request_ip", None) or "unknown"
+	cache_key = frappe.cache.make_key(f"chatbot_inbound_rl:{ip}")
+	if not frappe.cache.get(cache_key):
+		frappe.cache.setex(cache_key, _INBOUND_RL_WINDOW, 0)
+	if frappe.cache.incrby(cache_key, 1) > _INBOUND_RL_LIMIT:
+		frappe.throw(
+			_("Too many requests. Please slow down and try again shortly."),
+			frappe.RateLimitExceededError,
+		)
+
+
 @frappe.whitelist(allow_guest=True)
 def handle_inbound(phone_number: str, text: str, channel: str = "WhatsApp") -> dict:
 	"""Process one inbound message. Returns {replies: [str], session: name}."""
@@ -221,6 +251,8 @@ def handle_inbound(phone_number: str, text: str, channel: str = "WhatsApp") -> d
 		find_matching_flow,
 		get_node,
 	)
+
+	_enforce_inbound_rate_limit()
 
 	text = (text or "").strip()
 	if not text:

@@ -14,19 +14,23 @@ function useDrawerInvalidation() {
   return () => qc.invalidateQueries({ queryKey: ['cashdrawer'] })
 }
 
-export function useCashSessions() {
+export function useCashSessions(branch?: string) {
   return useQuery({
-    queryKey: ['cashdrawer', 'sessions'],
+    queryKey: ['cashdrawer', 'sessions', branch ?? null],
     queryFn: () =>
-      api.callMethodGet<CashSession[]>('gym_management.cashdrawer.list_sessions'),
+      api.callMethodGet<CashSession[]>('gym_management.cashdrawer.list_sessions', {
+        branch,
+      }),
   })
 }
 
-export function useDrawerSummary() {
+export function useDrawerSummary(branch?: string) {
   return useQuery({
-    queryKey: ['cashdrawer', 'summary'],
+    queryKey: ['cashdrawer', 'summary', branch ?? null],
     queryFn: () =>
-      api.callMethodGet<DrawerSummary>('gym_management.cashdrawer.drawer_summary'),
+      api.callMethodGet<DrawerSummary>('gym_management.cashdrawer.drawer_summary', {
+        branch,
+      }),
   })
 }
 

@@ -18,20 +18,26 @@ export interface PtListParams {
   status?: string
   search?: string
   trainer?: string
+  branch?: string
   page?: number
   pageLength?: number
 }
 
 export function usePtPackages(params: PtListParams) {
-  const { status, search, trainer, page = 1, pageLength = 25 } = params
+  const { status, search, trainer, branch, page = 1, pageLength = 25 } = params
   const limit_start = (page - 1) * pageLength
   return useQuery({
-    queryKey: ['pt', 'list', { status, search, trainer, limit_start, pageLength }],
+    queryKey: [
+      'pt',
+      'list',
+      { status, search, trainer, branch, limit_start, pageLength },
+    ],
     queryFn: () =>
       api.callMethodGet<PtPackageListResult>('gym_management.pt.list_packages', {
         status,
         search,
         trainer,
+        branch,
         limit_start,
         limit_page_length: pageLength,
       }),

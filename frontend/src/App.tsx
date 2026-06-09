@@ -5,6 +5,7 @@ import { Layout } from '@/components/layout/Layout'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import { RoleGuard } from '@/components/layout/RoleGuard'
 import { AuthProvider } from '@/context/AuthContext'
+import { BranchProvider } from '@/context/BranchContext'
 import { ToastProvider } from '@/context/ToastContext'
 import AcceptInvitePage from '@/pages/AcceptInvite'
 import ClassesPage from '@/pages/classes/Classes'
@@ -55,7 +56,9 @@ function App() {
               element={
                 <ProtectedRoute>
                   <RoleGuard>
-                    <Layout />
+                    <BranchProvider>
+                      <Layout />
+                    </BranchProvider>
                   </RoleGuard>
                 </ProtectedRoute>
               }

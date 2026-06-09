@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TBody, TD, TH, THead, TR, Table } from '@/components/ui/table'
+import { useBranch } from '@/context/BranchContext'
 import { useDebounce } from '@/hooks/useDebounce'
 import { ksh } from '@/lib/format'
 import { ptVariant } from '@/lib/status'
@@ -31,9 +32,11 @@ export default function PtPackagesPage() {
   const [searchInput, setSearchInput] = useState(params.get('q') ?? '')
   const search = useDebounce(searchInput, 250)
 
+  const { branchParam } = useBranch()
   const { data, isLoading, isError, error, refetch } = usePtPackages({
     status: status || undefined,
     search: search || undefined,
+    branch: branchParam,
     page,
     pageLength: PAGE_LENGTH,
   })

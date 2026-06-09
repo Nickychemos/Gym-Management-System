@@ -7,19 +7,21 @@ import { Drawer } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
+import { useBranch } from '@/context/BranchContext'
 import { useToast } from '@/context/ToastContext'
 import { ApiError } from '@/lib/api'
 import { useCreateMember } from '@/queries/members'
 
 const schema = z.object({
   full_name: z.string().min(2, 'Enter the member’s full name'),
+  home_branch: z.string().optional(),
   phone: z.string().min(7, 'Enter a valid phone number'),
   email: z.string().email('Enter a valid email').or(z.literal('')).optional(),
   gender: z.string().optional(),
   date_of_birth: z.string().optional(),
   source: z.string().optional(),
-  emergency_contact_name: z.string().min(2, 'Emergency contact name is required'),
-  emergency_contact_phone: z.string().min(7, 'Emergency contact phone is required'),
+  emergency_contact_name: z.string().optional(),
+  emergency_contact_phone: z.string().optional(),
   emergency_contact_relationship: z.string().optional(),
   tax_id: z.string().optional(),
 })
@@ -46,6 +48,9 @@ interface Props {
 export function AddMemberDrawer({ open, onClose, onCreated }: Props) {
   const { toast } = useToast()
   const createMember = useCreateMember()
+  const { branches, branchParam, canSwitch, multiBranch } = useBranch()
+  // Only ask which branch when there's a real choice to make.
+  const showBranch = multiBranch && canSwitch
   const {
     register,
     handleSubmit,
@@ -53,7 +58,11 @@ export function AddMemberDrawer({ open, onClose, onCreated }: Props) {
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { gender: '', source: 'Walk-in' },
+    defaultValues: {
+      gender: '',
+      source: 'Walk-in',
+      home_branch: branchParam ?? branches[0]?.name ?? '',
+    },
   })
 
   function close() {
@@ -62,16 +71,23 @@ export function AddMemberDrawer({ open, onClose, onCreated }: Props) {
   }
 
   const onSubmit = handleSubmit((values) => {
+    const home_branch =
+      values.home_branch || branchParam || branches[0]?.name || ''
+    if (showBranch && !home_branch) {
+      toast({ variant: 'error', title: 'Select a branch' })
+      return
+    }
     createMember.mutate(
       {
         full_name: values.full_name,
         phone: values.phone,
+        home_branch,
         email: values.email || undefined,
         gender: values.gender || undefined,
         date_of_birth: values.date_of_birth || undefined,
         source: values.source || undefined,
-        emergency_contact_name: values.emergency_contact_name,
-        emergency_contact_phone: values.emergency_contact_phone,
+        emergency_contact_name: values.emergency_contact_name || undefined,
+        emergency_contact_phone: values.emergency_contact_phone || undefined,
         emergency_contact_relationship:
           values.emergency_contact_relationship || undefined,
         tax_id: values.tax_id || undefined,
@@ -122,10 +138,22 @@ export function AddMemberDrawer({ open, onClose, onCreated }: Props) {
           <Field label="Full name" error={errors.full_name?.message} required>
             <Input autoFocus aria-invalid={!!errors.full_name} {...register('full_name')} />
           </Field>
+          {showBranch && (
+            <Field label="Branch" error={errors.home_branch?.message} required>
+              <Select aria-invalid={!!errors.home_branch} {...register('home_branch')}>
+                <option value="">Select a branch</option>
+                {branches.map((b) => (
+                  <option key={b.name} value={b.name}>
+                    {b.branch}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <Field label="Gender">
               <Select {...register('gender')}>
-                <option value="">—</option>
+                <option value="">Not specified</option>
                 {GENDERS.map((g) => (
                   <option key={g} value={g}>
                     {g}
@@ -157,7 +185,6 @@ export function AddMemberDrawer({ open, onClose, onCreated }: Props) {
           <Field
             label="Contact name"
             error={errors.emergency_contact_name?.message}
-            required
           >
             <Input
               aria-invalid={!!errors.emergency_contact_name}
@@ -168,7 +195,6 @@ export function AddMemberDrawer({ open, onClose, onCreated }: Props) {
             <Field
               label="Contact phone"
               error={errors.emergency_contact_phone?.message}
-              required
             >
               <Input
                 type="tel"

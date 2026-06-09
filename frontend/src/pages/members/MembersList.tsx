@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { TBody, TD, TH, THead, TR, Table } from '@/components/ui/table'
 import { useDebounce } from '@/hooks/useDebounce'
 import { ksh, relativeDay } from '@/lib/format'
+import { useBranch } from '@/context/BranchContext'
 import { subscriptionVariant } from '@/lib/status'
 import { useMembers } from '@/queries/members'
 import { AddMemberDrawer } from './AddMemberDrawer'
@@ -57,9 +58,11 @@ export default function MembersListPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debounced])
 
+  const { branchParam } = useBranch()
   const { data, isLoading, isError, error, refetch, isFetching } = useMembers({
     search: debounced || undefined,
     status: status || undefined,
+    branch: branchParam,
     page,
     pageLength: PAGE_LENGTH,
   })

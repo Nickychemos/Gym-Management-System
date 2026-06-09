@@ -17,19 +17,25 @@ const RR =
 export interface RefundListParams {
   status?: string
   search?: string
+  branch?: string
   page?: number
   pageLength?: number
 }
 
 export function useRefunds(params: RefundListParams) {
-  const { status, search, page = 1, pageLength = 25 } = params
+  const { status, search, branch, page = 1, pageLength = 25 } = params
   const limit_start = (page - 1) * pageLength
   return useQuery({
-    queryKey: ['refunds', 'list', { status, search, limit_start, pageLength }],
+    queryKey: [
+      'refunds',
+      'list',
+      { status, search, branch, limit_start, pageLength },
+    ],
     queryFn: () =>
       api.callMethodGet<RefundListResult>('gym_management.refunds.list_refunds', {
         status,
         search,
+        branch,
         limit_start,
         limit_page_length: pageLength,
       }),
@@ -37,11 +43,13 @@ export function useRefunds(params: RefundListParams) {
   })
 }
 
-export function useRefundSummary() {
+export function useRefundSummary(branch?: string) {
   return useQuery({
-    queryKey: ['refunds', 'summary'],
+    queryKey: ['refunds', 'summary', branch ?? null],
     queryFn: () =>
-      api.callMethodGet<RefundSummary>('gym_management.refunds.summary'),
+      api.callMethodGet<RefundSummary>('gym_management.refunds.summary', {
+        branch,
+      }),
   })
 }
 

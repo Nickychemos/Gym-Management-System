@@ -936,6 +936,8 @@ export interface StaffUser {
   enabled: 0 | 1
   last_login: string | null
   roles: string[]
+  /** The branch this staff member is scoped to (custom field gym_branch). */
+  gym_branch?: string | null
   /** True when the user has never logged in (invite not yet accepted). */
   pending?: boolean
 }

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useBranch } from '@/context/BranchContext'
 import { cn } from '@/lib/utils'
 import { fullDate } from '@/lib/format'
 import { type ScheduleSession } from '@/lib/types'
@@ -24,8 +25,9 @@ export default function SchedulePage() {
   const week = params.get('week') ?? undefined
   const [openSession, setOpenSession] = useState<string | null>(null)
 
+  const { branchParam } = useBranch()
   const { data, isLoading, isError, error, refetch, isFetching } =
-    useWeekSchedule(week)
+    useWeekSchedule(week, branchParam)
 
   function setWeek(value?: string) {
     setParams((prev) => {

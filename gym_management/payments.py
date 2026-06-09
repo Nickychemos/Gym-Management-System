@@ -17,6 +17,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import flt, get_first_day, today
 
+from gym_management.branches import resolve_branch_filter
 from gym_management.rbac import FRONTDESK, MANAGER, requires
 
 _TXN_FIELDS = [
@@ -52,6 +53,7 @@ def stream(
 	"""
 	limit_start = int(limit_start)
 	limit_page_length = int(limit_page_length)
+	branch = resolve_branch_filter(branch)
 
 	conds = ["1=1"]
 	params: dict = {}
@@ -67,13 +69,17 @@ def stream(
 			" OR t.account_reference LIKE %(s)s OR c.customer_name LIKE %(s)s)"
 		)
 		params["s"] = f"%{search}%"
-	# Note: M-Pesa Transaction has no branch field; branch filtering would route
-	# through linked docs, deferred until needed.
+	# M-Pesa Transaction has no branch field; scope through the linked member's
+	# home_branch (Member Profile.customer -> home_branch).
+	if branch:
+		conds.append("mp.home_branch = %(branch)s")
+		params["branch"] = branch
 	where = " AND ".join(conds)
 
 	base = """
 		FROM `tabM-Pesa Transaction` t
 		LEFT JOIN `tabCustomer` c ON c.name = t.customer
+		LEFT JOIN `tabMember Profile` mp ON mp.customer = t.customer
 		WHERE {where}
 	""".format(where=where)
 
@@ -112,6 +118,17 @@ def stream(
 def summary(branch: str | None = None) -> dict:
 	"""Payment KPIs for the page header: today's collected total + counts by
 	state, and month-to-date collected."""
+	branch = resolve_branch_filter(branch)
+	# M-Pesa Transaction has no branch field; scope through the linked member's
+	# home_branch via an EXISTS on Member Profile.
+	branch_clause = (
+		""" AND EXISTS (
+			SELECT 1 FROM `tabMember Profile` mp
+			WHERE mp.customer = t.customer AND mp.home_branch = %(branch)s
+		)"""
+		if branch
+		else ""
+	)
 	today_row = frappe.db.sql(
 		"""
 		SELECT
@@ -120,20 +137,20 @@ def summary(branch: str | None = None) -> dict:
 			SUM(status='Success' AND direction='Inbound') AS success_count,
 			SUM(status='Pending') AS pending_count,
 			SUM(status IN ('Failed','Timeout')) AS failed_count
-		FROM `tabM-Pesa Transaction`
-		WHERE DATE(creation) = %(today)s
-		""",
-		{"today": today()},
+		FROM `tabM-Pesa Transaction` t
+		WHERE DATE(creation) = %(today)s {branch_clause}
+		""".format(branch_clause=branch_clause),
+		{"today": today(), "branch": branch},
 		as_dict=True,
 	)[0]
 
 	mtd = frappe.db.sql(
 		"""
-		SELECT COALESCE(SUM(amount), 0) FROM `tabM-Pesa Transaction`
+		SELECT COALESCE(SUM(amount), 0) FROM `tabM-Pesa Transaction` t
 		WHERE status='Success' AND direction='Inbound'
-		  AND creation >= %(month_start)s
-		""",
-		{"month_start": get_first_day(today())},
+		  AND creation >= %(month_start)s {branch_clause}
+		""".format(branch_clause=branch_clause),
+		{"month_start": get_first_day(today()), "branch": branch},
 	)[0][0]
 
 	return {

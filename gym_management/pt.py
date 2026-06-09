@@ -20,6 +20,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import add_days, flt, today
 
+from gym_management.branches import resolve_branch_filter
 from gym_management.rbac import ANY_STAFF, FRONTDESK, requires
 
 _ACTIVE_SESSION_STATES = ["Scheduled", "Completed", "No-Show", "Rescheduled"]
@@ -55,18 +56,22 @@ def list_packages(
 	status: str | None = None,
 	search: str | None = None,
 	trainer: str | None = None,
+	branch: str | None = None,
 	limit_start: int = 0,
 	limit_page_length: int = 25,
 ) -> dict:
 	"""Enriched, paginated PT Package list (docstatus 1 only)."""
 	limit_start = int(limit_start)
 	limit_page_length = int(limit_page_length)
+	branch = resolve_branch_filter(branch)
 
 	filters: dict = {"docstatus": 1}
 	if status:
 		filters["status"] = status
 	if trainer:
 		filters["trainer"] = trainer
+	if branch:
+		filters["branch"] = branch
 
 	or_filters = None
 	if search:

@@ -28,6 +28,14 @@ import { ksh, relativeDay } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { type InviteResult, type PlanRow, type StaffUser } from '@/lib/types'
 import {
+  type BranchRow,
+  useBranches,
+  useCreateBranch,
+  useSetBranchActive,
+  useSetUserBranch,
+  useUpdateBranch,
+} from '@/queries/branches'
+import {
   useInviteUser,
   useIntegrationsStatus,
   usePlans,
@@ -46,6 +54,7 @@ import { PlanDrawer } from './PlanDrawer'
 
 const TABS = [
   { value: 'plans', label: 'Plans' },
+  { value: 'branches', label: 'Branches' },
   { value: 'gym', label: 'Gym' },
   { value: 'brand', label: 'Brand' },
   { value: 'integrations', label: 'Integrations' },
@@ -68,6 +77,7 @@ export default function SettingsPage() {
       </div>
 
       {tab === 'plans' && <PlansTab />}
+      {tab === 'branches' && <BranchesTab />}
       {tab === 'gym' && <GymTab />}
       {tab === 'brand' && <BrandTab />}
       {tab === 'integrations' && <IntegrationsTab />}
@@ -368,6 +378,7 @@ function RowActions({ user, isSelf }: { user: StaffUser; isSelf: boolean }) {
   const remove = useRemoveUser()
   const resend = useResendInvite()
   const [roleOpen, setRoleOpen] = useState(false)
+  const [branchOpen, setBranchOpen] = useState(false)
   const [removeOpen, setRemoveOpen] = useState(false)
   const [result, setResult] = useState<InviteResult | null>(null)
   const isPending = user.pending ?? user.last_login === null
@@ -397,6 +408,9 @@ function RowActions({ user, isSelf }: { user: StaffUser; isSelf: boolean }) {
       <Button variant="ghost" size="sm" disabled={isSelf} onClick={() => setRoleOpen(true)}>
         Role
       </Button>
+      <Button variant="ghost" size="sm" onClick={() => setBranchOpen(true)}>
+        Branch
+      </Button>
       <Button
         variant="ghost"
         size="sm"
@@ -418,6 +432,9 @@ function RowActions({ user, isSelf }: { user: StaffUser; isSelf: boolean }) {
       </Button>
 
       {roleOpen && <ChangeRoleDialog user={user} onClose={() => setRoleOpen(false)} />}
+      {branchOpen && (
+        <ChangeBranchDialog user={user} onClose={() => setBranchOpen(false)} />
+      )}
 
       {removeOpen && (
         <Dialog
@@ -605,5 +622,178 @@ function FormSkeleton() {
     <div className="space-y-4">
       {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className={cn('w-full rounded-lg', i === 0 ? 'h-48' : 'h-40')} />)}
     </div>
+  )
+}
+
+// ---------------- Branches ----------------
+
+function BranchesTab() {
+  const { toast } = useToast()
+  const { data, isLoading } = useBranches()
+  const setActive = useSetBranchActive()
+  const [dialog, setDialog] = useState<{ open: boolean; edit: BranchRow | null }>(
+    { open: false, edit: null },
+  )
+
+  function onError(err: unknown, title: string) {
+    toast({ variant: 'error', title, description: err instanceof ApiError ? err.message : undefined })
+  }
+
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader>
+        <CardTitle>Branches</CardTitle>
+        <Button size="sm" onClick={() => setDialog({ open: true, edit: null })}>
+          <Plus className="size-4" strokeWidth={2} />
+          New branch
+        </Button>
+      </CardHeader>
+      <CardContent className="px-0 py-0">
+        {isLoading ? (
+          <div className="px-5 py-4 space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}</div>
+        ) : !data || data.length === 0 ? (
+          <EmptyState
+            title="No branches yet"
+            description="Add your gym's locations so members, classes and payments can be scoped per branch."
+            action={<Button onClick={() => setDialog({ open: true, edit: null })}><Plus className="size-4" strokeWidth={2} />New branch</Button>}
+          />
+        ) : (
+          <Table>
+            <THead>
+              <TR><TH>Branch</TH><TH>Phone</TH><TH>Address</TH><TH>Active</TH><TH className="text-right">Actions</TH></TR>
+            </THead>
+            <TBody>
+              {data.map((b) => (
+                <TR key={b.name}>
+                  <TD><div className="text-neutral-900">{b.branch}</div></TD>
+                  <TD className="text-neutral-400">{b.gym_phone || 'Not set'}</TD>
+                  <TD className="text-neutral-400">{b.gym_address || 'Not set'}</TD>
+                  <TD>
+                    <label className="inline-flex items-center">
+                      <Checkbox
+                        checked={!!b.gym_is_active}
+                        disabled={setActive.isPending}
+                        onChange={(e) => setActive.mutate({ name: b.name, active: e.target.checked }, { onError: (err) => onError(err, 'Failed') })}
+                      />
+                    </label>
+                  </TD>
+                  <TD className="text-right">
+                    <Button variant="ghost" size="sm" onClick={() => setDialog({ open: true, edit: b })}>Edit</Button>
+                  </TD>
+                </TR>
+              ))}
+            </TBody>
+          </Table>
+        )}
+      </CardContent>
+      {dialog.open && (
+        <BranchDialog edit={dialog.edit} onClose={() => setDialog({ open: false, edit: null })} />
+      )}
+    </Card>
+  )
+}
+
+function BranchDialog({ edit, onClose }: { edit: BranchRow | null; onClose: () => void }) {
+  const { toast } = useToast()
+  const createBranch = useCreateBranch()
+  const updateBranch = useUpdateBranch()
+  const isEdit = !!edit
+  const [name, setName] = useState(edit?.branch ?? '')
+  const [phone, setPhone] = useState(edit?.gym_phone ?? '')
+  const [address, setAddress] = useState(edit?.gym_address ?? '')
+  const busy = createBranch.isPending || updateBranch.isPending
+
+  function onError(err: unknown, title: string) {
+    toast({ variant: 'error', title, description: err instanceof ApiError ? err.message : undefined })
+  }
+
+  function submit() {
+    if (isEdit) {
+      updateBranch.mutate(
+        { name: edit.name, gym_phone: phone, gym_address: address },
+        { onSuccess: () => { toast({ variant: 'success', title: 'Branch updated' }); onClose() }, onError: (err) => onError(err, 'Could not save branch') },
+      )
+    } else {
+      if (!name.trim()) { toast({ variant: 'error', title: 'Branch name is required' }); return }
+      createBranch.mutate(
+        { branch: name.trim(), gym_phone: phone, gym_address: address },
+        { onSuccess: () => { toast({ variant: 'success', title: 'Branch created' }); onClose() }, onError: (err) => onError(err, 'Could not create branch') },
+      )
+    }
+  }
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title={isEdit ? 'Edit branch' : 'New branch'}
+      widthClassName="max-w-md"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={busy}>Cancel</Button>
+          <Button onClick={submit} disabled={busy || (!isEdit && !name.trim())}>
+            {busy ? 'Saving' : isEdit ? 'Save' : 'Create branch'}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <Label htmlFor="b-name">Branch name</Label>
+          <Input id="b-name" value={name} disabled={isEdit} placeholder="e.g. Westlands" onChange={(e) => setName(e.target.value)} />
+          {isEdit && <p className="mt-1 text-tiny text-neutral-400">The branch name can't be changed.</p>}
+        </div>
+        <div>
+          <Label htmlFor="b-phone">Phone</Label>
+          <Input id="b-phone" value={phone} placeholder="e.g. 0712 345 678" onChange={(e) => setPhone(e.target.value)} />
+        </div>
+        <div>
+          <Label htmlFor="b-addr">Address</Label>
+          <Input id="b-addr" value={address} onChange={(e) => setAddress(e.target.value)} />
+        </div>
+      </div>
+    </Dialog>
+  )
+}
+
+function ChangeBranchDialog({ user, onClose }: { user: StaffUser; onClose: () => void }) {
+  const { toast } = useToast()
+  const { data: branches } = useBranches()
+  const setUserBranch = useSetUserBranch()
+  const [branch, setBranch] = useState(user.gym_branch ?? '')
+
+  function submit() {
+    setUserBranch.mutate(
+      { user: user.name, branch: branch || null },
+      {
+        onSuccess: () => { toast({ variant: 'success', title: 'Branch updated' }); onClose() },
+        onError: (err) => toast({ variant: 'error', title: 'Could not set branch', description: err instanceof ApiError ? err.message : undefined }),
+      },
+    )
+  }
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title="Assign branch"
+      description={user.full_name ?? user.name}
+      widthClassName="max-w-md"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={setUserBranch.isPending}>Cancel</Button>
+          <Button onClick={submit} disabled={setUserBranch.isPending}>{setUserBranch.isPending ? 'Saving' : 'Save'}</Button>
+        </>
+      }
+    >
+      <div>
+        <Label htmlFor="user-branch">Branch</Label>
+        <Select id="user-branch" value={branch} onChange={(e) => setBranch(e.target.value)}>
+          <option value="">No branch (all)</option>
+          {(branches ?? []).map((b) => <option key={b.name} value={b.name}>{b.branch}</option>)}
+        </Select>
+        <p className="mt-2 text-tiny text-neutral-500">Receptionists and trainers only see data for their assigned branch.</p>
+      </div>
+    </Dialog>
   )
 }

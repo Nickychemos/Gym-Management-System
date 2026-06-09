@@ -65,12 +65,13 @@ export function useSetClassTypeActive() {
 
 // ---- Class Schedules ----
 
-export function useClassSchedules() {
+export function useClassSchedules(branch?: string) {
   return useQuery({
-    queryKey: ['class-schedules'],
+    queryKey: ['class-schedules', branch ?? null],
     queryFn: () =>
       api.callMethodGet<ClassScheduleRow[]>(
         'gym_management.classes.list_class_schedules',
+        { branch },
       ),
   })
 }

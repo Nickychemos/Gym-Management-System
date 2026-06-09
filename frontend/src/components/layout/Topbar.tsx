@@ -8,6 +8,7 @@ import {
   DropdownSeparator,
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/context/AuthContext'
+import { ALL_BRANCHES, useBranch } from '@/context/BranchContext'
 import { canAccess } from '@/lib/roles'
 
 /** Friendly label for the caller's top role, for the account menu header. */
@@ -22,6 +23,50 @@ function primaryRole(roles: string[], isAdmin: boolean): string {
   return known.find((r) => roles.includes(r)) ?? 'Staff'
 }
 
+/** Branch selector. Owners/managers switch freely (incl. an all-branches view);
+ *  restricted staff see a static chip pinned to their branch. */
+function BranchSwitcher() {
+  const { selected, canSwitch, multiBranch, branches, setBranch } = useBranch()
+  const label = selected === ALL_BRANCHES ? 'All branches' : selected
+
+  // Single-branch gyms have no use for a branch control.
+  if (!multiBranch) return null
+
+  if (!canSwitch) {
+    return (
+      <div className="inline-flex h-8 items-center gap-1.5 rounded-md border border-neutral-200 px-3 text-small text-neutral-700">
+        <span className="size-2 rounded-full bg-success-500" />
+        <span>{label}</span>
+      </div>
+    )
+  }
+
+  return (
+    <DropdownMenu
+      align="start"
+      triggerLabel="Switch branch"
+      className="inline-flex h-8 items-center gap-1.5 rounded-md border border-neutral-200 px-3 text-small text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
+      trigger={
+        <>
+          <span className="size-2 rounded-full bg-success-500" />
+          <span>{label}</span>
+          <ChevronDown className="size-3.5 text-neutral-400" strokeWidth={2} />
+        </>
+      }
+    >
+      <DropdownItem onClick={() => setBranch(ALL_BRANCHES)}>
+        All branches
+      </DropdownItem>
+      {branches.length > 0 && <DropdownSeparator />}
+      {branches.map((b) => (
+        <DropdownItem key={b.name} onClick={() => setBranch(b.name)}>
+          {b.branch}
+        </DropdownItem>
+      ))}
+    </DropdownMenu>
+  )
+}
+
 export function Topbar() {
   const { state, logout } = useAuth()
   const authed = state.status === 'authenticated'
@@ -34,15 +79,7 @@ export function Topbar() {
 
   return (
     <header className="h-14 shrink-0 border-b border-neutral-200/80 bg-white shadow-[0_1px_2px_rgb(15_17_21/0.03)] flex items-center px-5 gap-4">
-      {/* Branch switcher placeholder */}
-      <button
-        type="button"
-        className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-3 h-8 text-small text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300 transition-colors"
-      >
-        <span className="size-2 rounded-full bg-success-500" />
-        <span>Westlands Branch</span>
-        <ChevronDown className="size-3.5 text-neutral-400" strokeWidth={2} />
-      </button>
+      <BranchSwitcher />
 
       {/* ⌘K search — visually present, command palette wires up later */}
       <button

@@ -17,6 +17,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import flt, today
 
+from gym_management.branches import resolve_branch_filter
 from gym_management.rbac import FRONTDESK, MANAGER, requires
 
 # Stages that still need someone to act, grouped for the header KPIs.
@@ -37,6 +38,7 @@ def list_refunds(
 	customer name."""
 	limit_start = int(limit_start)
 	limit_page_length = int(limit_page_length)
+	branch = resolve_branch_filter(branch)
 
 	conds = ["1=1"]
 	params: dict = {}
@@ -87,10 +89,15 @@ def list_refunds(
 
 @frappe.whitelist()
 @requires(MANAGER)
-def summary() -> dict:
+def summary(branch: str | None = None) -> dict:
 	"""Counts per workflow stage for the page header."""
+	branch = resolve_branch_filter(branch)
+	branch_clause = "WHERE branch = %(branch)s" if branch else ""
 	rows = frappe.db.sql(
-		"SELECT status, COUNT(*) FROM `tabRefund Request` GROUP BY status"
+		"SELECT status, COUNT(*) FROM `tabRefund Request` {branch_clause} GROUP BY status".format(
+			branch_clause=branch_clause
+		),
+		{"branch": branch},
 	)
 	by_status = {s: int(n) for s, n in rows}
 	awaiting_approval = sum(by_status.get(s, 0) for s in _AWAITING_APPROVAL)
@@ -98,8 +105,9 @@ def summary() -> dict:
 	refunded_total = frappe.db.sql(
 		"""
 		SELECT COALESCE(SUM(requested_refund_amount), 0)
-		FROM `tabRefund Request` WHERE status = 'Refunded'
-		"""
+		FROM `tabRefund Request` WHERE status = 'Refunded' {branch_clause}
+		""".format(branch_clause="AND branch = %(branch)s" if branch else ""),
+		{"branch": branch},
 	)[0][0]
 	return {
 		"by_status": by_status,

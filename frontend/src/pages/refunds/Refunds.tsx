@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TBody, TD, TH, THead, TR, Table } from '@/components/ui/table'
+import { useBranch } from '@/context/BranchContext'
 import { useDebounce } from '@/hooks/useDebounce'
 import { fullDate, ksh, kshCompact } from '@/lib/format'
 import { refundVariant } from '@/lib/status'
@@ -40,10 +41,12 @@ export default function RefundsPage() {
   const [searchInput, setSearchInput] = useState(params.get('q') ?? '')
   const search = useDebounce(searchInput, 250)
 
-  const summary = useRefundSummary()
+  const { branchParam } = useBranch()
+  const summary = useRefundSummary(branchParam)
   const { data, isLoading, isError, error, refetch } = useRefunds({
     status: status || undefined,
     search: search || undefined,
+    branch: branchParam,
     page,
     pageLength: PAGE_LENGTH,
   })

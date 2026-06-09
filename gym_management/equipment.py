@@ -26,6 +26,7 @@ Public API:
 from __future__ import annotations
 
 import frappe
+from gym_management.branches import resolve_branch_filter
 from gym_management.rbac import MANAGER, requires
 from frappe.utils import add_days, flt, getdate, now_datetime, today
 
@@ -172,6 +173,7 @@ def list_equipment(
 ) -> dict:
 	"""Every machine + derived operational status. `op_status` filters by the
 	computed status (Operational / Maintenance Due / Out of Service)."""
+	branch = resolve_branch_filter(branch)
 	filters: dict = {"docstatus": ["<", 2]}
 	if search:
 		filters["asset_name"] = ["like", f"%{search}%"]
@@ -436,6 +438,7 @@ def list_tickets(
 ) -> dict:
 	limit_start = int(limit_start)
 	limit_page_length = int(limit_page_length)
+	branch = resolve_branch_filter(branch)
 	filters: dict = {"docstatus": 1}
 	if status == "Open":
 		filters["status"] = ["in", list(_OPEN_STATES)]
@@ -488,6 +491,7 @@ def list_tickets(
 @frappe.whitelist()
 @requires(MANAGER)
 def ticket_summary(branch: str | None = None) -> dict:
+	branch = resolve_branch_filter(branch)
 	base = {"docstatus": 1}
 	if branch:
 		base["branch"] = branch

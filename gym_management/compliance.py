@@ -13,6 +13,7 @@ module computes `days_to_expiry` + a severity bucket fresh on every read.
 from __future__ import annotations
 
 import frappe
+from gym_management.branches import resolve_branch_filter
 from gym_management.rbac import MANAGER, requires
 from frappe.utils import date_diff, flt, getdate, today
 
@@ -41,14 +42,18 @@ def list_compliance(
 	bucket: str | None = None,
 	category: str | None = None,
 	search: str | None = None,
+	branch: str | None = None,
 	limit_start: int = 0,
 	limit_page_length: int = 50,
 ) -> dict:
 	"""Compliance items with freshly computed expiry. `bucket` filters by
 	expired/soon/ok (computed, applied after the DB read)."""
+	branch = resolve_branch_filter(branch)
 	filters: dict = {}
 	if category:
 		filters["compliance_category"] = category
+	if branch:
+		filters["branch"] = branch
 	if search:
 		filters["compliance_name"] = ["like", f"%{search}%"]
 
@@ -146,10 +151,14 @@ def list_certifications(
 
 @frappe.whitelist()
 @requires(MANAGER)
-def summary() -> dict:
+def summary(branch: str | None = None) -> dict:
 	"""Expiring-soon / expired counts across compliance items and certs."""
-	def buckets(doctype, date_field):
-		rows = frappe.get_all(doctype, fields=[f"{date_field} as expires_on"])
+	branch = resolve_branch_filter(branch)
+
+	def buckets(doctype, date_field, filters=None):
+		rows = frappe.get_all(
+			doctype, filters=filters or {}, fields=[f"{date_field} as expires_on"]
+		)
 		soon = expired = 0
 		for r in rows:
 			_, sev = _severity(r.expires_on)
@@ -159,7 +168,11 @@ def summary() -> dict:
 				expired += 1
 		return soon, expired
 
-	c_soon, c_expired = buckets("Compliance Item", "expires_on")
+	# Compliance Item is branch-scoped; Certification Register has no branch field
+	# (staff certs are gym-wide), so it stays unscoped.
+	c_soon, c_expired = buckets(
+		"Compliance Item", "expires_on", {"branch": branch} if branch else None
+	)
 	cert_soon, cert_expired = buckets("Certification Register", "expires_on")
 	return {
 		"compliance_soon": c_soon,

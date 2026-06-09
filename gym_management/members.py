@@ -20,6 +20,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import add_days, flt, get_first_day, getdate, today
 
+from gym_management.branches import resolve_branch_filter
 from gym_management.rbac import ANY_STAFF, FRONTDESK, requires
 
 
@@ -49,6 +50,8 @@ def list_members(
 	"""
 	limit_start = int(limit_start)
 	limit_page_length = int(limit_page_length)
+	# Restricted staff are pinned to their branch; managers get requested/all.
+	branch = resolve_branch_filter(branch)
 
 	conds = ["1=1"]
 	params: dict = {}
@@ -284,7 +287,7 @@ def member_activity(member: str, limit: int = 20) -> list[dict]:
 		items.append(
 			{
 				"type": "payment",
-				"title": f"{verb} — KSh {flt(p.amount):,.0f}",
+				"title": f"{verb}: KSh {flt(p.amount):,.0f}",
 				"at": str(p.mpesa_timestamp or p.creation),
 				"ref_doctype": "M-Pesa Transaction",
 				"ref_name": p.name,
@@ -341,7 +344,7 @@ def member_activity(member: str, limit: int = 20) -> list[dict]:
 		items.append(
 			{
 				"type": "survey",
-				"title": f"Survey — {detail}",
+				"title": f"Survey: {detail}",
 				"at": str(s.submitted_on) if s.submitted_on else None,
 				"ref_doctype": "Survey Response",
 				"ref_name": s.name,
@@ -352,15 +355,15 @@ def member_activity(member: str, limit: int = 20) -> list[dict]:
 	for pt in frappe.get_all(
 		"PT Package",
 		filters={"customer": customer},
-		fields=["name", "sessions_purchased", "start_date"],
-		order_by="start_date desc",
+		fields=["name", "sessions_purchased", "creation"],
+		order_by="creation desc",
 		limit=limit,
 	):
 		items.append(
 			{
 				"type": "pt",
-				"title": f"PT package — {int(pt.sessions_purchased or 0)} sessions",
-				"at": str(pt.start_date) if pt.start_date else None,
+				"title": f"PT package: {int(pt.sessions_purchased or 0)} sessions",
+				"at": str(pt.creation),
 				"ref_doctype": "PT Package",
 				"ref_name": pt.name,
 			}
@@ -370,15 +373,15 @@ def member_activity(member: str, limit: int = 20) -> list[dict]:
 	for sub in frappe.get_all(
 		"Member Subscription",
 		filters={"customer": customer},
-		fields=["name", "membership_plan", "start_date"],
-		order_by="start_date desc",
+		fields=["name", "membership_plan", "creation"],
+		order_by="creation desc",
 		limit=limit,
 	):
 		items.append(
 			{
 				"type": "subscription",
-				"title": f"Subscription — {sub.membership_plan}",
-				"at": str(sub.start_date) if sub.start_date else None,
+				"title": f"Subscription: {sub.membership_plan}",
+				"at": str(sub.creation),
 				"ref_doctype": "Member Subscription",
 				"ref_name": sub.name,
 			}
@@ -416,8 +419,8 @@ def _default_territory() -> str:
 def create_member(
 	full_name: str,
 	phone: str,
-	emergency_contact_name: str,
-	emergency_contact_phone: str,
+	emergency_contact_name: str | None = None,
+	emergency_contact_phone: str | None = None,
 	email: str | None = None,
 	gender: str | None = None,
 	date_of_birth: str | None = None,

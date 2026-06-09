@@ -97,11 +97,13 @@ website_route_rules = [
 after_install = [
 	"gym_management.users.seed_gym_roles",
 	"gym_management.rbac.seed_doctype_permissions",
+	"gym_management.branches.setup_branch_fields",
 ]
 
 after_migrate = [
 	"gym_management.users.seed_gym_roles",
 	"gym_management.rbac.seed_doctype_permissions",
+	"gym_management.branches.setup_branch_fields",
 ]
 
 # Uninstallation

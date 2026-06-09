@@ -29,25 +29,31 @@ export function useEquipment(params: {
   search?: string
   op_status?: string
   category?: string
+  branch?: string
 }) {
-  const { search, op_status, category } = params
+  const { search, op_status, category, branch } = params
   return useQuery({
-    queryKey: ['equipment', 'register', { search, op_status, category }],
+    queryKey: [
+      'equipment',
+      'register',
+      { search, op_status, category, branch },
+    ],
     queryFn: () =>
       api.callMethodGet<EquipmentListResult>(
         'gym_management.equipment.list_equipment',
-        { search, op_status, category },
+        { search, op_status, category, branch },
       ),
     placeholderData: keepPreviousData,
   })
 }
 
-export function useEquipmentSummary() {
+export function useEquipmentSummary(branch?: string) {
   return useQuery({
-    queryKey: ['equipment', 'register-summary'],
+    queryKey: ['equipment', 'register-summary', branch ?? null],
     queryFn: () =>
       api.callMethodGet<EquipmentSummary>(
         'gym_management.equipment.equipment_summary',
+        { branch },
       ),
   })
 }
@@ -123,19 +129,25 @@ export function useMarkServiced() {
 export interface TicketListParams {
   status?: string
   search?: string
+  branch?: string
   page?: number
   pageLength?: number
 }
 
 export function useTickets(params: TicketListParams) {
-  const { status, search, page = 1, pageLength = 25 } = params
+  const { status, search, branch, page = 1, pageLength = 25 } = params
   const limit_start = (page - 1) * pageLength
   return useQuery({
-    queryKey: ['equipment', 'tickets', { status, search, limit_start, pageLength }],
+    queryKey: [
+      'equipment',
+      'tickets',
+      { status, search, branch, limit_start, pageLength },
+    ],
     queryFn: () =>
       api.callMethodGet<TicketListResult>('gym_management.equipment.list_tickets', {
         status,
         search,
+        branch,
         limit_start,
         limit_page_length: pageLength,
       }),
@@ -143,11 +155,13 @@ export function useTickets(params: TicketListParams) {
   })
 }
 
-export function useTicketSummary() {
+export function useTicketSummary(branch?: string) {
   return useQuery({
-    queryKey: ['equipment', 'summary'],
+    queryKey: ['equipment', 'summary', branch ?? null],
     queryFn: () =>
-      api.callMethodGet<TicketSummary>('gym_management.equipment.ticket_summary'),
+      api.callMethodGet<TicketSummary>('gym_management.equipment.ticket_summary', {
+        branch,
+      }),
   })
 }
 

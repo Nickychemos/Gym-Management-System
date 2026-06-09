@@ -10,6 +10,7 @@ import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TBody, TD, TH, THead, TR, Table } from '@/components/ui/table'
 import { Tabs } from '@/components/ui/tabs'
+import { useBranch } from '@/context/BranchContext'
 import { fullDate } from '@/lib/format'
 import { severityVariant } from '@/lib/status'
 import { cn } from '@/lib/utils'
@@ -49,7 +50,8 @@ export default function CompliancePage() {
   const [params, setParams] = useSearchParams()
   const tab = params.get('tab') ?? 'items'
   const bucket = params.get('bucket') ?? ''
-  const summary = useComplianceSummary()
+  const { branchParam } = useBranch()
+  const summary = useComplianceSummary(branchParam)
 
   const [itemDrawer, setItemDrawer] = useState<{ open: boolean; edit: ComplianceRow | null }>({ open: false, edit: null })
   const [certDrawer, setCertDrawer] = useState<{ open: boolean; edit: CertRow | null }>({ open: false, edit: null })
@@ -142,7 +144,11 @@ function ComplianceItems({
   onEdit: (row: ComplianceRow) => void
   onAdd: () => void
 }) {
-  const { data, isLoading, isError } = useCompliance({ bucket: bucket || undefined })
+  const { branchParam } = useBranch()
+  const { data, isLoading, isError } = useCompliance({
+    bucket: bucket || undefined,
+    branch: branchParam,
+  })
   const rows = data?.rows ?? []
 
   return (

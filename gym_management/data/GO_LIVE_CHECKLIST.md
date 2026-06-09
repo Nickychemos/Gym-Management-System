@@ -76,7 +76,37 @@ verifies the Meta `X-Hub-Signature-256` HMAC using `whatsapp_app_secret`.
 - A **Default Outgoing Email Account** enabled (staff invites + renewal reminders).
 - Confirm **automated DB backups** are on and you have **test-restored once**.
 
-## 5. RBAC
+## 5. Abuse protection (guest endpoints)
+
+The public chatbot endpoint already throttles **direct** hits per source IP in
+app code (`chatbot._enforce_inbound_rate_limit`, 20 req / 60 s). That catches a
+single abuser but not one rotating IPs. Add an nginx limit on the guest paths as
+the stronger outer layer:
+
+```nginx
+# in the http{} block
+limit_req_zone $binary_remote_addr zone=gymguest:10m rate=10r/s;
+
+# in the server{} block, on the chatbot + webhook entrypoints
+location ~ ^/api/method/gym_management\..*(handle_inbound|whatsapp_webhook\.receive) {
+    limit_req zone=gymguest burst=20 nodelay;
+    try_files $uri @webserver;
+}
+```
+
+The M-Pesa callback and WhatsApp webhook paths are authenticated (callback token
+/ HMAC), so do **not** rate-limit those aggressively — Daraja/Meta retry and you
+could drop real payment/message events.
+
+## 6. Error monitoring (recommended before launch)
+
+The frontend has an error boundary that calls an optional `window.__reportError`
+hook; the backend logs to **Error Log**. To get alerted on production errors,
+wire a monitor (e.g. Sentry): set `window.__reportError` in `index.html`/app
+bootstrap, and add a Frappe logging handler or the Sentry Frappe integration.
+Until then, watch **Error Log** (Desk) and the M-Pesa callback-auth entries.
+
+## 7. RBAC
 
 The preflight verifies this, but to (re)apply the roles + DocType permissions:
 

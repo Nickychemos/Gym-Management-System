@@ -17,26 +17,28 @@ export interface PaymentStreamParams {
   status?: string
   direction?: string
   search?: string
+  branch?: string
   page?: number
   pageLength?: number
 }
 
 /** Enriched, paginated M-Pesa transaction feed. Auto-refreshes so STK pushes
- *  flip Pending → Success in near-real-time without a manual reload. */
+ *  flip Pending to Success in near-real-time without a manual reload. */
 export function usePaymentStream(params: PaymentStreamParams) {
-  const { status, direction, search, page = 1, pageLength = 25 } = params
+  const { status, direction, search, branch, page = 1, pageLength = 25 } = params
   const limit_start = (page - 1) * pageLength
   return useQuery({
     queryKey: [
       'payments',
       'stream',
-      { status, direction, search, limit_start, pageLength },
+      { status, direction, search, branch, limit_start, pageLength },
     ],
     queryFn: () =>
       api.callMethodGet<PaymentStreamResult>('gym_management.payments.stream', {
         status,
         direction,
         search,
+        branch,
         limit_start,
         limit_page_length: pageLength,
       }),

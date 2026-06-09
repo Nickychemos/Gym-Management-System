@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import frappe
 
+from gym_management.branches import resolve_branch_filter
 from gym_management.rbac import ANY_STAFF, MANAGER, requires
 
 DAY_FIELDS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
@@ -127,6 +128,7 @@ def set_class_type_active(name: str, active: int | str) -> dict:
 @frappe.whitelist()
 @requires(ANY_STAFF)
 def list_class_schedules(branch: str | None = None) -> list[dict]:
+	branch = resolve_branch_filter(branch)
 	filters = {}
 	if branch:
 		filters["branch"] = branch

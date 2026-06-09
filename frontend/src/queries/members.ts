@@ -196,8 +196,8 @@ export function useCreateSubscription(member?: string) {
 export interface CreateMemberInput {
   full_name: string
   phone: string
-  emergency_contact_name: string
-  emergency_contact_phone: string
+  emergency_contact_name?: string
+  emergency_contact_phone?: string
   email?: string
   gender?: string
   date_of_birth?: string

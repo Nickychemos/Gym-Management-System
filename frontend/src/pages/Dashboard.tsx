@@ -5,13 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
+import { useBranch } from '@/context/BranchContext'
 import { ksh, kshCompact } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { type DashboardSummary } from '@/lib/types'
 import { useDashboardSummary } from '@/queries/dashboard'
 
 export default function DashboardPage() {
-  const { data, isLoading, isError, error, refetch } = useDashboardSummary()
+  const { branchParam } = useBranch()
+  const { data, isLoading, isError, error, refetch } =
+    useDashboardSummary(branchParam)
 
   return (
     <div>

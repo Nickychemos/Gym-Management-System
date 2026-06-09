@@ -8,7 +8,7 @@ Public API:
   Config:   get_settings, update_gym_settings, update_brand_settings
   Plans:    list_plans, create_plan, update_plan, set_plan_active
   Status:   integrations_status
-  Users:    list_staff, list_roles, add_staff
+  Users:    list_staff, list_roles
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import flt
 
-from gym_management.rbac import ADMIN, ANY_STAFF, MANAGER, requires
+from gym_management.rbac import ANY_STAFF, MANAGER, requires
 
 # Fields the UI may edit on each Single (allow-listed so nothing else leaks).
 _GYM_FIELDS = [
@@ -235,7 +235,7 @@ def list_staff() -> list[dict]:
 	users = frappe.get_all(
 		"User",
 		filters={"name": ["not in", _SYSTEM_USERS], "user_type": "System User"},
-		fields=["name", "full_name", "enabled", "last_login"],
+		fields=["name", "full_name", "enabled", "last_login", "gym_branch"],
 		order_by="full_name asc",
 	)
 	for u in users:
@@ -264,29 +264,3 @@ def list_roles() -> list[str]:
 		"Role", filters={"disabled": 0, "is_custom": 1}, fields=["name"]
 	)
 	return [r.name for r in custom] + [r.name for r in rows]
-
-
-@frappe.whitelist()
-@requires(ADMIN)
-def add_staff(email: str, full_name: str, role: str | None = None) -> dict:
-	"""Create a staff (System User) with an optional role. No welcome email is
-	sent (dev-safe); the user resets their password to sign in."""
-	if frappe.db.exists("User", email):
-		frappe.throw(frappe._("A user with this email already exists"))
-	parts = (full_name or "").strip().split(" ", 1)
-	doc = frappe.get_doc(
-		{
-			"doctype": "User",
-			"email": email,
-			"first_name": parts[0] or email,
-			"last_name": parts[1] if len(parts) > 1 else "",
-			"user_type": "System User",
-			"send_welcome_email": 0,
-		}
-	)
-	if role:
-		doc.append("roles", {"role": role})
-	doc.flags.no_welcome_mail = True
-	doc.insert(ignore_permissions=True)
-	frappe.db.commit()
-	return {"ok": True, "user": doc.name}

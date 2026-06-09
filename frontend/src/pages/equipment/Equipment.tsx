@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TBody, TD, TH, THead, TR, Table } from '@/components/ui/table'
 import { Tabs } from '@/components/ui/tabs'
+import { useBranch } from '@/context/BranchContext'
 import { useToast } from '@/context/ToastContext'
 import { useDebounce } from '@/hooks/useDebounce'
 import { ApiError } from '@/lib/api'
@@ -40,7 +41,8 @@ export default function EquipmentPage() {
   const [addEquip, setAddEquip] = useState(false)
   const [reportIssue, setReportIssue] = useState(false)
 
-  const summary = useEquipmentSummary()
+  const { branchParam } = useBranch()
+  const summary = useEquipmentSummary(branchParam)
   const s = summary.data
 
   function setParam(key: string, value: string) {
@@ -131,12 +133,14 @@ function RegisterTab({
   const category = params.get('category') ?? ''
   const [searchInput, setSearchInput] = useState(params.get('q') ?? '')
   const search = useDebounce(searchInput, 250)
+  const { branchParam } = useBranch()
   const { data: categories } = useEquipmentCategories()
 
   const { data, isLoading, isError, refetch } = useEquipment({
     search: search || undefined,
     op_status: status || undefined,
     category: category || undefined,
+    branch: branchParam,
   })
   const rows = data?.rows ?? []
 
@@ -227,9 +231,11 @@ function TicketsTab({
   const status = params.get('status') ?? 'Open'
   const [searchInput, setSearchInput] = useState(params.get('q') ?? '')
   const search = useDebounce(searchInput, 250)
+  const { branchParam } = useBranch()
   const { data, isLoading, isError, refetch } = useTickets({
     status: status === 'All' ? undefined : status,
     search: search || undefined,
+    branch: branchParam,
   })
   const rows = data?.rows ?? []
 

@@ -15,6 +15,7 @@ through these thin wrappers rather than poking at /api/resource directly.
 from __future__ import annotations
 
 import frappe
+from gym_management.branches import resolve_branch_filter
 from gym_management.rbac import ANY_STAFF, requires
 from frappe.utils import add_days, get_datetime, getdate, today
 
@@ -44,6 +45,7 @@ def week(branch: str | None = None, week_start: str | None = None) -> dict:
 	                      spots_remaining, status}],
 	    }
 	"""
+	branch = resolve_branch_filter(branch)
 	start = _monday_of(week_start)
 	end = add_days(start, 6)
 

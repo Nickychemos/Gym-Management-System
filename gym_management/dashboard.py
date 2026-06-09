@@ -17,6 +17,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import add_days, get_first_day, now_datetime, today
 
+from gym_management.branches import resolve_branch_filter
 from gym_management.rbac import ANY_STAFF, MANAGER, has_tier, requires
 
 
@@ -302,7 +303,9 @@ def summary(branch: str | None = None) -> dict:
 	        "nps": {...} | None,      # None for non-managers
 	    }
 	"""
-	branch = branch or None
+	# Restricted staff are pinned to their own branch; managers get the
+	# requested branch (or all). Enforced server-side, not just in the UI.
+	branch = resolve_branch_filter(branch)
 	can_finance = has_tier(MANAGER)
 
 	kpis = _kpis(branch)

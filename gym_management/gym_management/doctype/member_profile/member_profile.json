@@ -184,14 +184,14 @@
    "fieldname": "emergency_contact_name",
    "fieldtype": "Data",
    "label": "Emergency Contact Name",
-   "reqd": 1
+   "reqd": 0
   },
   {
    "fieldname": "emergency_contact_phone",
    "fieldtype": "Data",
    "label": "Emergency Contact Phone",
    "options": "Phone",
-   "reqd": 1
+   "reqd": 0
   },
   {
    "fieldname": "emergency_contact_relationship",

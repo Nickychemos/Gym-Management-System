@@ -14,6 +14,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import flt, today
 
+from gym_management.branches import resolve_branch_filter
 from gym_management.rbac import MANAGER, requires
 
 _OPEN = "Open"
@@ -22,6 +23,7 @@ _OPEN = "Open"
 @frappe.whitelist()
 @requires(MANAGER)
 def list_sessions(branch: str | None = None, status: str | None = None, limit: int = 50) -> list[dict]:
+	branch = resolve_branch_filter(branch)
 	filters: dict = {"docstatus": ["<", 2]}
 	if branch:
 		filters["branch"] = branch
@@ -59,6 +61,7 @@ def list_sessions(branch: str | None = None, status: str | None = None, limit: i
 @frappe.whitelist()
 @requires(MANAGER)
 def drawer_summary(branch: str | None = None) -> dict:
+	branch = resolve_branch_filter(branch)
 	base: dict = {"docstatus": ["<", 2]}
 	if branch:
 		base["branch"] = branch
@@ -66,9 +69,9 @@ def drawer_summary(branch: str | None = None) -> dict:
 	today_variance = frappe.db.sql(
 		"""
 		SELECT COALESCE(SUM(variance), 0) FROM `tabCash Drawer Session`
-		WHERE shift_date = %(today)s AND status != 'Open'
-		""",
-		{"today": today()},
+		WHERE shift_date = %(today)s AND status != 'Open' {branch_clause}
+		""".format(branch_clause="AND branch = %(branch)s" if branch else ""),
+		{"today": today(), "branch": branch},
 	)[0][0]
 	return {"open_drawers": int(open_count), "today_variance": flt(today_variance)}
 
