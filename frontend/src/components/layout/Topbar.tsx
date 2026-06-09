@@ -1,6 +1,7 @@
-import { Bell, ChevronDown, LogOut, Search, Settings, User } from 'lucide-react'
+import { ChevronDown, LogOut, Search, Settings, User } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
+import { NotificationBell } from '@/components/notifications/NotificationBell'
 import {
   DropdownItem,
   DropdownLabel,
@@ -98,14 +99,7 @@ export function Topbar() {
       </button>
 
       <div className="ml-auto flex items-center gap-1">
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="relative inline-flex items-center justify-center size-8 rounded-md text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
-        >
-          <Bell className="size-4" strokeWidth={1.75} />
-          <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-danger-500" />
-        </button>
+        <NotificationBell />
 
         <div className="ml-1 pl-2 border-l border-neutral-200">
           <DropdownMenu

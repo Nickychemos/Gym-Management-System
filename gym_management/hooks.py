@@ -158,19 +158,22 @@ after_migrate = [
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+# Real-time notifications: fire on key events (handlers in notifications.py).
+doc_events = {
+	"Member Profile": {"after_insert": "gym_management.notifications.on_new_member"},
+	"Refund Request": {"after_insert": "gym_management.notifications.on_refund_request"},
+	"Equipment Maintenance Ticket": {
+		"after_insert": "gym_management.notifications.on_equipment_ticket"
+	},
+}
 
 # Scheduled Tasks
 # ---------------
 
 scheduler_events = {
 	"daily": [
+		# Summary notifications: renewals due this week + compliance expiring.
+		"gym_management.notifications.daily_digest",
 		# Flip Active freezes whose freeze_end_date has passed to Completed,
 		# and unfreeze the parent Member Subscription back to Active.
 		"gym_management.gym_management.doctype.subscription_freeze.subscription_freeze.auto_resume_expired",

@@ -57,6 +57,13 @@ export function monthYear(value: string | null | undefined): string {
   return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
 }
 
+/** "5 minutes ago", "2 hours ago" — for notification timestamps. */
+export function relativeTime(value: string | null | undefined): string {
+  const d = parse(value)
+  if (!d) return ''
+  return formatDistanceToNowStrict(d, { addSuffix: true })
+}
+
 /** "Jun 22, 2026" */
 export function fullDate(value: string | null | undefined): string {
   const d = parse(value)

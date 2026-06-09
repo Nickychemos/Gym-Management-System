@@ -57,6 +57,12 @@ export default defineConfig(({ command }) => ({
       },
       '/assets': 'http://internal-app.localhost:8000',
       '/files': 'http://internal-app.localhost:8000',
+      // Frappe socketio (real-time notifications) runs on its own port.
+      '/socket.io': {
+        target: 'http://internal-app.localhost:9000',
+        changeOrigin: true,
+        ws: true,
+      },
     },
   },
 }))
