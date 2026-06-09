@@ -42,7 +42,10 @@ const ICONS: Record<string, LucideIcon> = {
 interface Row {
   label: string
   sublabel: string
-  route: string
+  /** Navigate here when selected (data + page results). */
+  route?: string
+  /** Re-run this search term when selected (recent searches). */
+  query?: string
   Icon: LucideIcon
 }
 interface Group {
@@ -50,22 +53,22 @@ interface Group {
   rows: Row[]
 }
 
-const RECENT_KEY = 'benisho:search-recent'
-interface Recent {
-  label: string
-  sublabel: string
-  route: string
-}
+const RECENT_KEY = 'benisho:recent-searches'
 
-function loadRecent(): Recent[] {
+function loadRecentQueries(): string[] {
   try {
     return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]')
   } catch {
     return []
   }
 }
-function pushRecent(r: Recent) {
-  const next = [r, ...loadRecent().filter((x) => x.route !== r.route)].slice(0, 6)
+function pushRecentQuery(q: string) {
+  const term = q.trim()
+  if (term.length < 2) return
+  const next = [
+    term,
+    ...loadRecentQueries().filter((x) => x.toLowerCase() !== term.toLowerCase()),
+  ].slice(0, 6)
   try {
     localStorage.setItem(RECENT_KEY, JSON.stringify(next))
   } catch {
@@ -150,9 +153,14 @@ function Palette({ onClose }: { onClose: () => void }) {
 
   const groups: Group[] = useMemo(() => {
     if (debounced.length < 2) {
-      const recent = loadRecent().map((r) => ({ ...r, Icon: Clock }))
+      const recent: Row[] = loadRecentQueries().map((q) => ({
+        label: q,
+        sublabel: '',
+        query: q,
+        Icon: Clock,
+      }))
       const out: Group[] = []
-      if (recent.length) out.push({ label: 'Recent', rows: recent })
+      if (recent.length) out.push({ label: 'Recent searches', rows: recent })
       out.push({ label: 'Go to', rows: pageRows.slice(0, 7) })
       return out
     }
@@ -172,7 +180,14 @@ function Palette({ onClose }: { onClose: () => void }) {
   const flat = useMemo(() => groups.flatMap((g) => g.rows), [groups])
 
   function select(row: Row) {
-    pushRecent({ label: row.label, sublabel: row.sublabel, route: row.route })
+    // Recent-search rows re-run the term instead of navigating.
+    if (row.query !== undefined) {
+      setQuery(row.query)
+      setActive(0)
+      return
+    }
+    if (!row.route) return
+    pushRecentQuery(query)
     onClose()
     navigate(row.route)
   }
@@ -252,10 +267,11 @@ function Palette({ onClose }: { onClose: () => void }) {
                   const here = idx
                   return (
                     <button
-                      key={`${g.label}-${row.route}-${row.label}`}
+                      key={`${g.label}-${row.route ?? row.query}-${row.label}`}
                       type="button"
                       data-active={isActive}
                       onMouseMove={() => setActive(here)}
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={() => select(row)}
                       className={cn(
                         'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left',
