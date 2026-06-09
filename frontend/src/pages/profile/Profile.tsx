@@ -8,7 +8,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
-import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { useAuth } from '@/context/AuthContext'
@@ -18,7 +17,6 @@ import {
   type MyProfile,
   useChangeMyPassword,
   useMyProfile,
-  useProfileOptions,
   useRemoveAvatar,
   useUpdateMyProfile,
   useUploadAvatar,
@@ -98,12 +96,6 @@ export default function ProfilePage() {
             description="Your name and contact information."
           >
             <PersonalDetails profile={data} />
-          </Section>
-          <Section
-            title="Preferences"
-            description="Language and time zone used across the app."
-          >
-            <Preferences profile={data} />
           </Section>
           <Section
             title="Account"
@@ -337,79 +329,6 @@ function PersonalDetails({ profile }: { profile: MyProfile }) {
       <div className="mt-5 flex justify-end">
         <Button type="submit" disabled={!dirty || update.isPending}>
           {update.isPending ? 'Saving' : 'Save changes'}
-        </Button>
-      </div>
-    </form>
-  )
-}
-
-// ------------------------------------------------------------ preferences ---
-
-function Preferences({ profile }: { profile: MyProfile }) {
-  const { data: options } = useProfileOptions()
-  const update = useUpdateMyProfile()
-  const { toast } = useToast()
-
-  const [language, setLanguage] = useState(profile.language ?? '')
-  const [timeZone, setTimeZone] = useState(profile.time_zone ?? '')
-
-  const dirty =
-    language !== (profile.language ?? '') || timeZone !== (profile.time_zone ?? '')
-
-  function onSubmit(e: FormEvent) {
-    e.preventDefault()
-    if (!dirty) return
-    update.mutate(
-      { language, time_zone: timeZone },
-      {
-        onSuccess: () => toast({ variant: 'success', title: 'Preferences saved' }),
-        onError: (err) =>
-          toast({
-            variant: 'error',
-            title: 'Could not save preferences',
-            description: err instanceof ApiError ? err.message : undefined,
-          }),
-      },
-    )
-  }
-
-  return (
-    <form onSubmit={onSubmit}>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <Label htmlFor="lang">Language</Label>
-          <Select
-            id="lang"
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-          >
-            <option value="">System default</option>
-            {options?.languages.map((l) => (
-              <option key={l.code} value={l.code}>
-                {l.label}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="tz">Time zone</Label>
-          <Select
-            id="tz"
-            value={timeZone}
-            onChange={(e) => setTimeZone(e.target.value)}
-          >
-            <option value="">System default</option>
-            {options?.timezones.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </Select>
-        </div>
-      </div>
-      <div className="mt-5 flex justify-end">
-        <Button type="submit" disabled={!dirty || update.isPending}>
-          {update.isPending ? 'Saving' : 'Save preferences'}
         </Button>
       </div>
     </form>

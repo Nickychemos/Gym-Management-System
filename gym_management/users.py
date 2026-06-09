@@ -152,8 +152,6 @@ def get_my_profile() -> dict:
 				"mobile_no",
 				"phone",
 				"user_image",
-				"language",
-				"time_zone",
 				"last_login",
 				"creation",
 			],
@@ -176,11 +174,9 @@ def update_my_profile(
 	last_name: str | None = None,
 	mobile_no: str | None = None,
 	phone: str | None = None,
-	language: str | None = None,
-	time_zone: str | None = None,
 ) -> dict:
-	"""Update the caller's own name, contact details and preferences. Self-service,
-	so it runs with ignore_permissions (gym roles cannot touch the User doctype)."""
+	"""Update the caller's own name + contact details. Self-service, so it runs
+	with ignore_permissions (gym roles cannot touch the User doctype directly)."""
 	user = _require_signed_in()
 	doc = frappe.get_doc("User", user)
 	if first_name is not None:
@@ -191,26 +187,9 @@ def update_my_profile(
 		doc.mobile_no = mobile_no.strip()
 	if phone is not None:
 		doc.phone = phone.strip()
-	if language is not None:
-		doc.language = language
-	if time_zone is not None:
-		doc.time_zone = time_zone
 	doc.save(ignore_permissions=True)
 	frappe.db.commit()
 	return get_my_profile()
-
-
-@frappe.whitelist()
-def profile_options() -> dict:
-	"""Language + time zone choices for the profile preferences."""
-	import pytz
-
-	languages = frappe.get_all(
-		"Language",
-		fields=["name as code", "language_name as label"],
-		order_by="language_name asc",
-	)
-	return {"languages": languages, "timezones": list(pytz.common_timezones)}
 
 
 @frappe.whitelist()

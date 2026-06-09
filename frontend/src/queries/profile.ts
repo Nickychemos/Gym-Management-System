@@ -11,17 +11,10 @@ export interface MyProfile {
   mobile_no: string | null
   phone: string | null
   user_image: string | null
-  language: string | null
-  time_zone: string | null
   last_login: string | null
   creation: string | null
   roles: string[]
   is_admin: boolean
-}
-
-export interface ProfileOptions {
-  languages: { code: string; label: string }[]
-  timezones: string[]
 }
 
 export function useMyProfile() {
@@ -29,15 +22,6 @@ export function useMyProfile() {
     queryKey: ['profile', 'me'],
     queryFn: () =>
       api.callMethodGet<MyProfile>('gym_management.users.get_my_profile'),
-  })
-}
-
-export function useProfileOptions() {
-  return useQuery({
-    queryKey: ['profile', 'options'],
-    queryFn: () =>
-      api.callMethodGet<ProfileOptions>('gym_management.users.profile_options'),
-    staleTime: 60 * 60 * 1000, // these barely change
   })
 }
 
@@ -49,8 +33,6 @@ export function useUpdateMyProfile() {
       last_name?: string
       mobile_no?: string
       phone?: string
-      language?: string
-      time_zone?: string
     }) =>
       api.callMethod<MyProfile>(
         'gym_management.users.update_my_profile',
