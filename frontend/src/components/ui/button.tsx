@@ -10,7 +10,8 @@ const buttonVariants = cva(
     'rounded-md font-medium select-none',
     'transition-colors duration-100',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2',
-    'disabled:pointer-events-none disabled:opacity-50',
+    // Disabled: a flat, quiet gray instead of a translucent dark button.
+    'disabled:pointer-events-none disabled:bg-neutral-100 disabled:text-neutral-400 disabled:border-neutral-200 disabled:shadow-none',
   ],
   {
     variants: {

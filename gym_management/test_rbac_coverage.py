@@ -20,6 +20,12 @@ import unittest
 # (allow_guest=True) are auto-exempt and need not be listed here.
 EXEMPT_NAMES = {
     "current_user",        # returns only the caller's own identity
+    "get_my_profile",      # caller's own profile (self-service)
+    "update_my_profile",   # caller edits their own name/contact (self-service)
+    "change_my_password",  # caller changes their own password (self-service)
+    "profile_options",     # language/timezone choices for the profile (self-service)
+    "set_my_avatar",       # caller uploads their own photo (self-service)
+    "remove_my_avatar",    # caller clears their own photo (self-service)
     "resolve_scan",        # hardware reader endpoint (device-token auth)
 }
 

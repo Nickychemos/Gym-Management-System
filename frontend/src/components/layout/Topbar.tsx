@@ -100,18 +100,15 @@ export function Topbar() {
               </div>
             </DropdownLabel>
             <DropdownSeparator />
-            {/* Profile page is deferred; for now it lands on the Settings hub. */}
-            {canSettings && (
-              <DropdownItem to="/settings" icon={User}>
-                Your profile
-              </DropdownItem>
-            )}
+            <DropdownItem to="/profile" icon={User}>
+              Your profile
+            </DropdownItem>
             {canSettings && (
               <DropdownItem to="/settings" icon={Settings}>
                 Company settings
               </DropdownItem>
             )}
-            {canSettings && <DropdownSeparator />}
+            <DropdownSeparator />
             <DropdownItem onClick={() => logout()} icon={LogOut} danger>
               Sign out
             </DropdownItem>

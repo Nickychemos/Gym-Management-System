@@ -125,6 +125,152 @@ def current_user() -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Personal profile (self-service: any signed-in user, own record only)
+# ---------------------------------------------------------------------------
+
+
+def _require_signed_in() -> str:
+	user = frappe.session.user
+	if not user or user == "Guest":
+		frappe.throw(_("Please sign in."), frappe.AuthenticationError)
+	return user
+
+
+@frappe.whitelist()
+def get_my_profile() -> dict:
+	"""The caller's own profile (identity, contact, roles, account dates)."""
+	user = _require_signed_in()
+	doc = (
+		frappe.db.get_value(
+			"User",
+			user,
+			[
+				"first_name",
+				"last_name",
+				"full_name",
+				"email",
+				"mobile_no",
+				"phone",
+				"user_image",
+				"language",
+				"time_zone",
+				"last_login",
+				"creation",
+			],
+			as_dict=True,
+		)
+		or {}
+	)
+	roles = [r for r in frappe.get_roles() if r not in ("All", "Guest")]
+	return {
+		**doc,
+		"user": user,
+		"roles": roles,
+		"is_admin": "System Manager" in roles or user == "Administrator",
+	}
+
+
+@frappe.whitelist()
+def update_my_profile(
+	first_name: str | None = None,
+	last_name: str | None = None,
+	mobile_no: str | None = None,
+	phone: str | None = None,
+	language: str | None = None,
+	time_zone: str | None = None,
+) -> dict:
+	"""Update the caller's own name, contact details and preferences. Self-service,
+	so it runs with ignore_permissions (gym roles cannot touch the User doctype)."""
+	user = _require_signed_in()
+	doc = frappe.get_doc("User", user)
+	if first_name is not None:
+		doc.first_name = first_name.strip()
+	if last_name is not None:
+		doc.last_name = last_name.strip()
+	if mobile_no is not None:
+		doc.mobile_no = mobile_no.strip()
+	if phone is not None:
+		doc.phone = phone.strip()
+	if language is not None:
+		doc.language = language
+	if time_zone is not None:
+		doc.time_zone = time_zone
+	doc.save(ignore_permissions=True)
+	frappe.db.commit()
+	return get_my_profile()
+
+
+@frappe.whitelist()
+def profile_options() -> dict:
+	"""Language + time zone choices for the profile preferences."""
+	import pytz
+
+	languages = frappe.get_all(
+		"Language",
+		fields=["name as code", "language_name as label"],
+		order_by="language_name asc",
+	)
+	return {"languages": languages, "timezones": list(pytz.common_timezones)}
+
+
+@frappe.whitelist()
+def set_my_avatar() -> dict:
+	"""Upload the caller's profile photo (multipart form field 'file')."""
+	from frappe.utils.file_manager import save_file
+
+	user = _require_signed_in()
+	files = getattr(frappe.request, "files", None)
+	upload = files.get("file") if files else None
+	if not upload:
+		frappe.throw(_("No image was uploaded."))
+	if not (upload.content_type or "").lower().startswith("image/"):
+		frappe.throw(_("Please upload an image file."))
+	content = upload.stream.read()
+	if len(content) > 5 * 1024 * 1024:
+		frappe.throw(_("Image must be 5 MB or smaller."))
+	file_doc = save_file(
+		upload.filename or f"{user}-avatar",
+		content,
+		"User",
+		user,
+		decode=False,
+		is_private=0,
+		df="user_image",
+	)
+	frappe.db.set_value("User", user, "user_image", file_doc.file_url)
+	frappe.db.commit()
+	return get_my_profile()
+
+
+@frappe.whitelist()
+def remove_my_avatar() -> dict:
+	"""Clear the caller's profile photo."""
+	user = _require_signed_in()
+	frappe.db.set_value("User", user, "user_image", "")
+	frappe.db.commit()
+	return get_my_profile()
+
+
+@frappe.whitelist()
+def change_my_password(old_password: str, new_password: str) -> dict:
+	"""Change the caller's own password after verifying the current one."""
+	from frappe.utils.password import check_password
+
+	user = _require_signed_in()
+	try:
+		check_password(user, old_password or "")
+	except frappe.AuthenticationError:
+		frappe.throw(_("Your current password is incorrect."))
+	if len(new_password or "") < 8:
+		frappe.throw(_("Your new password must be at least 8 characters."))
+	doc = frappe.get_doc("User", user)
+	doc.new_password = new_password
+	doc.save(ignore_permissions=True)
+	frappe.db.commit()
+	return {"ok": True}
+
+
+# ---------------------------------------------------------------------------
 # Login (optional reCAPTCHA v3) + public auth config
 # ---------------------------------------------------------------------------
 

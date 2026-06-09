@@ -20,6 +20,7 @@ import MemberDetailPage from '@/pages/members/MemberDetail'
 import MarketingPage from '@/pages/marketing/Marketing'
 import MembersListPage from '@/pages/members/MembersList'
 import PaymentsPage from '@/pages/payments/Payments'
+import ProfilePage from '@/pages/profile/Profile'
 import PtPackageDetailPage from '@/pages/pt/PtPackageDetail'
 import PtPackagesPage from '@/pages/pt/PtPackages'
 import RefundsPage from '@/pages/refunds/Refunds'
@@ -78,6 +79,7 @@ function App() {
               <Route path="coaching/training/:id" element={<TrainingPlanBuilderPage />} />
               <Route path="surveys" element={<SurveysPage />} />
               <Route path="settings" element={<SettingsPage />} />
+              <Route path="profile" element={<ProfilePage />} />
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
