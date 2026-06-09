@@ -7,6 +7,7 @@ import {
   DropdownMenu,
   DropdownSeparator,
 } from '@/components/ui/dropdown-menu'
+import { useCommandPalette } from '@/components/search/CommandPalette'
 import { useAuth } from '@/context/AuthContext'
 import { ALL_BRANCHES, useBranch } from '@/context/BranchContext'
 import { canAccess } from '@/lib/roles'
@@ -69,6 +70,7 @@ function BranchSwitcher() {
 
 export function Topbar() {
   const { state, logout } = useAuth()
+  const palette = useCommandPalette()
   const authed = state.status === 'authenticated'
   const fullName = authed ? state.fullName || state.user : 'Loading'
   const email = authed ? state.user : ''
@@ -81,9 +83,10 @@ export function Topbar() {
     <header className="h-14 shrink-0 border-b border-neutral-200/80 bg-white shadow-[0_1px_2px_rgb(15_17_21/0.03)] flex items-center px-5 gap-4">
       <BranchSwitcher />
 
-      {/* ⌘K search — visually present, command palette wires up later */}
+      {/* Command palette trigger (also opens via Cmd/Ctrl+K and Ctrl+G). */}
       <button
         type="button"
+        onClick={() => palette.open()}
         className="flex items-center gap-2 max-w-md flex-1 rounded-md border border-neutral-200 px-3 h-8 text-small text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 transition-colors"
         aria-label="Open command palette"
       >

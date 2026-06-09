@@ -1,71 +1,11 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-import {
-  Calendar,
-  ClipboardList,
-  Dumbbell,
-  HeartHandshake,
-  Home,
-  MessageSquare,
-  PanelLeft,
-  PanelLeftClose,
-  Receipt,
-  Settings,
-  ShieldCheck,
-  Smile,
-  Users,
-  Wallet,
-  Wrench,
-} from 'lucide-react'
-import { type LucideIcon } from 'lucide-react'
+import { PanelLeft, PanelLeftClose } from 'lucide-react'
 
 import { useAuth } from '@/context/AuthContext'
+import { NAV_GROUPS } from '@/lib/nav'
 import { canAccess } from '@/lib/roles'
 import { cn } from '@/lib/utils'
-
-interface NavItem {
-  to: string
-  label: string
-  icon: LucideIcon
-}
-
-interface NavGroup {
-  label?: string
-  items: NavItem[]
-}
-
-const groups: NavGroup[] = [
-  {
-    items: [
-      { to: '/', label: 'Dashboard', icon: Home },
-      { to: '/members', label: 'Members', icon: Users },
-      { to: '/schedule', label: 'Schedule', icon: Calendar },
-      { to: '/classes', label: 'Classes', icon: Dumbbell },
-      { to: '/pt', label: 'PT Packages', icon: ClipboardList },
-      { to: '/payments', label: 'Payments', icon: Wallet },
-      { to: '/refunds', label: 'Refunds', icon: Receipt },
-    ],
-  },
-  {
-    label: 'Operations',
-    items: [
-      { to: '/equipment', label: 'Equipment', icon: Wrench },
-      { to: '/compliance', label: 'Compliance', icon: ShieldCheck },
-    ],
-  },
-  {
-    label: 'Engagement',
-    items: [
-      { to: '/marketing', label: 'Marketing', icon: MessageSquare },
-      { to: '/coaching', label: 'Coaching', icon: HeartHandshake },
-      { to: '/surveys', label: 'Surveys & NPS', icon: Smile },
-    ],
-  },
-  {
-    label: 'Admin',
-    items: [{ to: '/settings', label: 'Settings', icon: Settings }],
-  },
-]
 
 const STORAGE_KEY = 'benisho:nav-collapsed'
 
@@ -96,7 +36,7 @@ export function Sidebar() {
 
   // Hide nav items the current role can't reach, then drop now-empty groups
   // (so e.g. the "Admin" header disappears when Settings is filtered out).
-  const visibleGroups = groups
+  const visibleGroups = NAV_GROUPS
     .map((group) => ({
       ...group,
       items: group.items.filter((item) => canAccess(item.to, roles, isAdmin)),
