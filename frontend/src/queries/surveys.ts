@@ -12,11 +12,11 @@ function useSurveyInvalidation() {
   return () => qc.invalidateQueries({ queryKey: ['surveys'] })
 }
 
-export function useNpsDashboard(days = 30) {
+export function useNpsDashboard(days = 30, branch?: string) {
   return useQuery({
-    queryKey: ['surveys', 'nps', days],
+    queryKey: ['surveys', 'nps', days, branch ?? null],
     queryFn: () =>
-      api.callMethodGet<NpsDashboardData>('gym_management.surveys.nps_dashboard', { days }),
+      api.callMethodGet<NpsDashboardData>('gym_management.surveys.nps_dashboard', { days, branch }),
   })
 }
 
@@ -28,12 +28,13 @@ export function useSurveyTemplates() {
   })
 }
 
-export function useSurveyResponses(survey_template?: string) {
+export function useSurveyResponses(survey_template?: string, branch?: string) {
   return useQuery({
-    queryKey: ['surveys', 'responses', survey_template ?? null],
+    queryKey: ['surveys', 'responses', survey_template ?? null, branch ?? null],
     queryFn: () =>
       api.callMethodGet<SurveyResponseRow[]>('gym_management.surveys.list_responses', {
         survey_template,
+        branch,
       }),
   })
 }

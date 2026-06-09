@@ -263,8 +263,8 @@ def _alerts(branch: str | None) -> list[dict]:
 	return alerts
 
 
-def _nps() -> dict | None:
-	"""NPS tile — rolling 30-day score for the first active NPS survey, if any."""
+def _nps(branch: str | None = None) -> dict | None:
+	"""NPS tile: rolling 30-day score for the first active NPS survey, if any."""
 	from gym_management.surveys import compute_nps_score
 
 	survey = frappe.get_all(
@@ -276,7 +276,7 @@ def _nps() -> dict | None:
 	)
 	if not survey:
 		return None
-	return compute_nps_score(survey[0].name, days=30)
+	return compute_nps_score(survey[0].name, days=30, branch=branch)
 
 
 @frappe.whitelist()
@@ -321,5 +321,5 @@ def summary(branch: str | None = None) -> dict:
 		"todays_classes": _todays_classes(branch),
 		"recent_payments": _recent_payments(branch) if can_finance else [],
 		"alerts": _alerts(branch),
-		"nps": _nps() if can_finance else None,
+		"nps": _nps(branch) if can_finance else None,
 	}

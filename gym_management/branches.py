@@ -117,6 +117,19 @@ def resolve_branch_filter(requested: str | None) -> str | None:
 	return requested if frappe.db.exists("Branch", requested) else None
 
 
+def customers_in_branch(branch: str | None) -> list[str] | None:
+	"""Customers whose member home_branch is `branch`, for scoping doctypes that
+	link to a member but carry no branch field (payments, surveys, coaching).
+
+	Returns `None` for no filter (all branches); an empty list when the branch
+	has no members (caller should then match nothing)."""
+	if not branch:
+		return None
+	return frappe.get_all(
+		"Member Profile", filters={"home_branch": branch}, pluck="customer"
+	)
+
+
 # ---------------------------------------------------------------------------
 # Whitelisted: context (any staff) + management (managers/owners)
 # ---------------------------------------------------------------------------

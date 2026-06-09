@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 
 import frappe
+from gym_management.branches import customers_in_branch, resolve_branch_filter
 from gym_management.rbac import TRAINER, requires
 from frappe.utils import flt, now_datetime, today
 
@@ -57,11 +58,17 @@ def coaching_trainers() -> list[dict]:
 
 @frappe.whitelist()
 @requires(TRAINER)
-def list_diet_plans(member: str | None = None) -> list[dict]:
+def list_diet_plans(
+	member: str | None = None, branch: str | None = None
+) -> list[dict]:
 	filters = {"docstatus": ["<", 2]}
 	if member:
 		customer = frappe.db.get_value("Member Profile", member, "customer") or member
 		filters["member"] = customer
+	else:
+		custs = customers_in_branch(resolve_branch_filter(branch))
+		if custs is not None:
+			filters["member"] = ["in", custs or ["__none__"]]
 	rows = frappe.get_all(
 		"Diet Plan",
 		filters=filters,
@@ -156,11 +163,17 @@ def save_diet_plan(plan) -> dict:
 
 @frappe.whitelist()
 @requires(TRAINER)
-def list_training_plans(member: str | None = None) -> list[dict]:
+def list_training_plans(
+	member: str | None = None, branch: str | None = None
+) -> list[dict]:
 	filters = {"docstatus": ["<", 2]}
 	if member:
 		customer = frappe.db.get_value("Member Profile", member, "customer") or member
 		filters["member"] = customer
+	else:
+		custs = customers_in_branch(resolve_branch_filter(branch))
+		if custs is not None:
+			filters["member"] = ["in", custs or ["__none__"]]
 	rows = frappe.get_all(
 		"Training Prescription",
 		filters=filters,
@@ -249,11 +262,17 @@ def save_training_plan(plan) -> dict:
 
 @frappe.whitelist()
 @requires(TRAINER)
-def list_coaching_notes(member: str | None = None, limit: int = 50) -> list[dict]:
+def list_coaching_notes(
+	member: str | None = None, limit: int = 50, branch: str | None = None
+) -> list[dict]:
 	filters = {}
 	if member:
 		customer = frappe.db.get_value("Member Profile", member, "customer") or member
 		filters["member"] = customer
+	else:
+		custs = customers_in_branch(resolve_branch_filter(branch))
+		if custs is not None:
+			filters["member"] = ["in", custs or ["__none__"]]
 	rows = frappe.get_all(
 		"Coaching Note",
 		filters=filters,

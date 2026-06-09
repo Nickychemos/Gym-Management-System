@@ -21,13 +21,16 @@ from __future__ import annotations
 import json
 
 import frappe
+from gym_management.branches import customers_in_branch, resolve_branch_filter
 from gym_management.rbac import ANY_STAFF, MANAGER, requires
 from frappe.utils import add_to_date, now_datetime
 
 
 @frappe.whitelist()
 @requires(MANAGER)
-def compute_nps_score(survey_template: str, days: int = 30) -> dict:
+def compute_nps_score(
+	survey_template: str, days: int = 30, branch: str | None = None
+) -> dict:
 	"""Rolling NPS for a survey over the last N days.
 
 	Returns:
@@ -46,15 +49,15 @@ def compute_nps_score(survey_template: str, days: int = 30) -> dict:
 	days = int(days)
 	since = add_to_date(now_datetime(), days=-days)
 
-	rows = frappe.get_all(
-		"Survey Response",
-		filters={
-			"survey_template": survey_template,
-			"submitted_on": [">=", since],
-			"nps_category": ["in", ["Promoter", "Passive", "Detractor"]],
-		},
-		fields=["nps_category"],
-	)
+	filters = {
+		"survey_template": survey_template,
+		"submitted_on": [">=", since],
+		"nps_category": ["in", ["Promoter", "Passive", "Detractor"]],
+	}
+	custs = customers_in_branch(branch)
+	if custs is not None:
+		filters["member"] = ["in", custs or ["__none__"]]
+	rows = frappe.get_all("Survey Response", filters=filters, fields=["nps_category"])
 	total = len(rows)
 	if total == 0:
 		return {
@@ -230,10 +233,16 @@ def _active_nps_template():
 
 @frappe.whitelist()
 @requires(MANAGER)
-def list_responses(survey_template: str | None = None, limit: int = 50) -> list[dict]:
+def list_responses(
+	survey_template: str | None = None, limit: int = 50, branch: str | None = None
+) -> list[dict]:
+	branch = resolve_branch_filter(branch)
 	filters = {}
 	if survey_template:
 		filters["survey_template"] = survey_template
+	custs = customers_in_branch(branch)
+	if custs is not None:
+		filters["member"] = ["in", custs or ["__none__"]]
 	rows = frappe.get_all(
 		"Survey Response",
 		filters=filters,
@@ -250,12 +259,15 @@ def list_responses(survey_template: str | None = None, limit: int = 50) -> list[
 
 @frappe.whitelist()
 @requires(MANAGER)
-def nps_dashboard(survey_template: str | None = None, days: int = 30) -> dict:
+def nps_dashboard(
+	survey_template: str | None = None, days: int = 30, branch: str | None = None
+) -> dict:
+	branch = resolve_branch_filter(branch)
 	template = survey_template or _active_nps_template()
 	if not template:
 		return {"template": None, "score": None}
-	score = compute_nps_score(template, days=days)
-	recent = list_responses(template, limit=10)
+	score = compute_nps_score(template, days=days, branch=branch)
+	recent = list_responses(template, limit=10, branch=branch)
 	return {"template": template, "score": score, "recent": recent}
 
 

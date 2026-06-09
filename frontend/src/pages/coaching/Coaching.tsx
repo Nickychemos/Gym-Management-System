@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { TBody, TD, TH, THead, TR, Table } from '@/components/ui/table'
 import { Tabs } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { useBranch } from '@/context/BranchContext'
 import { useToast } from '@/context/ToastContext'
 import { useDebounce } from '@/hooks/useDebounce'
 import { ApiError } from '@/lib/api'
@@ -77,7 +78,8 @@ export default function CoachingPage() {
 
 function DietTab() {
   const navigate = useNavigate()
-  const { data, isLoading } = useDietPlans()
+  const { branchParam } = useBranch()
+  const { data, isLoading } = useDietPlans(undefined, branchParam)
   return (
     <Card className="overflow-hidden">
       {isLoading ? <RowsSkeleton /> : !data || data.length === 0 ? (
@@ -104,7 +106,8 @@ function DietTab() {
 
 function TrainingTab() {
   const navigate = useNavigate()
-  const { data, isLoading } = useTrainingPlans()
+  const { branchParam } = useBranch()
+  const { data, isLoading } = useTrainingPlans(undefined, branchParam)
   return (
     <Card className="overflow-hidden">
       {isLoading ? <RowsSkeleton /> : !data || data.length === 0 ? (
@@ -130,7 +133,8 @@ function TrainingTab() {
 }
 
 function NotesTab() {
-  const { data, isLoading } = useCoachingNotes()
+  const { branchParam } = useBranch()
+  const { data, isLoading } = useCoachingNotes(undefined, branchParam)
   return (
     <Card className="overflow-hidden">
       <CardContent className="px-0 py-0">

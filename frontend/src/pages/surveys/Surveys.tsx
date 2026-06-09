@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { TBody, TD, TH, THead, TR, Table } from '@/components/ui/table'
 import { Tabs } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { useBranch } from '@/context/BranchContext'
 import { useToast } from '@/context/ToastContext'
 import { ApiError } from '@/lib/api'
 import { dateTime } from '@/lib/format'
@@ -84,7 +85,8 @@ function npsColor(score: number): string {
 }
 
 function NpsTab() {
-  const { data, isLoading } = useNpsDashboard()
+  const { branchParam } = useBranch()
+  const { data, isLoading } = useNpsDashboard(30, branchParam)
   if (isLoading) return <div className="grid grid-cols-1 lg:grid-cols-3 gap-4"><Skeleton className="h-64 rounded-lg" /><Skeleton className="h-64 rounded-lg lg:col-span-2" /></div>
   const score = data?.score
   if (!data?.template || !score || score.nps_score === null) {
@@ -179,7 +181,8 @@ function TemplatesTab() {
 }
 
 function ResponsesTab() {
-  const { data, isLoading } = useSurveyResponses()
+  const { branchParam } = useBranch()
+  const { data, isLoading } = useSurveyResponses(undefined, branchParam)
   return (
     <Card className="overflow-hidden">
       <CardContent className="px-0 py-0">

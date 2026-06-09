@@ -30,11 +30,11 @@ export function useCoachingTrainers() {
 
 // ---- Diet ----
 
-export function useDietPlans(member?: string) {
+export function useDietPlans(member?: string, branch?: string) {
   return useQuery({
-    queryKey: ['coaching', 'diet-plans', member ?? null],
+    queryKey: ['coaching', 'diet-plans', member ?? null, branch ?? null],
     queryFn: () =>
-      api.callMethodGet<DietPlanRow[]>('gym_management.coaching.list_diet_plans', { member }),
+      api.callMethodGet<DietPlanRow[]>('gym_management.coaching.list_diet_plans', { member, branch }),
   })
 }
 
@@ -74,11 +74,11 @@ export function useSaveDietPlan() {
 
 // ---- Training ----
 
-export function useTrainingPlans(member?: string) {
+export function useTrainingPlans(member?: string, branch?: string) {
   return useQuery({
-    queryKey: ['coaching', 'training-plans', member ?? null],
+    queryKey: ['coaching', 'training-plans', member ?? null, branch ?? null],
     queryFn: () =>
-      api.callMethodGet<TrainingPlanRow[]>('gym_management.coaching.list_training_plans', { member }),
+      api.callMethodGet<TrainingPlanRow[]>('gym_management.coaching.list_training_plans', { member, branch }),
   })
 }
 
@@ -114,11 +114,11 @@ export function useSaveTrainingPlan() {
 
 // ---- Notes ----
 
-export function useCoachingNotes(member?: string) {
+export function useCoachingNotes(member?: string, branch?: string) {
   return useQuery({
-    queryKey: ['coaching', 'notes', member ?? null],
+    queryKey: ['coaching', 'notes', member ?? null, branch ?? null],
     queryFn: () =>
-      api.callMethodGet<CoachingNote[]>('gym_management.coaching.list_coaching_notes', { member }),
+      api.callMethodGet<CoachingNote[]>('gym_management.coaching.list_coaching_notes', { member, branch }),
   })
 }
 
