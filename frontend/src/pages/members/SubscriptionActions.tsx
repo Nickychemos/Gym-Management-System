@@ -50,9 +50,9 @@ export function SubscriptionLifecycle({
   const { toast } = useToast()
   const { state } = useAuth()
   const [freezeOpen, setFreezeOpen] = useState(false)
+  const [renewOpen, setRenewOpen] = useState(false)
   const [changeDir, setChangeDir] = useState<'up' | 'down' | null>(null)
   const [removeOpen, setRemoveOpen] = useState(false)
-  const renew = useRenewSubscription(member)
   const unfreeze = useUnfreezeSubscription(member)
   const { data: plans } = useMembershipPlans()
 
@@ -60,7 +60,7 @@ export function SubscriptionLifecycle({
     state.status === 'authenticated' &&
     isManager(state.roles, state.isAdmin)
 
-  const busy = renew.isPending || unfreeze.isPending
+  const busy = unfreeze.isPending
 
   // Tier direction is by catalog price (the current plan's listed price, falling
   // back to what this member paid if the plan has since been deactivated). Day
@@ -106,17 +106,7 @@ export function SubscriptionLifecycle({
           Resume
         </Button>
       )}
-      <Button
-        variant="secondary"
-        size={size}
-        disabled={busy}
-        onClick={() =>
-          renew.mutate(subscription, {
-            onSuccess: (r) => toast({ variant: 'success', title: 'Renewed', description: r.subscription }),
-            onError: errToast(toast, 'Could not renew'),
-          })
-        }
-      >
+      <Button variant="secondary" size={size} disabled={busy} onClick={() => setRenewOpen(true)}>
         Renew
       </Button>
       {canChange && higher.length > 0 && (
@@ -144,6 +134,15 @@ export function SubscriptionLifecycle({
 
       {freezeOpen && (
         <FreezeDialog subscription={subscription} member={member} onClose={() => setFreezeOpen(false)} />
+      )}
+      {renewOpen && (
+        <RenewDialog
+          subscription={subscription}
+          member={member}
+          currentPlan={currentPlan}
+          currentEnd={currentEnd}
+          onClose={() => setRenewOpen(false)}
+        />
       )}
       {removeOpen && (
         <RemoveSubscriptionDialog
@@ -228,6 +227,62 @@ function FreezeDialog({
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
       </div>
+    </Dialog>
+  )
+}
+
+function RenewDialog({
+  subscription,
+  member,
+  currentPlan,
+  currentEnd,
+  onClose,
+}: {
+  subscription: string
+  member: string
+  currentPlan?: string
+  currentEnd?: string | null
+  onClose: () => void
+}) {
+  const { toast } = useToast()
+  const renew = useRenewSubscription(member)
+
+  function submit() {
+    renew.mutate(subscription, {
+      onSuccess: (r) => {
+        toast({
+          variant: 'success',
+          title: 'Subscription renewed',
+          description: `${currentPlan ?? 'Membership'} starts ${fullDate(r.start_date)}`,
+        })
+        onClose()
+      },
+      onError: errToast(toast, 'Could not renew'),
+    })
+  }
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title="Renew subscription"
+      widthClassName="max-w-md"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={renew.isPending}>Cancel</Button>
+          <Button onClick={submit} disabled={renew.isPending}>
+            {renew.isPending ? 'Renewing…' : 'Renew'}
+          </Button>
+        </>
+      }
+    >
+      <p className="text-small text-neutral-600">
+        This adds another {currentPlan ?? 'membership'} term
+        {currentEnd
+          ? `, starting when the current one ends on ${fullDate(currentEnd)}`
+          : ' starting today'}
+        . The member keeps the days they already have.
+      </p>
     </Dialog>
   )
 }

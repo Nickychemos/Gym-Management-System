@@ -182,10 +182,12 @@ export function useRenewSubscription(member?: string) {
   const invalidate = useMemberInvalidation(member)
   return useMutation({
     mutationFn: (subscription: string) =>
-      api.callMethod<{ ok: boolean; subscription: string; status: string }>(
-        'gym_management.members.renew_subscription',
-        { subscription },
-      ),
+      api.callMethod<{
+        ok: boolean
+        subscription: string
+        status: string
+        start_date: string
+      }>('gym_management.members.renew_subscription', { subscription }),
     onSuccess: invalidate,
   })
 }

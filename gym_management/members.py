@@ -1019,7 +1019,12 @@ def renew_subscription(subscription: str) -> dict:
 		start = add_days(getdate(cur.end_date), 1)
 	doc = _new_subscription(cur.customer, cur.membership_plan, cur.branch, start)
 	frappe.db.commit()
-	return {"ok": True, "subscription": doc.name, "status": doc.status}
+	return {
+		"ok": True,
+		"subscription": doc.name,
+		"status": doc.status,
+		"start_date": str(doc.start_date),
+	}
 
 
 @frappe.whitelist()
