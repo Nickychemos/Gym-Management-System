@@ -816,6 +816,7 @@ export interface CoachingNote {
   member: string
   member_name: string
   trainer_name: string | null
+  author_name: string | null
   note_date: string | null
   category: string
   note_text: string | null

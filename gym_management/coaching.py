@@ -276,15 +276,18 @@ def list_coaching_notes(
 	rows = frappe.get_all(
 		"Coaching Note",
 		filters=filters,
-		fields=["name", "member", "trainer", "note_date", "category", "note_text", "linked_diet_plan", "linked_training_prescription"],
+		fields=["name", "member", "trainer", "note_date", "category", "note_text", "linked_diet_plan", "linked_training_prescription", "owner"],
 		order_by="note_date desc",
 		limit=int(limit),
 	)
 	cust = _names("Customer", [r.member for r in rows], "customer_name")
 	emp = _names("Employee", [r.trainer for r in rows], "employee_name")
+	# `owner` is the user who created the note — the real authorship for audit.
+	authors = _names("User", [r.owner for r in rows], "full_name")
 	for r in rows:
 		r["member_name"] = cust.get(r.member, r.member)
 		r["trainer_name"] = emp.get(r.trainer, r.trainer)
+		r["author_name"] = authors.get(r.owner) or r.owner
 		r["note_date"] = str(r.note_date) if r.note_date else None
 	return rows
 

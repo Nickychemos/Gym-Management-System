@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react'
+import { type FormEvent, lazy, Suspense, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -18,8 +18,10 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, type TabDef } from '@/components/ui/tabs'
+import { Textarea } from '@/components/ui/textarea'
 import { dateTime, fullDate, ksh, monthYear, relativeDay } from '@/lib/format'
 import { bookingVariant, paymentVariant, subscriptionVariant } from '@/lib/status'
 import { type ActivityType } from '@/lib/types'
@@ -32,6 +34,7 @@ import {
 import { useMemberPayments } from '@/queries/payments'
 import {
   useCoachingNotes,
+  useCreateCoachingNote,
   useDietPlans,
   useTrainingPlans,
 } from '@/queries/coaching'
@@ -44,12 +47,12 @@ const MemberAnalyticsTab = lazy(() => import('./MemberAnalyticsTab'))
 
 const TABS: TabDef[] = [
   { value: 'overview', label: 'Overview' },
-  { value: 'analytics', label: 'Analytics' },
   { value: 'subscriptions', label: 'Subscriptions' },
   { value: 'classes', label: 'Classes' },
   { value: 'payments', label: 'Payments' },
   { value: 'coaching', label: 'Coaching' },
   { value: 'notes', label: 'Notes' },
+  { value: 'analytics', label: 'Analytics' },
 ]
 
 export default function MemberDetailPage() {
@@ -154,6 +157,8 @@ export default function MemberDetailPage() {
             <PaymentsTab member={id!} />
           ) : tab === 'coaching' ? (
             <CoachingTab member={id!} />
+          ) : tab === 'notes' ? (
+            <NotesTab member={id!} />
           ) : (
             <TabComingSoon tab={tab} />
           )}
@@ -481,7 +486,6 @@ function ClassesTab({ member }: { member: string }) {
 function CoachingTab({ member }: { member: string }) {
   const diet = useDietPlans(member)
   const training = useTrainingPlans(member)
-  const notes = useCoachingNotes(member)
 
   return (
     <div className="space-y-4">
@@ -536,23 +540,112 @@ function CoachingTab({ member }: { member: string }) {
           </CardContent>
         </Card>
       </div>
+    </div>
+  )
+}
+
+const NOTE_CATEGORIES = [
+  'General',
+  'Progress',
+  'Concern',
+  'Adjustment',
+  'Injury',
+  'Behavior',
+]
+
+function NotesTab({ member }: { member: string }) {
+  const { data, isLoading } = useCoachingNotes(member)
+  const createNote = useCreateCoachingNote()
+  const [category, setCategory] = useState('General')
+  const [text, setText] = useState('')
+
+  function submit(e: FormEvent) {
+    e.preventDefault()
+    const note_text = text.trim()
+    if (!note_text) return
+    createNote.mutate(
+      { member, note_text, category },
+      { onSuccess: () => setText('') },
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Add a Note</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={submit} className="space-y-3">
+            <Textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={3}
+              placeholder="Write a note about this member: a conversation, a concern, a follow-up…"
+            />
+            <div className="flex items-center gap-3">
+              <span className="text-small text-neutral-500">Category</span>
+              <div className="w-44">
+                <Select
+                  aria-label="Note category"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                >
+                  {NOTE_CATEGORIES.map((c) => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </Select>
+              </div>
+              <Button
+                type="submit"
+                className="ml-auto shrink-0 whitespace-nowrap"
+                disabled={!text.trim() || createNote.isPending}
+              >
+                {createNote.isPending ? 'Saving…' : 'Add note'}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
       <Card>
-        <CardHeader><CardTitle>Coaching Notes</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Notes</CardTitle>
+          {data && data.length > 0 && (
+            <span className="text-small text-neutral-500">{data.length}</span>
+          )}
+        </CardHeader>
         <CardContent className="px-0 py-0">
-          {notes.isLoading ? (
-            <div className="px-5 py-4 space-y-2">{Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-6 w-full" />)}</div>
-          ) : !notes.data || notes.data.length === 0 ? (
-            <EmptyState title="No notes yet" />
+          {isLoading ? (
+            <div className="px-5 py-4 space-y-2">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <Skeleton key={i} className="h-6 w-full" />
+              ))}
+            </div>
+          ) : !data || data.length === 0 ? (
+            <EmptyState
+              icon={MessageSquare}
+              title="No notes yet"
+              description="Add the first note about this member above."
+            />
           ) : (
             <ul className="divide-y divide-neutral-100">
-              {notes.data.map((n) => (
+              {data.map((n) => (
                 <li key={n.name} className="px-5 py-3">
                   <div className="flex items-center gap-2">
                     <Badge variant="neutral">{n.category}</Badge>
-                    <span className="text-tiny text-neutral-400 ml-auto">{dateTime(n.note_date)}</span>
+                    {n.author_name && (
+                      <span className="text-tiny text-neutral-500">
+                        {n.author_name}
+                      </span>
+                    )}
+                    <span className="text-tiny text-neutral-400 ml-auto">
+                      {dateTime(n.note_date)}
+                    </span>
                   </div>
-                  <p className="text-small text-neutral-700 mt-1">{n.note_text}</p>
+                  <p className="text-small text-neutral-700 mt-1">
+                    {n.note_text}
+                  </p>
                 </li>
               ))}
             </ul>
