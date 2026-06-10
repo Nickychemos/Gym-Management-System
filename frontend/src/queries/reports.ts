@@ -21,6 +21,36 @@ export interface RunReportParams {
   end?: string
 }
 
+/** Download a report as pdf / csv / xlsx. Fetches the binary through the API
+ *  proxy (session cookie) and saves it via a temporary anchor. */
+export async function downloadReport(params: {
+  report: string
+  format: 'pdf' | 'csv' | 'xlsx'
+  period: string
+  branch?: string
+}) {
+  const qs = new URLSearchParams({
+    report: params.report,
+    format: params.format,
+    period: params.period,
+  })
+  if (params.branch) qs.set('branch', params.branch)
+  const res = await fetch(
+    `/api/method/gym_management.reports.export_report?${qs.toString()}`,
+    { credentials: 'include' },
+  )
+  if (!res.ok) throw new Error(`Export failed (${res.status})`)
+  const blob = await res.blob()
+  const href = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = href
+  a.download = `${params.report}_${params.period}.${params.format}`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(href)
+}
+
 /** Run a report and get its generic envelope (kpis/charts/tables). */
 export function useRunReport({ report, period, branch, start, end }: RunReportParams) {
   return useQuery({

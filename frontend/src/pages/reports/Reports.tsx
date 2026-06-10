@@ -1,7 +1,14 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ArrowLeft, ArrowDownRight, ArrowUpRight, BarChart3 } from 'lucide-react'
+import {
+  ArrowLeft,
+  ArrowDownRight,
+  ArrowUpRight,
+  BarChart3,
+  Download,
+} from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Select } from '@/components/ui/select'
@@ -9,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table'
 import { MiniBars, TrendChart } from '@/components/charts/ChartKit'
 import { useBranch } from '@/context/BranchContext'
+import { useToast } from '@/context/ToastContext'
 import { dateTime, ksh } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import {
@@ -18,7 +26,7 @@ import {
   type ReportTable,
   type ReportValueFormat,
 } from '@/lib/types'
-import { useReportList, useRunReport } from '@/queries/reports'
+import { downloadReport, useReportList, useRunReport } from '@/queries/reports'
 
 const PERIODS = [
   { value: 'this_month', label: 'This month' },
@@ -152,11 +160,28 @@ function ReportViewer({
   onBack: () => void
 }) {
   const { branchParam, selected, multiBranch } = useBranch()
+  const { toast } = useToast()
+  const [busy, setBusy] = useState<string | null>(null)
   const { data, isLoading, isError, error } = useRunReport({
     report,
     period,
     branch: branchParam,
   })
+
+  async function exportAs(format: 'pdf' | 'csv' | 'xlsx') {
+    setBusy(format)
+    try {
+      await downloadReport({ report, format, period, branch: branchParam })
+    } catch (e) {
+      toast({
+        variant: 'error',
+        title: 'Export failed',
+        description: e instanceof Error ? e.message : undefined,
+      })
+    } finally {
+      setBusy(null)
+    }
+  }
 
   return (
     <div>
@@ -179,17 +204,29 @@ function ReportViewer({
             {multiBranch ? ` · ${selected === '__all__' ? 'All branches' : selected}` : ''}
           </p>
         </div>
-        <Select
-          value={period}
-          onChange={(e) => onPeriod(e.target.value)}
-          className="max-w-[180px]"
-        >
-          {PERIODS.map((p) => (
-            <option key={p.value} value={p.value}>
-              {p.label}
-            </option>
+        <div className="flex items-center gap-2">
+          <div className="w-40">
+            <Select value={period} onChange={(e) => onPeriod(e.target.value)}>
+              {PERIODS.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+          {(['pdf', 'csv', 'xlsx'] as const).map((f) => (
+            <Button
+              key={f}
+              variant="secondary"
+              size="sm"
+              disabled={!data || busy !== null}
+              onClick={() => exportAs(f)}
+            >
+              <Download className="size-3.5" strokeWidth={2} />
+              {busy === f ? '…' : f.toUpperCase()}
+            </Button>
           ))}
-        </Select>
+        </div>
       </div>
 
       {isError ? (

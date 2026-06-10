@@ -12,6 +12,9 @@ v1 reports: revenue_summary, membership_mrr, class_attendance, nps, owner_snapsh
 
 from __future__ import annotations
 
+import csv
+import io
+
 import frappe
 from frappe.utils import (
     add_days,
@@ -22,6 +25,8 @@ from frappe.utils import (
     getdate,
     today,
 )
+from frappe.utils.pdf import get_pdf
+from frappe.utils.xlsxutils import make_xlsx
 
 from gym_management.branches import resolve_branch_filter
 from gym_management.rbac import MANAGER, requires
@@ -484,11 +489,8 @@ def list_reports() -> list[dict]:
     ]
 
 
-@frappe.whitelist()
-@requires(MANAGER)
-def run_report(report: str, period: str = "this_month", start=None, end=None,
-               branch: str | None = None) -> dict:
-    """Run a report and return its generic envelope (kpis/charts/tables)."""
+def _envelope(report, period, start, end, branch) -> dict:
+    """Build a report's generic envelope. Shared by run_report and export."""
     if report not in _BUILDERS:
         frappe.throw(frappe._("Unknown report: {0}").format(report))
     branch = resolve_branch_filter(branch)  # managers: requested branch or all
@@ -506,3 +508,158 @@ def run_report(report: str, period: str = "this_month", start=None, end=None,
         "charts": sections.get("charts", []),
         "tables": sections.get("tables", []),
     }
+
+
+@frappe.whitelist()
+@requires(MANAGER)
+def run_report(report: str, period: str = "this_month", start=None, end=None,
+               branch: str | None = None) -> dict:
+    """Run a report and return its generic envelope (kpis/charts/tables)."""
+    return _envelope(report, period, start, end, branch)
+
+
+# ---------------------------------------------------------------------------
+# Export (PDF / CSV / Excel) — same service layer, so numbers always match
+# ---------------------------------------------------------------------------
+
+
+def _raw(value, fmt):
+    """Value for CSV/Excel cells: keep numbers numeric, others as text."""
+    if value is None or value == "":
+        return ""
+    if fmt in (KSH, NUM, PCT):
+        return value
+    return str(value)
+
+
+def _report_rows(env) -> list[list]:
+    """Flatten an envelope to spreadsheet rows (title, KPIs, then each table)."""
+    rows: list[list] = [[env["title"]], [f"Period: {env['period']['label']}"], []]
+    if env["kpis"]:
+        rows.append(["Metric", "Value"])
+        for k in env["kpis"]:
+            rows.append([k["label"], _raw(k["value"], k["format"])])
+        rows.append([])
+    for t in env["tables"]:
+        rows.append([t["title"]])
+        rows.append([c["label"] for c in t["columns"]])
+        for r in t["rows"]:
+            rows.append([_raw(r.get(c["key"]), c["format"]) for c in t["columns"]])
+        rows.append([])
+    return rows
+
+
+def _to_csv(env) -> str:
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    for row in _report_rows(env):
+        w.writerow(row)
+    return buf.getvalue()
+
+
+def _to_xlsx(env) -> bytes:
+    xlsx = make_xlsx(_report_rows(env), (env["title"] or "Report")[:31])
+    return xlsx.getvalue()
+
+
+def _brand() -> dict:
+    try:
+        bs = frappe.get_cached_doc("Brand Settings")
+        return {
+            "name": bs.gym_display_name or bs.gym_legal_name or "Benisho",
+            "color": bs.primary_color or "#0f1115",
+            "logo": bs.logo,
+        }
+    except Exception:
+        return {"name": "Benisho", "color": "#0f1115", "logo": None}
+
+
+def _fmt_html(value, fmt) -> str:
+    if value is None or value == "":
+        return "&mdash;"
+    if fmt == KSH:
+        try:
+            return f"KSh {float(value):,.0f}"
+        except (TypeError, ValueError):
+            return str(value)
+    if fmt == PCT:
+        return f"{value}%"
+    if fmt == NUM:
+        try:
+            return f"{float(value):,.0f}"
+        except (TypeError, ValueError):
+            return str(value)
+    return frappe.utils.escape_html(str(value))
+
+
+def _to_pdf(env) -> bytes:
+    b = _brand()
+    kpis = "".join(
+        f"<div class='kpi'><div class='kl'>{frappe.utils.escape_html(k['label'])}</div>"
+        f"<div class='kv'>{_fmt_html(k['value'], k['format'])}</div></div>"
+        for k in env["kpis"]
+    )
+    tables = ""
+    for t in env["tables"]:
+        head = "".join(f"<th>{frappe.utils.escape_html(c['label'])}</th>" for c in t["columns"])
+        body = ""
+        for r in t["rows"]:
+            cells = "".join(
+                f"<td>{_fmt_html(r.get(c['key']), c['format'])}</td>" for c in t["columns"]
+            )
+            body += f"<tr>{cells}</tr>"
+        if not body:
+            body = f"<tr><td colspan='{len(t['columns'])}' class='muted'>No data</td></tr>"
+        tables += (
+            f"<h3>{frappe.utils.escape_html(t['title'])}</h3>"
+            f"<table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>"
+        )
+    logo = f"<img class='logo' src='{b['logo']}' style='height:34px'/>" if b["logo"] else ""
+    # NB: wkhtmltopdf's WebKit predates flexbox — use inline-block / float only.
+    html = f"""<html><head><meta charset="utf-8"><style>
+      body{{font-family:Helvetica,Arial,sans-serif;color:#0f1115;font-size:12px;}}
+      .head{{overflow:hidden;border-bottom:2px solid {b['color']};
+             padding-bottom:8px;margin-bottom:14px;}}
+      .logo{{float:right;}}
+      .title{{font-size:19px;font-weight:700;}}
+      .sub{{color:#6b7280;font-size:11px;margin-top:2px;}}
+      .kpis{{margin:12px 0;}}
+      .kpi{{display:inline-block;vertical-align:top;border:1px solid #e4e5e7;
+            border-radius:6px;padding:8px 12px;min-width:118px;margin:0 6px 6px 0;}}
+      .kl{{color:#6b7280;font-size:10px;}}
+      .kv{{font-size:17px;font-weight:700;margin-top:2px;}}
+      h3{{margin:16px 0 4px;font-size:13px;}}
+      table{{width:100%;border-collapse:collapse;margin-bottom:6px;}}
+      th,td{{text-align:left;padding:5px 8px;border-bottom:1px solid #eee;font-size:11px;}}
+      th{{background:#f7f7f8;color:#525866;}}
+      .muted{{color:#9ca0a8;}}
+      .foot{{margin-top:18px;color:#9ca0a8;font-size:10px;border-top:1px solid #eee;padding-top:6px;}}
+    </style></head><body>
+      <div class='head'>
+        {logo}
+        <div class='title'>{frappe.utils.escape_html(env['title'])}</div>
+        <div class='sub'>{frappe.utils.escape_html(b['name'])} &middot; {frappe.utils.escape_html(env['period']['label'])}</div>
+      </div>
+      <div class='kpis'>{kpis}</div>
+      {tables}
+      <div class='foot'>Generated {env['generated_on'][:16]} &middot; {frappe.utils.escape_html(b['name'])}</div>
+    </body></html>"""
+    return get_pdf(html)
+
+
+@frappe.whitelist()
+@requires(MANAGER)
+def export_report(report: str, format: str = "pdf", period: str = "this_month",
+                  start=None, end=None, branch: str | None = None):
+    """Download a report as pdf / csv / xlsx. Served as a binary attachment."""
+    env = _envelope(report, period, start, end, branch)
+    base = f"{report}_{env['period']['label']}".replace(" ", "_").replace("/", "-")
+    if format == "csv":
+        content, ext = _to_csv(env), "csv"
+    elif format == "xlsx":
+        content, ext = _to_xlsx(env), "xlsx"
+    else:
+        content, ext = _to_pdf(env), "pdf"
+    frappe.response["filename"] = f"{base}.{ext}"
+    frappe.response["filecontent"] = content
+    frappe.response["type"] = "binary"
