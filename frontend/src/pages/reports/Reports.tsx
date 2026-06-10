@@ -821,6 +821,9 @@ function KpiTile({ kpi }: { kpi: ReportKpi }) {
 
 function ChartCard({ chart }: { chart: ReportChart }) {
   const hasData = chart.data.some((d) => d.value > 0)
+  // Cap x-axis labels to ~12 so long ranges don't render an unreadable wall.
+  const n = chart.data.length
+  const tickInterval = n <= 12 ? 0 : Math.ceil(n / 12)
   return (
     <Card>
       <CardHeader>
@@ -831,7 +834,7 @@ function ChartCard({ chart }: { chart: ReportChart }) {
           chart.type === 'area' ? (
             <TrendChart
               data={chart.data}
-              tickInterval={chart.data.length > 14 ? 2 : undefined}
+              tickInterval={tickInterval}
               format={chart.format === 'ksh' ? (n) => ksh(n) : undefined}
             />
           ) : (

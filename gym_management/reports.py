@@ -153,12 +153,15 @@ def _revenue_total(s, e, branch):
     return flt(row[0]), int(row[1])
 
 
-def _daily_revenue(s, e, branch):
+def _revenue_trend(s, e, branch):
+    """Revenue over time, bucketed adaptively so the x-axis stays readable:
+    daily for <=31 days, weekly up to ~4 months, monthly beyond that."""
+    s, e = getdate(s), getdate(e)
     cond = (
         "t.status='Success' AND t.direction='Inbound' "
         "AND DATE(COALESCE(t.mpesa_timestamp, t.creation)) BETWEEN %(s)s AND %(e)s"
     )
-    params = {"s": s, "e": e}
+    params = {"s": str(s), "e": str(e)}
     if branch:
         cond += (
             " AND EXISTS (SELECT 1 FROM `tabMember Profile` mp "
@@ -167,15 +170,41 @@ def _daily_revenue(s, e, branch):
         params["b"] = branch
     rows = frappe.db.sql(
         f"""SELECT DATE(COALESCE(t.mpesa_timestamp, t.creation)) d, COALESCE(SUM(t.amount),0)
-            FROM `tabM-Pesa Transaction` t WHERE {cond} GROUP BY d ORDER BY d""",
+            FROM `tabM-Pesa Transaction` t WHERE {cond} GROUP BY d""",
         params,
     )
     by_day = {str(d): flt(a) for d, a in rows}
-    out, cur = [], getdate(s)
-    while cur <= getdate(e):
-        out.append({"label": formatdate(cur, "d MMM"), "value": by_day.get(str(cur), 0.0)})
-        cur = add_days(cur, 1)
-    return out
+
+    def bucket_sum(lo, hi):
+        total, cur = 0.0, lo
+        while cur <= hi:
+            total += by_day.get(str(cur), 0.0)
+            cur = add_days(cur, 1)
+        return total
+
+    span = (e - s).days
+    points = []
+    if span <= 31:
+        cur = s
+        while cur <= e:
+            points.append({"label": formatdate(cur, "d MMM"), "value": by_day.get(str(cur), 0.0)})
+            cur = add_days(cur, 1)
+    elif span <= 120:
+        cur = s
+        while cur <= e:
+            hi = min(add_days(cur, 6), e)
+            points.append({"label": formatdate(cur, "d MMM"), "value": bucket_sum(cur, hi)})
+            cur = add_days(cur, 7)
+    else:
+        y, m = s.year, s.month
+        while (y < e.year) or (y == e.year and m <= e.month):
+            first = getdate(f"{y:04d}-{m:02d}-01")
+            last = get_last_day(first)
+            points.append({"label": formatdate(first, "MMM"), "value": bucket_sum(max(first, s), min(last, e))})
+            m += 1
+            if m > 12:
+                m, y = 1, y + 1
+    return points
 
 
 # ---------------------------------------------------------------------------
@@ -216,8 +245,8 @@ def _revenue_summary(p, branch):
             _kpi("prev", "Previous period", prev_total, KSH, hint="same length, prior"),
         ],
         "charts": [
-            {"key": "trend", "type": "area", "title": "Daily revenue",
-             "format": KSH, "data": _daily_revenue(s, e, branch)},
+            {"key": "trend", "type": "area", "title": "Revenue trend",
+             "format": KSH, "data": _revenue_trend(s, e, branch)},
         ],
         "tables": [
             {"key": "by_branch", "title": "By branch",

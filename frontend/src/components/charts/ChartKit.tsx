@@ -49,6 +49,14 @@ interface TrendChartProps {
   format?: (n: number) => string
 }
 
+/** Compact y-axis tick: 1000 -> "1k", 83500 -> "84k", small values unchanged. */
+function compactTick(v: number): string {
+  const n = Math.abs(v)
+  if (n >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`
+  if (n >= 1000) return `${Math.round(v / 1000)}k`
+  return String(v)
+}
+
 /** Single-series area chart over time (visit frequency, spend). */
 export function TrendChart({
   data,
@@ -76,11 +84,12 @@ export function TrendChart({
           minTickGap={8}
         />
         <YAxis
-          width={28}
+          width={40}
           tick={{ fill: CHART.axis, fontSize: 11 }}
           tickLine={false}
           axisLine={false}
           allowDecimals={false}
+          tickFormatter={compactTick}
         />
         <Tooltip
           cursor={{ stroke: CHART.grid }}
@@ -127,11 +136,12 @@ export function MiniBars({
           axisLine={{ stroke: CHART.grid }}
         />
         <YAxis
-          width={28}
+          width={40}
           tick={{ fill: CHART.axis, fontSize: 11 }}
           tickLine={false}
           axisLine={false}
           allowDecimals={false}
+          tickFormatter={compactTick}
         />
         <Tooltip
           cursor={{ fill: CHART.grid, fillOpacity: 0.5 }}
