@@ -8,6 +8,7 @@ import {
 import { api } from '@/lib/api'
 import {
   type ActivityItem,
+  type MemberAnalytics,
   type MemberClassRow,
   type MemberListResult,
   type MemberOverview,
@@ -23,6 +24,7 @@ function useMemberInvalidation(member?: string) {
       qc.invalidateQueries({ queryKey: ['members', 'overview', member] })
       qc.invalidateQueries({ queryKey: ['members', 'subscriptions', member] })
       qc.invalidateQueries({ queryKey: ['members', 'activity', member] })
+      qc.invalidateQueries({ queryKey: ['members', 'analytics', member] })
     }
   }
 }
@@ -93,6 +95,19 @@ export function useMemberSubscriptions(member: string | undefined) {
     queryFn: () =>
       api.callMethodGet<MemberSubscriptionRow[]>(
         'gym_management.members.member_subscriptions',
+        { member },
+      ),
+    enabled: !!member,
+  })
+}
+
+/** Per-member analytics (Analytics tab): visits, engagement, retention, spend. */
+export function useMemberAnalytics(member: string | undefined) {
+  return useQuery({
+    queryKey: ['members', 'analytics', member],
+    queryFn: () =>
+      api.callMethodGet<MemberAnalytics>(
+        'gym_management.members.member_analytics',
         { member },
       ),
     enabled: !!member,

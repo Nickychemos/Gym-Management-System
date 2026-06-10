@@ -180,6 +180,80 @@ export interface MembershipPlanOption {
   duration_days: number
 }
 
+// ---- Member analytics (gym_management.members.member_analytics) ----
+
+export type RiskLevel = 'low' | 'medium' | 'high'
+
+export interface VisitTrendPoint {
+  week_start: string
+  count: number
+}
+
+export interface WeekdayPoint {
+  label: string
+  count: number
+}
+
+export interface MemberVisits {
+  total: number
+  this_month: number
+  last_visit: string | null
+  avg_per_week: number | null
+  trend: VisitTrendPoint[]
+  weekday: WeekdayPoint[]
+}
+
+export interface ClassEngagement {
+  attended: number
+  no_shows: number
+  cancelled: number
+  booked: number
+  attendance_rate: number | null
+  top_types: { class_type: string; count: number }[]
+}
+
+export interface PtEngagement {
+  packages: number
+  active_packages: number
+  sessions_purchased: number
+  sessions_used: number
+  sessions_remaining: number
+  utilization_pct: number | null
+}
+
+export interface RetentionRisk {
+  tenure_days: number | null
+  subscription_status: SubscriptionStatus | null
+  days_to_expiry: number | null
+  auto_renew: boolean
+  days_since_visit: number | null
+  nps_score: number | null
+  nps_category: string | null
+  risk_level: RiskLevel
+  risk_reasons: string[]
+}
+
+export interface MemberFinancials {
+  lifetime_spend: number
+  avg_transaction: number | null
+  outstanding: number
+  trend: { month: string; amount: number }[]
+}
+
+export interface MemberAnalytics {
+  member: string
+  customer: string
+  full_name: string
+  branch: string | null
+  joined_on: string | null
+  can_see_financials: boolean
+  visits: MemberVisits
+  classes: ClassEngagement
+  pt: PtEngagement
+  retention: RetentionRisk
+  financials: MemberFinancials | null
+}
+
 export type ActivityType =
   | 'visit'
   | 'payment'

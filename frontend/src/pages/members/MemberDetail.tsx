@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
+  BarChart3,
   CalendarClock,
   CreditCard,
   Dumbbell,
@@ -37,8 +38,13 @@ import {
 import { EditMemberDrawer } from './EditMemberDrawer'
 import { SubscribeButton, SubscriptionLifecycle } from './SubscriptionActions'
 
+// Charts (Recharts) load only when the Analytics tab is opened, keeping them
+// out of the main bundle.
+const MemberAnalyticsTab = lazy(() => import('./MemberAnalyticsTab'))
+
 const TABS: TabDef[] = [
   { value: 'overview', label: 'Overview' },
+  { value: 'analytics', label: 'Analytics' },
   { value: 'subscriptions', label: 'Subscriptions' },
   { value: 'classes', label: 'Classes' },
   { value: 'payments', label: 'Payments' },
@@ -136,6 +142,10 @@ export default function MemberDetailPage() {
 
           {tab === 'overview' ? (
             <OverviewTab member={id!} overview={data} />
+          ) : tab === 'analytics' ? (
+            <Suspense fallback={<TabLoading />}>
+              <MemberAnalyticsTab member={id!} />
+            </Suspense>
           ) : tab === 'subscriptions' ? (
             <SubscriptionsTab member={id!} />
           ) : tab === 'classes' ? (
@@ -554,11 +564,25 @@ function CoachingTab({ member }: { member: string }) {
 }
 
 const TAB_ICON: Record<string, LucideIcon> = {
+  analytics: BarChart3,
   subscriptions: Wallet,
   classes: CalendarClock,
   payments: CreditCard,
   coaching: MessageSquare,
   notes: MessageSquare,
+}
+
+function TabLoading() {
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-24 w-full rounded-lg" />
+        ))}
+      </div>
+      <Skeleton className="h-56 w-full rounded-lg" />
+    </div>
+  )
 }
 
 function TabComingSoon({ tab }: { tab: string }) {

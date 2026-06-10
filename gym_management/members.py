@@ -21,7 +21,7 @@ import frappe
 from frappe.utils import add_days, flt, get_first_day, getdate, today
 
 from gym_management.branches import resolve_branch_filter
-from gym_management.rbac import ANY_STAFF, FRONTDESK, requires
+from gym_management.rbac import ANY_STAFF, FRONTDESK, MANAGER, has_tier, requires
 
 
 # ---------------------------------------------------------------------------
@@ -610,6 +610,328 @@ def member_classes(member: str, limit: int = 50) -> list[dict]:
 			}
 		)
 	return out
+
+
+# ---------------------------------------------------------------------------
+# Member 360 — analytics tab
+# ---------------------------------------------------------------------------
+
+# WEEKDAY() returns Monday=0 .. Sunday=6; labels for the frontend pattern chart.
+_WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+def _visit_analytics(customer: str, mp) -> dict:
+    """Visit volume, a rolling 12-week trend and a weekday pattern."""
+    total = int(mp.total_visits or 0)
+    month_start = get_first_day(today())
+    this_month = frappe.db.count(
+        "Visit Log", {"customer": customer, "check_in_time": [">=", month_start]}
+    )
+
+    avg_per_week = None
+    if mp.joined_on and total:
+        days = max((getdate(today()) - getdate(mp.joined_on)).days, 1)
+        avg_per_week = round(total / (days / 7), 1)
+
+    # Rolling 12 weeks of 7-day buckets (bucket 0 = the most recent 7 days).
+    trend: list[dict] = []
+    weekday: list[dict] = [{"label": d, "count": 0} for d in _WEEKDAYS]
+    try:
+        since = add_days(getdate(today()), -83)
+        rows = frappe.db.sql(
+            """
+            SELECT FLOOR(DATEDIFF(%(today)s, DATE(check_in_time)) / 7) AS wk,
+                   COUNT(*) AS n
+            FROM `tabVisit Log`
+            WHERE customer = %(c)s AND check_in_time >= %(since)s
+            GROUP BY wk
+            """,
+            {"today": today(), "c": customer, "since": since},
+        )
+        by_wk = {int(wk): int(n) for wk, n in rows}
+        for wk in range(11, -1, -1):  # oldest -> newest for a left-to-right chart
+            start = add_days(getdate(today()), -(wk * 7 + 6))
+            trend.append({"week_start": str(start), "count": by_wk.get(wk, 0)})
+
+        wd_rows = frappe.db.sql(
+            """
+            SELECT WEEKDAY(check_in_time) AS wd, COUNT(*) AS n
+            FROM `tabVisit Log`
+            WHERE customer = %(c)s AND check_in_time IS NOT NULL
+            GROUP BY wd
+            """,
+            {"c": customer},
+        )
+        for wd, n in wd_rows:
+            if wd is not None and 0 <= int(wd) <= 6:
+                weekday[int(wd)]["count"] = int(n)
+    except Exception:
+        pass
+
+    return {
+        "total": total,
+        "this_month": int(this_month),
+        "last_visit": str(mp.last_visit) if mp.last_visit else None,
+        "avg_per_week": avg_per_week,
+        "trend": trend,
+        "weekday": weekday,
+    }
+
+
+def _class_pt_analytics(customer: str) -> dict:
+    """Class booking outcomes (+ favourite types) and PT session utilisation."""
+    by_status: dict[str, int] = {}
+    top_types: list[dict] = []
+    try:
+        for status, n in frappe.db.sql(
+            """
+            SELECT status, COUNT(*) FROM `tabClass Booking`
+            WHERE customer = %(c)s AND docstatus = 1 GROUP BY status
+            """,
+            {"c": customer},
+        ):
+            by_status[status] = int(n)
+        top_types = [
+            {"class_type": ct, "count": int(n)}
+            for ct, n in frappe.db.sql(
+                """
+                SELECT cs.class_type, COUNT(*) AS n
+                FROM `tabClass Booking` cb
+                JOIN `tabClass Session` cs ON cs.name = cb.class_session
+                WHERE cb.customer = %(c)s AND cb.docstatus = 1
+                  AND cs.class_type IS NOT NULL
+                GROUP BY cs.class_type ORDER BY n DESC LIMIT 5
+                """,
+                {"c": customer},
+            )
+        ]
+    except Exception:
+        pass
+
+    attended = by_status.get("Checked-In", 0)
+    no_shows = by_status.get("No-Show", 0)
+    cancelled = by_status.get("Cancelled", 0)
+    booked = by_status.get("Booked", 0) + by_status.get("Waitlisted", 0)
+    seen = attended + no_shows
+    attendance_rate = round(100 * attended / seen, 1) if seen else None
+
+    pt = {
+        "packages": 0,
+        "active_packages": 0,
+        "sessions_purchased": 0,
+        "sessions_used": 0,
+        "sessions_remaining": 0,
+        "utilization_pct": None,
+    }
+    try:
+        row = frappe.db.sql(
+            """
+            SELECT COUNT(*),
+                   SUM(CASE WHEN status = 'Active' THEN 1 ELSE 0 END),
+                   COALESCE(SUM(sessions_purchased), 0),
+                   COALESCE(SUM(sessions_used), 0)
+            FROM `tabPT Package`
+            WHERE customer = %(c)s AND docstatus < 2
+            """,
+            {"c": customer},
+        )[0]
+        purchased, used = int(row[2] or 0), int(row[3] or 0)
+        pt = {
+            "packages": int(row[0] or 0),
+            "active_packages": int(row[1] or 0),
+            "sessions_purchased": purchased,
+            "sessions_used": used,
+            "sessions_remaining": max(purchased - used, 0),
+            "utilization_pct": round(100 * used / purchased, 1) if purchased else None,
+        }
+    except Exception:
+        pass
+
+    return {
+        "classes": {
+            "attended": attended,
+            "no_shows": no_shows,
+            "cancelled": cancelled,
+            "booked": booked,
+            "attendance_rate": attendance_rate,
+            "top_types": top_types,
+        },
+        "pt": pt,
+    }
+
+
+def _retention_analytics(customer: str, mp, subscription, visits: dict) -> dict:
+    """Tenure, renewal countdown, latest NPS and an explainable churn-risk score."""
+    tenure_days = (
+        (getdate(today()) - getdate(mp.joined_on)).days if mp.joined_on else None
+    )
+
+    status = subscription["status"] if subscription else None
+    active = status in ("Active", "Frozen")
+    days_to_expiry = None
+    if subscription and subscription.get("end_date"):
+        days_to_expiry = (getdate(subscription["end_date"]) - getdate(today())).days
+    auto_renew = bool(subscription and subscription.get("auto_renew"))
+
+    # Days since the last check-in.
+    days_since_visit = None
+    if mp.last_visit:
+        days_since_visit = (getdate(today()) - getdate(mp.last_visit)).days
+
+    # Latest NPS for this member.
+    nps_score = nps_category = None
+    try:
+        nps_rows = frappe.get_all(
+            "Survey Response",
+            filters={"member": customer, "nps_score": ["is", "set"]},
+            fields=["nps_score", "nps_category"],
+            order_by="submitted_on desc",
+            limit=1,
+        )
+        if nps_rows:
+            nps_score = int(nps_rows[0].nps_score)
+            nps_category = nps_rows[0].nps_category
+    except Exception:
+        pass
+
+    high: list[str] = []
+    med: list[str] = []
+    if not subscription or status in ("Lapsed", "Expired", "Cancelled"):
+        high.append("No active membership")
+    elif days_to_expiry is not None and days_to_expiry <= 7 and not auto_renew:
+        high.append(f"Expires in {days_to_expiry} day(s), no auto-renew")
+    if active and days_since_visit is not None and days_since_visit >= 21:
+        high.append(f"No visit in {days_since_visit} days")
+
+    if active and days_to_expiry is not None and 7 < days_to_expiry <= 14 and not auto_renew:
+        med.append("Membership expires within two weeks")
+    # Recent attendance below half the lifetime weekly pace.
+    recent = frappe.db.count(
+        "Visit Log",
+        {"customer": customer, "check_in_time": [">=", add_days(getdate(today()), -30)]},
+    )
+    avg_per_week = visits.get("avg_per_week")
+    if active and avg_per_week and (recent / 4.0) < (avg_per_week / 2):
+        med.append("Attendance trending down")
+
+    reasons = high + med
+    level = "high" if high else "medium" if med else "low"
+
+    return {
+        "tenure_days": tenure_days,
+        "subscription_status": status,
+        "days_to_expiry": days_to_expiry,
+        "auto_renew": auto_renew,
+        "days_since_visit": days_since_visit,
+        "nps_score": nps_score,
+        "nps_category": nps_category,
+        "risk_level": level,
+        "risk_reasons": reasons,
+    }
+
+
+def _financial_analytics(customer: str) -> dict:
+    """Lifetime spend, average transaction, outstanding and a 6-month trend.
+    Manager/owner only (called behind a has_tier(MANAGER) check)."""
+    lifetime_spend = 0.0
+    avg_transaction = None
+    try:
+        total, count = frappe.db.sql(
+            """
+            SELECT COALESCE(SUM(amount), 0), COUNT(*)
+            FROM `tabM-Pesa Transaction`
+            WHERE customer = %(c)s AND status = 'Success' AND direction = 'Inbound'
+            """,
+            {"c": customer},
+        )[0]
+        lifetime_spend = flt(total)
+        avg_transaction = round(lifetime_spend / count, 0) if count else None
+    except Exception:
+        pass
+
+    # Last 6 calendar months, oldest first, gaps back-filled to 0.
+    d = getdate(today())
+    y, m = d.year, d.month
+    keys: list[str] = []
+    for _ in range(6):
+        keys.append(f"{y:04d}-{m:02d}")
+        m -= 1
+        if m == 0:
+            m, y = 12, y - 1
+    keys.reverse()
+    by_month: dict[str, float] = {}
+    try:
+        for ym, amt in frappe.db.sql(
+            """
+            SELECT DATE_FORMAT(COALESCE(mpesa_timestamp, creation), '%%Y-%%m') AS ym,
+                   COALESCE(SUM(amount), 0)
+            FROM `tabM-Pesa Transaction`
+            WHERE customer = %(c)s AND status = 'Success' AND direction = 'Inbound'
+              AND COALESCE(mpesa_timestamp, creation) >= %(since)s
+            GROUP BY ym
+            """,
+            {"c": customer, "since": keys[0] + "-01"},
+        ):
+            by_month[ym] = flt(amt)
+    except Exception:
+        pass
+    trend = [{"month": k, "amount": by_month.get(k, 0.0)} for k in keys]
+
+    outstanding = _outstanding_balances([customer]).get(customer, 0.0)
+    return {
+        "lifetime_spend": lifetime_spend,
+        "avg_transaction": avg_transaction,
+        "outstanding": flt(outstanding),
+        "trend": trend,
+    }
+
+
+@frappe.whitelist()
+@requires(ANY_STAFF)
+def member_analytics(member: str) -> dict:
+    """Per-member analytics for the Member 360 Analytics tab.
+
+    Operational metrics (visits, classes, PT, retention/risk) are returned to any
+    staff. The financial block (spend trend, outstanding) is gated behind
+    has_tier(MANAGER) and is None for restricted staff, mirroring the dashboard's
+    can_see_financials role-trim. Every aggregation degrades to empty on a stripped
+    bench rather than erroring.
+    """
+    mp = frappe.get_doc("Member Profile", member)
+    customer = mp.customer
+
+    # Current (most recent) subscription — same shape as member_overview.
+    sub_rows = frappe.get_all(
+        "Member Subscription",
+        filters={"customer": customer},
+        fields=["name", "membership_plan", "status", "end_date", "auto_renew"],
+        order_by="start_date desc, creation desc",
+        limit=1,
+    )
+    subscription = sub_rows[0] if sub_rows else None
+    if subscription:
+        subscription["end_date"] = str(subscription["end_date"] or "") or None
+
+    visits = _visit_analytics(customer, mp)
+    engagement = _class_pt_analytics(customer)
+    retention = _retention_analytics(customer, mp, subscription, visits)
+
+    can_see_financials = has_tier(MANAGER)
+    financials = _financial_analytics(customer) if can_see_financials else None
+
+    return {
+        "member": mp.name,
+        "customer": customer,
+        "full_name": mp.member_full_name,
+        "branch": mp.home_branch,
+        "joined_on": str(mp.joined_on) if mp.joined_on else None,
+        "can_see_financials": can_see_financials,
+        "visits": visits,
+        "classes": engagement["classes"],
+        "pt": engagement["pt"],
+        "retention": retention,
+        "financials": financials,
+    }
 
 
 # ---------------------------------------------------------------------------
