@@ -1,0 +1,129 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-06-10 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "report_key",
+  "title",
+  "frequency",
+  "day_of_week",
+  "day_of_month",
+  "send_hour",
+  "period",
+  "branch",
+  "recipient_roles",
+  "formats",
+  "is_active",
+  "last_sent_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "report_key",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Report Key",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title"
+  },
+  {
+   "default": "Monthly",
+   "fieldname": "frequency",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Frequency",
+   "options": "Daily\nWeekly\nMonthly\nQuarterly",
+   "reqd": 1
+  },
+  {
+   "default": "Monday",
+   "depends_on": "eval:doc.frequency=='Weekly'",
+   "fieldname": "day_of_week",
+   "fieldtype": "Select",
+   "label": "Day of Week",
+   "options": "Monday\nTuesday\nWednesday\nThursday\nFriday\nSaturday\nSunday"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:['Monthly','Quarterly'].includes(doc.frequency)",
+   "fieldname": "day_of_month",
+   "fieldtype": "Int",
+   "label": "Day of Month"
+  },
+  {
+   "default": "8",
+   "fieldname": "send_hour",
+   "fieldtype": "Int",
+   "label": "Send Hour (0-23)"
+  },
+  {
+   "default": "last_month",
+   "fieldname": "period",
+   "fieldtype": "Select",
+   "label": "Reporting Period",
+   "options": "this_month\nlast_month\nlast_30_days\nthis_quarter\nthis_year"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "description": "JSON list of role names",
+   "fieldname": "recipient_roles",
+   "fieldtype": "Small Text",
+   "label": "Recipient Roles"
+  },
+  {
+   "default": "[\"pdf\"]",
+   "description": "JSON list of pdf/csv/xlsx",
+   "fieldname": "formats",
+   "fieldtype": "Small Text",
+   "label": "Formats"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  },
+  {
+   "fieldname": "last_sent_on",
+   "fieldtype": "Datetime",
+   "label": "Last Sent On",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-06-10 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Report Schedule",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "search_fields": "report_key,title",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

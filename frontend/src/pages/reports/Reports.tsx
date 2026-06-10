@@ -5,6 +5,7 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   BarChart3,
+  CalendarClock,
   Download,
 } from 'lucide-react'
 
@@ -27,6 +28,7 @@ import {
   type ReportValueFormat,
 } from '@/lib/types'
 import { downloadReport, useReportList, useRunReport } from '@/queries/reports'
+import { ScheduleDialog, ScheduleManager } from './ScheduleManager'
 
 const PERIODS = [
   { value: 'this_month', label: 'This month' },
@@ -55,6 +57,7 @@ function fmt(v: unknown, format: ReportValueFormat): string {
 export default function ReportsPage() {
   const [params, setParams] = useSearchParams()
   const report = params.get('report') ?? undefined
+  const view = params.get('view')
 
   function setParam(key: string, value: string | null) {
     setParams(
@@ -70,16 +73,33 @@ export default function ReportsPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-h2 font-semibold tracking-tight text-neutral-900">
-          Reports
-        </h1>
-        <p className="text-small text-neutral-500 mt-0.5">
-          Aggregated insight across every part of your gym.
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-h2 font-semibold tracking-tight text-neutral-900">
+            Reports
+          </h1>
+          <p className="text-small text-neutral-500 mt-0.5">
+            Aggregated insight across every part of your gym.
+          </p>
+        </div>
+        {!report && (
+          <div className="inline-flex shrink-0 rounded-md border border-neutral-200 p-0.5">
+            <ToggleBtn active={view !== 'schedules'} onClick={() => setParam('view', null)}>
+              Reports
+            </ToggleBtn>
+            <ToggleBtn
+              active={view === 'schedules'}
+              onClick={() => setParam('view', 'schedules')}
+            >
+              Scheduled
+            </ToggleBtn>
+          </div>
+        )}
       </div>
 
-      {report ? (
+      {view === 'schedules' && !report ? (
+        <ScheduleManager />
+      ) : report ? (
         <ReportViewer
           report={report}
           period={params.get('period') ?? 'this_month'}
@@ -93,6 +113,29 @@ export default function ReportsPage() {
         <Catalogue onOpen={(key) => setParam('report', key)} />
       )}
     </div>
+  )
+}
+
+function ToggleBtn({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'rounded px-3 py-1 text-small font-medium transition-colors',
+        active ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:text-neutral-900',
+      )}
+    >
+      {children}
+    </button>
   )
 }
 
@@ -162,6 +205,7 @@ function ReportViewer({
   const { branchParam, selected, multiBranch } = useBranch()
   const { toast } = useToast()
   const [busy, setBusy] = useState<string | null>(null)
+  const [scheduleOpen, setScheduleOpen] = useState(false)
   const { data, isLoading, isError, error } = useRunReport({
     report,
     period,
@@ -226,8 +270,19 @@ function ReportViewer({
               {busy === f ? '…' : f.toUpperCase()}
             </Button>
           ))}
+          <Button size="sm" disabled={!data} onClick={() => setScheduleOpen(true)}>
+            <CalendarClock className="size-3.5" strokeWidth={2} />
+            Schedule
+          </Button>
         </div>
       </div>
+
+      {scheduleOpen && (
+        <ScheduleDialog
+          preset={{ report_key: report, period, branch: branchParam ?? null }}
+          onClose={() => setScheduleOpen(false)}
+        />
+      )}
 
       {isError ? (
         <Card>

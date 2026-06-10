@@ -1,7 +1,13 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/lib/api'
-import { type ReportEnvelope, type ReportListItem } from '@/lib/types'
+import {
+  type DeliveryLogRow,
+  type ReportEnvelope,
+  type ReportListItem,
+  type ReportSchedule,
+  type ScheduleOptions,
+} from '@/lib/types'
 
 /** The report catalogue for the Reports home. */
 export function useReportList() {
@@ -64,5 +70,94 @@ export function useRunReport({ report, period, branch, start, end }: RunReportPa
         end,
       }),
     enabled: !!report,
+  })
+}
+
+// ---- Schedules ----
+
+export function useScheduleOptions() {
+  return useQuery({
+    queryKey: ['reports', 'schedule-options'],
+    queryFn: () =>
+      api.callMethodGet<ScheduleOptions>('gym_management.reports.schedule_options'),
+    staleTime: 10 * 60 * 1000,
+  })
+}
+
+export function useSchedules() {
+  return useQuery({
+    queryKey: ['reports', 'schedules'],
+    queryFn: () =>
+      api.callMethodGet<ReportSchedule[]>('gym_management.reports.list_schedules'),
+  })
+}
+
+export function useDeliveryLog() {
+  return useQuery({
+    queryKey: ['reports', 'delivery-log'],
+    queryFn: () =>
+      api.callMethodGet<DeliveryLogRow[]>('gym_management.reports.delivery_log', {
+        limit: 30,
+      }),
+  })
+}
+
+function useScheduleInvalidation() {
+  const qc = useQueryClient()
+  return () => qc.invalidateQueries({ queryKey: ['reports', 'schedules'] })
+}
+
+export interface SaveScheduleInput {
+  name?: string
+  report_key: string
+  title?: string
+  frequency: string
+  day_of_week?: string
+  day_of_month?: number
+  send_hour?: number
+  period?: string
+  branch?: string | null
+  recipient_roles: string[]
+  formats: string[]
+  is_active?: number
+}
+
+export function useSaveSchedule() {
+  const invalidate = useScheduleInvalidation()
+  return useMutation({
+    mutationFn: (input: SaveScheduleInput) =>
+      api.callMethod<{ name: string }>(
+        'gym_management.reports.save_schedule',
+        input as unknown as Record<string, unknown>,
+      ),
+    onSuccess: invalidate,
+  })
+}
+
+export function useDeleteSchedule() {
+  const invalidate = useScheduleInvalidation()
+  return useMutation({
+    mutationFn: (name: string) =>
+      api.callMethod('gym_management.reports.delete_schedule', { name }),
+    onSuccess: invalidate,
+  })
+}
+
+export function useSetScheduleActive() {
+  const invalidate = useScheduleInvalidation()
+  return useMutation({
+    mutationFn: (vars: { name: string; active: number }) =>
+      api.callMethod('gym_management.reports.set_schedule_active', vars),
+    onSuccess: invalidate,
+  })
+}
+
+export function useSendScheduleNow() {
+  return useMutation({
+    mutationFn: (name: string) =>
+      api.callMethod<{ sent: number; recipients: number }>(
+        'gym_management.reports.send_schedule_now',
+        { name },
+      ),
   })
 }

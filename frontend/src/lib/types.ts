@@ -332,6 +332,44 @@ export interface ReportEnvelope {
   tables: ReportTable[]
 }
 
+export type ReportFrequency = 'Daily' | 'Weekly' | 'Monthly' | 'Quarterly'
+
+export interface ReportSchedule {
+  name: string
+  report_key: string
+  title: string
+  frequency: ReportFrequency
+  day_of_week: string
+  day_of_month: number
+  send_hour: number
+  period: string
+  branch: string | null
+  recipient_roles: string[]
+  formats: string[]
+  is_active: number
+  last_sent_on: string | null
+}
+
+export interface ScheduleOptions {
+  reports: { key: string; title: string }[]
+  roles: string[]
+  periods: string[]
+  formats: string[]
+  weekdays: string[]
+}
+
+export interface DeliveryLogRow {
+  name: string
+  report_key: string
+  recipient: string
+  recipient_email: string
+  status: 'Sent' | 'Failed'
+  formats: string
+  period_label: string
+  sent_on: string | null
+  error: string | null
+}
+
 // ---- Schedule + bookings (gym_management.schedule.*) ----
 
 export type SessionStatus =

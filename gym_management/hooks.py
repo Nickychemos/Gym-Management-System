@@ -171,6 +171,10 @@ doc_events = {
 # ---------------
 
 scheduler_events = {
+	"hourly": [
+		# Send any Report Schedule that is due this hour (honours send_hour).
+		"gym_management.reports.dispatch_scheduled",
+	],
 	"daily": [
 		# Summary notifications: renewals due this week + compliance expiring.
 		"gym_management.notifications.daily_digest",

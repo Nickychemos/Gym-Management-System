@@ -22,14 +22,16 @@ from frappe.utils import (
     flt,
     formatdate,
     get_first_day,
+    get_last_day,
     getdate,
+    now_datetime,
     today,
 )
 from frappe.utils.pdf import get_pdf
 from frappe.utils.xlsxutils import make_xlsx
 
 from gym_management.branches import resolve_branch_filter
-from gym_management.rbac import MANAGER, requires
+from gym_management.rbac import GYM_ROLES, MANAGER, requires
 
 # Value formats the frontend understands when rendering a cell/KPI.
 KSH, NUM, PCT, TEXT, DATE = "ksh", "number", "percent", "text", "date"
@@ -663,3 +665,251 @@ def export_report(report: str, format: str = "pdf", period: str = "this_month",
     frappe.response["filename"] = f"{base}.{ext}"
     frappe.response["filecontent"] = content
     frappe.response["type"] = "binary"
+
+
+# ---------------------------------------------------------------------------
+# Scheduling + email delivery
+# ---------------------------------------------------------------------------
+
+_WEEKDAYS_FULL = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
+                  "Saturday", "Sunday"]
+_PERIODS = ["this_month", "last_month", "last_30_days", "this_quarter", "this_year"]
+_FORMATS = ["pdf", "csv", "xlsx"]
+
+
+def _json_list(value) -> list:
+    if not value:
+        return []
+    if isinstance(value, list):
+        return [str(v) for v in value]
+    try:
+        parsed = frappe.parse_json(value)
+        return [str(v) for v in parsed] if isinstance(parsed, list) else []
+    except Exception:
+        return []
+
+
+def _attachment(env, fmt) -> dict:
+    base = f"{env['key']}_{env['period']['label']}".replace(" ", "_").replace("/", "-")
+    if fmt == "csv":
+        return {"fname": f"{base}.csv", "fcontent": _to_csv(env)}
+    if fmt == "xlsx":
+        return {"fname": f"{base}.xlsx", "fcontent": _to_xlsx(env)}
+    return {"fname": f"{base}.pdf", "fcontent": _to_pdf(env)}
+
+
+def _role_recipients(roles: list) -> list[dict]:
+    """Enabled users with an email who hold any of `roles`."""
+    if not roles:
+        return []
+    users = set(frappe.get_all(
+        "Has Role",
+        filters={"role": ["in", roles], "parenttype": "User"},
+        pluck="parent",
+    ))
+    users.discard("Guest")
+    out = []
+    for u in users:
+        info = frappe.db.get_value("User", u, ["enabled", "email", "name"], as_dict=True)
+        if info and info.enabled and info.email:
+            out.append({"user": info.name, "email": info.email})
+    return out
+
+
+def _email_body(env, brand) -> str:
+    kpis = "".join(
+        f"<li><b>{frappe.utils.escape_html(k['label'])}:</b> "
+        f"{_fmt_html(k['value'], k['format'])}</li>"
+        for k in env["kpis"][:6]
+    )
+    return f"""<div style="font-family:Helvetica,Arial,sans-serif;color:#0f1115">
+      <h2 style="margin:0 0 2px">{frappe.utils.escape_html(env['title'])}</h2>
+      <p style="color:#6b7280;margin:0 0 12px">{frappe.utils.escape_html(brand['name'])}
+         &middot; {frappe.utils.escape_html(env['period']['label'])}</p>
+      <ul style="line-height:1.7;padding-left:18px">{kpis}</ul>
+      <p style="color:#6b7280;font-size:13px">The full report is attached.</p>
+    </div>"""
+
+
+def _send_report(sched, override_recipients=None) -> dict:
+    """Build the report, render the chosen formats, email each recipient and log
+    every delivery. Stamps last_sent_on."""
+    formats = [f for f in (_json_list(sched.formats) or ["pdf"]) if f in _FORMATS] or ["pdf"]
+    recipients = override_recipients or _role_recipients(_json_list(sched.recipient_roles))
+
+    sent = 0
+    if recipients:
+        env = _envelope(sched.report_key, sched.period or "last_month", None, None, sched.branch)
+        attachments = [_attachment(env, f) for f in formats]
+        brand = _brand()
+        subject = f"{env['title']} — {env['period']['label']}"
+        body = _email_body(env, brand)
+        for r in recipients:
+            status, err = "Sent", None
+            try:
+                frappe.sendmail(
+                    recipients=[r["email"]],
+                    subject=subject,
+                    message=body,
+                    attachments=attachments,
+                    reference_doctype="Report Schedule",
+                    reference_name=sched.name,
+                )
+                sent += 1
+            except Exception as e:  # noqa: BLE001
+                status, err = "Failed", str(e)[:500]
+            frappe.get_doc({
+                "doctype": "Report Delivery Log",
+                "report_schedule": sched.name,
+                "report_key": sched.report_key,
+                "recipient": r["user"],
+                "recipient_email": r["email"],
+                "status": status,
+                "formats": ", ".join(formats),
+                "period_label": env["period"]["label"],
+                "sent_on": now_datetime(),
+                "error": err,
+            }).insert(ignore_permissions=True)
+
+    sched.db_set("last_sent_on", now_datetime())
+    frappe.db.commit()
+    return {"sent": sent, "recipients": len(recipients)}
+
+
+def _is_due(sched, now) -> bool:
+    if not sched.is_active:
+        return False
+    if int(sched.send_hour or 8) != now.hour:
+        return False
+    # One send per day max (guards the hourly tick against re-firing).
+    if sched.last_sent_on and getdate(sched.last_sent_on) == getdate(now):
+        return False
+    f = sched.frequency
+    if f == "Daily":
+        return True
+    if f == "Weekly":
+        return now.strftime("%A") == (sched.day_of_week or "Monday")
+    if f in ("Monthly", "Quarterly"):
+        target = min(int(sched.day_of_month or 1), get_last_day(now).day)
+        if now.day != target:
+            return False
+        return now.month in (1, 4, 7, 10) if f == "Quarterly" else True
+    return False
+
+
+def dispatch_scheduled():
+    """Hourly job: send every Report Schedule that is due this hour."""
+    now = now_datetime()
+    for name in frappe.get_all("Report Schedule", filters={"is_active": 1}, pluck="name"):
+        sched = frappe.get_doc("Report Schedule", name)
+        if _is_due(sched, now):
+            try:
+                _send_report(sched)
+            except Exception:  # noqa: BLE001
+                frappe.log_error(
+                    f"Report dispatch failed for {name}", "reports.dispatch_scheduled"
+                )
+
+
+# ---------------------------------------------------------------------------
+# Schedule management API (SPA-driven)
+# ---------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+@requires(MANAGER)
+def schedule_options() -> dict:
+    """Form options for creating a schedule."""
+    return {
+        "reports": [{"key": k, "title": v["title"]} for k, v in REPORTS.items()],
+        "roles": list(GYM_ROLES) + ["System Manager"],
+        "periods": _PERIODS,
+        "formats": _FORMATS,
+        "weekdays": _WEEKDAYS_FULL,
+    }
+
+
+@frappe.whitelist()
+@requires(MANAGER)
+def list_schedules() -> list[dict]:
+    rows = frappe.get_all(
+        "Report Schedule",
+        fields=["name", "report_key", "title", "frequency", "day_of_week",
+                "day_of_month", "send_hour", "period", "branch", "recipient_roles",
+                "formats", "is_active", "last_sent_on"],
+        order_by="modified desc",
+    )
+    for r in rows:
+        r["recipient_roles"] = _json_list(r.recipient_roles)
+        r["formats"] = _json_list(r.formats) or ["pdf"]
+        r["title"] = r.title or REPORTS.get(r.report_key, {}).get("title", r.report_key)
+        r["is_active"] = int(r.is_active or 0)
+        r["last_sent_on"] = str(r.last_sent_on) if r.last_sent_on else None
+    return rows
+
+
+@frappe.whitelist()
+@requires(MANAGER)
+def save_schedule(name=None, report_key=None, title=None, frequency="Monthly",
+                  day_of_week="Monday", day_of_month=1, send_hour=8,
+                  period="last_month", branch=None, recipient_roles=None,
+                  formats=None, is_active=1) -> dict:
+    if report_key not in REPORTS:
+        frappe.throw(frappe._("Unknown report: {0}").format(report_key))
+    roles = _json_list(recipient_roles)
+    fmts = [f for f in _json_list(formats) if f in _FORMATS] or ["pdf"]
+    doc = frappe.get_doc("Report Schedule", name) if name else frappe.new_doc("Report Schedule")
+    doc.update({
+        "report_key": report_key,
+        "title": title or REPORTS[report_key]["title"],
+        "frequency": frequency,
+        "day_of_week": day_of_week,
+        "day_of_month": int(day_of_month or 1),
+        "send_hour": int(send_hour or 8),
+        "period": period if period in _PERIODS else "last_month",
+        "branch": branch or None,
+        "recipient_roles": frappe.as_json(roles),
+        "formats": frappe.as_json(fmts),
+        "is_active": int(is_active or 0),
+    })
+    doc.save(ignore_permissions=True)
+    frappe.db.commit()
+    return {"name": doc.name}
+
+
+@frappe.whitelist()
+@requires(MANAGER)
+def set_schedule_active(name: str, active: int) -> dict:
+    frappe.db.set_value("Report Schedule", name, "is_active", int(active))
+    frappe.db.commit()
+    return {"ok": True}
+
+
+@frappe.whitelist()
+@requires(MANAGER)
+def delete_schedule(name: str) -> dict:
+    frappe.delete_doc("Report Schedule", name, ignore_permissions=True, force=True)
+    frappe.db.commit()
+    return {"ok": True}
+
+
+@frappe.whitelist()
+@requires(MANAGER)
+def send_schedule_now(name: str) -> dict:
+    """Send a schedule immediately (for testing a configuration)."""
+    return _send_report(frappe.get_doc("Report Schedule", name))
+
+
+@frappe.whitelist()
+@requires(MANAGER)
+def delivery_log(limit: int = 30) -> list[dict]:
+    rows = frappe.get_all(
+        "Report Delivery Log",
+        fields=["name", "report_key", "recipient", "recipient_email", "status",
+                "formats", "period_label", "sent_on", "error"],
+        order_by="creation desc",
+        limit_page_length=int(limit),
+    )
+    for r in rows:
+        r["sent_on"] = str(r.sent_on) if r.sent_on else None
+    return rows
