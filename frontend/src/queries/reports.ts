@@ -6,6 +6,8 @@ import {
   type ReportEnvelope,
   type ReportListItem,
   type ReportSchedule,
+  type ReportVisibility,
+  type SavedReport,
   type ScheduleOptions,
 } from '@/lib/types'
 
@@ -34,6 +36,7 @@ export async function downloadReport(params: {
   format: 'pdf' | 'csv' | 'xlsx'
   period: string
   branch?: string
+  config?: ReportVisibility
 }) {
   const qs = new URLSearchParams({
     report: params.report,
@@ -41,6 +44,8 @@ export async function downloadReport(params: {
     period: params.period,
   })
   if (params.branch) qs.set('branch', params.branch)
+  if (params.config && Object.keys(params.config).length)
+    qs.set('config', JSON.stringify(params.config))
   const res = await fetch(
     `/api/method/gym_management.reports.export_report?${qs.toString()}`,
     { credentials: 'include' },
@@ -110,6 +115,7 @@ function useScheduleInvalidation() {
 export interface SaveScheduleInput {
   name?: string
   report_key: string
+  saved_report?: string | null
   title?: string
   frequency: string
   day_of_week?: string
@@ -159,5 +165,43 @@ export function useSendScheduleNow() {
         'gym_management.reports.send_schedule_now',
         { name },
       ),
+  })
+}
+
+// ---- Saved reports (customised views) ----
+
+export function useSavedReports() {
+  return useQuery({
+    queryKey: ['reports', 'saved'],
+    queryFn: () =>
+      api.callMethodGet<SavedReport[]>('gym_management.reports.list_saved_reports'),
+  })
+}
+
+export function useSaveSavedReport() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      name?: string
+      title: string
+      report_key: string
+      period: string
+      branch?: string | null
+      config: ReportVisibility
+    }) =>
+      api.callMethod<{ name: string }>(
+        'gym_management.reports.save_saved_report',
+        input as unknown as Record<string, unknown>,
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['reports', 'saved'] }),
+  })
+}
+
+export function useDeleteSavedReport() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (name: string) =>
+      api.callMethod('gym_management.reports.delete_saved_report', { name }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['reports', 'saved'] }),
   })
 }

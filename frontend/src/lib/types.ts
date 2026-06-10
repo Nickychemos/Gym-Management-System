@@ -370,6 +370,23 @@ export interface DeliveryLogRow {
   error: string | null
 }
 
+export interface ReportVisibility {
+  hidden_kpis?: string[]
+  hidden_charts?: string[]
+  hidden_tables?: string[]
+  hidden_columns?: Record<string, string[]>
+}
+
+export interface SavedReport {
+  name: string
+  title: string
+  report_key: string
+  period: string
+  branch: string | null
+  config: ReportVisibility
+  report_title: string
+}
+
 // ---- Schedule + bookings (gym_management.schedule.*) ----
 
 export type SessionStatus =

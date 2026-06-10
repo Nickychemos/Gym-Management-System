@@ -201,7 +201,12 @@ export function ScheduleDialog({
   onClose,
 }: {
   schedule?: ReportSchedule
-  preset?: { report_key?: string; period?: string; branch?: string | null }
+  preset?: {
+    report_key?: string
+    period?: string
+    branch?: string | null
+    saved_report?: string
+  }
   onClose: () => void
 }) {
   const { data: opts } = useScheduleOptions()
@@ -233,6 +238,7 @@ export function ScheduleDialog({
       {
         name: schedule?.name,
         report_key: reportKey,
+        saved_report: preset?.saved_report,
         frequency,
         day_of_week: dayOfWeek,
         day_of_month: dayOfMonth,

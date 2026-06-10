@@ -652,9 +652,13 @@ def _to_pdf(env) -> bytes:
 @frappe.whitelist()
 @requires(MANAGER)
 def export_report(report: str, format: str = "pdf", period: str = "this_month",
-                  start=None, end=None, branch: str | None = None):
-    """Download a report as pdf / csv / xlsx. Served as a binary attachment."""
+                  start=None, end=None, branch: str | None = None, config=None):
+    """Download a report as pdf / csv / xlsx. Served as a binary attachment.
+    `config` (a visibility JSON) hides the same sections/columns as on screen."""
     env = _envelope(report, period, start, end, branch)
+    if config:
+        cfg = config if isinstance(config, dict) else frappe.parse_json(config)
+        env = _apply_visibility(env, cfg or {})
     base = f"{report}_{env['period']['label']}".replace(" ", "_").replace("/", "-")
     if format == "csv":
         content, ext = _to_csv(env), "csv"
@@ -739,7 +743,10 @@ def _send_report(sched, override_recipients=None) -> dict:
 
     sent = 0
     if recipients:
-        env = _envelope(sched.report_key, sched.period or "last_month", None, None, sched.branch)
+        if sched.saved_report and frappe.db.exists("Saved Report", sched.saved_report):
+            env = _saved_envelope(frappe.get_doc("Saved Report", sched.saved_report))
+        else:
+            env = _envelope(sched.report_key, sched.period or "last_month", None, None, sched.branch)
         attachments = [_attachment(env, f) for f in formats]
         brand = _brand()
         subject = f"{env['title']} — {env['period']['label']}"
@@ -834,9 +841,9 @@ def schedule_options() -> dict:
 def list_schedules() -> list[dict]:
     rows = frappe.get_all(
         "Report Schedule",
-        fields=["name", "report_key", "title", "frequency", "day_of_week",
-                "day_of_month", "send_hour", "period", "branch", "recipient_roles",
-                "formats", "is_active", "last_sent_on"],
+        fields=["name", "report_key", "saved_report", "title", "frequency",
+                "day_of_week", "day_of_month", "send_hour", "period", "branch",
+                "recipient_roles", "formats", "is_active", "last_sent_on"],
         order_by="modified desc",
     )
     for r in rows:
@@ -853,7 +860,15 @@ def list_schedules() -> list[dict]:
 def save_schedule(name=None, report_key=None, title=None, frequency="Monthly",
                   day_of_week="Monday", day_of_month=1, send_hour=8,
                   period="last_month", branch=None, recipient_roles=None,
-                  formats=None, is_active=1) -> dict:
+                  formats=None, is_active=1, saved_report=None) -> dict:
+    # A saved view drives both the report and its period/branch/customisation.
+    if saved_report and frappe.db.exists("Saved Report", saved_report):
+        sr = frappe.db.get_value("Saved Report", saved_report,
+                                 ["report_key", "title", "period", "branch"], as_dict=True)
+        report_key = sr.report_key
+        title = title or sr.title
+        period = sr.period
+        branch = sr.branch
     if report_key not in REPORTS:
         frappe.throw(frappe._("Unknown report: {0}").format(report_key))
     roles = _json_list(recipient_roles)
@@ -861,6 +876,7 @@ def save_schedule(name=None, report_key=None, title=None, frequency="Monthly",
     doc = frappe.get_doc("Report Schedule", name) if name else frappe.new_doc("Report Schedule")
     doc.update({
         "report_key": report_key,
+        "saved_report": saved_report or None,
         "title": title or REPORTS[report_key]["title"],
         "frequency": frequency,
         "day_of_week": day_of_week,
@@ -913,3 +929,90 @@ def delivery_log(limit: int = 30) -> list[dict]:
     for r in rows:
         r["sent_on"] = str(r.sent_on) if r.sent_on else None
     return rows
+
+
+# ---------------------------------------------------------------------------
+# Saved Reports — customised views (section + column selection)
+# ---------------------------------------------------------------------------
+
+
+def _apply_visibility(env: dict, config: dict) -> dict:
+    """Drop the sections/columns a saved view hides. `config` lists hidden keys,
+    so any section added to a report later shows by default."""
+    if not config:
+        return env
+    hk = set(config.get("hidden_kpis", []))
+    hc = set(config.get("hidden_charts", []))
+    ht = set(config.get("hidden_tables", []))
+    hcol = config.get("hidden_columns", {}) or {}
+    env["kpis"] = [k for k in env["kpis"] if k["key"] not in hk]
+    env["charts"] = [c for c in env["charts"] if c["key"] not in hc]
+    tables = []
+    for t in env["tables"]:
+        if t["key"] in ht:
+            continue
+        hidden = set(hcol.get(t["key"], []))
+        if hidden:
+            t = {**t, "columns": [c for c in t["columns"] if c["key"] not in hidden]}
+        tables.append(t)
+    env["tables"] = tables
+    return env
+
+
+def _saved_envelope(sr) -> dict:
+    config = frappe.parse_json(sr.config) if sr.config else {}
+    env = _envelope(sr.report_key, sr.period or "this_month", None, None, sr.branch)
+    return _apply_visibility(env, config)
+
+
+@frappe.whitelist()
+@requires(MANAGER)
+def list_saved_reports() -> list[dict]:
+    rows = frappe.get_all(
+        "Saved Report",
+        fields=["name", "title", "report_key", "period", "branch", "config"],
+        order_by="modified desc",
+    )
+    for r in rows:
+        r["report_title"] = REPORTS.get(r.report_key, {}).get("title", r.report_key)
+        r["config"] = frappe.parse_json(r.config) if r.config else {}
+    return rows
+
+
+@frappe.whitelist()
+@requires(MANAGER)
+def save_saved_report(name=None, title=None, report_key=None, period="this_month",
+                      branch=None, config=None) -> dict:
+    if report_key not in REPORTS:
+        frappe.throw(frappe._("Unknown report: {0}").format(report_key))
+    cfg = config if isinstance(config, dict) else (frappe.parse_json(config) if config else {})
+    doc = frappe.get_doc("Saved Report", name) if name else frappe.new_doc("Saved Report")
+    doc.update({
+        "title": title or REPORTS[report_key]["title"],
+        "report_key": report_key,
+        "period": period if period in _PERIODS else "this_month",
+        "branch": branch or None,
+        "config": frappe.as_json(cfg),
+    })
+    doc.save(ignore_permissions=True)
+    frappe.db.commit()
+    return {"name": doc.name}
+
+
+@frappe.whitelist()
+@requires(MANAGER)
+def run_saved_report(name: str) -> dict:
+    sr = frappe.get_doc("Saved Report", name)
+    env = _saved_envelope(sr)
+    env["saved_report"] = sr.name
+    env["saved_title"] = sr.title
+    env["config"] = frappe.parse_json(sr.config) if sr.config else {}
+    return env
+
+
+@frappe.whitelist()
+@requires(MANAGER)
+def delete_saved_report(name: str) -> dict:
+    frappe.delete_doc("Saved Report", name, ignore_permissions=True, force=True)
+    frappe.db.commit()
+    return {"ok": True}

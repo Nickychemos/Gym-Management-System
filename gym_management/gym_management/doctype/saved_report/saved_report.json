@@ -1,0 +1,73 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-06-10 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "report_key",
+  "period",
+  "branch",
+  "config"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "report_key",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Report Key",
+   "reqd": 1
+  },
+  {
+   "default": "this_month",
+   "fieldname": "period",
+   "fieldtype": "Select",
+   "label": "Reporting Period",
+   "options": "this_month\nlast_month\nlast_30_days\nthis_quarter\nthis_year"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "description": "JSON of hidden section/column keys",
+   "fieldname": "config",
+   "fieldtype": "Long Text",
+   "label": "Config"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-06-10 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gym Management",
+ "name": "Saved Report",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "search_fields": "title,report_key",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "report_key",
+  "saved_report",
   "title",
   "frequency",
   "day_of_week",
@@ -27,6 +28,12 @@
    "in_list_view": 1,
    "label": "Report Key",
    "reqd": 1
+  },
+  {
+   "fieldname": "saved_report",
+   "fieldtype": "Link",
+   "label": "Saved Report",
+   "options": "Saved Report"
   },
   {
    "fieldname": "title",
