@@ -9,7 +9,7 @@ import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/context/ToastContext'
 import { ApiError } from '@/lib/api'
-import { ksh } from '@/lib/format'
+import { fullDate, ksh } from '@/lib/format'
 import {
   useCreateSubscription,
   useFreezeSubscription,
@@ -30,16 +30,20 @@ export function SubscriptionLifecycle({
   subscription,
   status,
   member,
+  currentPlan,
+  currentEnd,
   size = 'sm',
 }: {
   subscription: string
   status: string
   member: string
+  currentPlan?: string
+  currentEnd?: string | null
   size?: 'sm' | 'md'
 }) {
   const { toast } = useToast()
   const [freezeOpen, setFreezeOpen] = useState(false)
-  const [upgradeOpen, setUpgradeOpen] = useState(false)
+  const [changeOpen, setChangeOpen] = useState(false)
   const renew = useRenewSubscription(member)
   const unfreeze = useUnfreezeSubscription(member)
 
@@ -81,16 +85,22 @@ export function SubscriptionLifecycle({
         Renew
       </Button>
       {(status === 'Active' || status === 'Frozen') && (
-        <Button variant="secondary" size={size} disabled={busy} onClick={() => setUpgradeOpen(true)}>
-          Upgrade
+        <Button variant="secondary" size={size} disabled={busy} onClick={() => setChangeOpen(true)}>
+          Change plan
         </Button>
       )}
 
       {freezeOpen && (
         <FreezeDialog subscription={subscription} member={member} onClose={() => setFreezeOpen(false)} />
       )}
-      {upgradeOpen && (
-        <UpgradeDialog subscription={subscription} member={member} onClose={() => setUpgradeOpen(false)} />
+      {changeOpen && (
+        <ChangePlanDialog
+          subscription={subscription}
+          member={member}
+          currentPlan={currentPlan}
+          currentEnd={currentEnd}
+          onClose={() => setChangeOpen(false)}
+        />
       )}
     </div>
   )
@@ -162,13 +172,17 @@ function FreezeDialog({
   )
 }
 
-function UpgradeDialog({
+function ChangePlanDialog({
   subscription,
   member,
+  currentPlan,
+  currentEnd,
   onClose,
 }: {
   subscription: string
   member: string
+  currentPlan?: string
+  currentEnd?: string | null
   onClose: () => void
 }) {
   const { toast } = useToast()
@@ -176,12 +190,26 @@ function UpgradeDialog({
   const { data: plans } = useMembershipPlans()
   const [plan, setPlan] = useState('')
 
+  // Only other recurring membership tiers are valid change targets: drop the
+  // current plan (changing to itself is a no-op) and Day Pass (a drop-in, not a
+  // membership a member moves onto).
+  const options = (plans ?? []).filter(
+    (p) => p.name !== currentPlan && p.plan_type !== 'Day Pass',
+  )
+
   function submit() {
     if (!plan) return toast({ variant: 'error', title: 'Pick a plan' })
     upgrade.mutate(
       { subscription, new_plan: plan },
       {
-        onSuccess: () => { toast({ variant: 'success', title: 'Subscription changed' }); onClose() },
+        onSuccess: (r) => {
+          toast({
+            variant: 'success',
+            title: 'Plan change scheduled',
+            description: `${plan} starts ${fullDate(r.start_date)}`,
+          })
+          onClose()
+        },
         onError: errToast(toast, 'Could not change plan'),
       },
     )
@@ -192,23 +220,38 @@ function UpgradeDialog({
       open
       onClose={onClose}
       title="Change plan"
-      description="Cancels the current subscription and starts a new one today."
+      description="The new plan takes effect at the next renewal, so no paid days are lost."
       widthClassName="max-w-md"
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={upgrade.isPending}>Cancel</Button>
-          <Button onClick={submit} disabled={upgrade.isPending}>{upgrade.isPending ? 'Changing…' : 'Change plan'}</Button>
+          <Button onClick={submit} disabled={upgrade.isPending || options.length === 0}>
+            {upgrade.isPending ? 'Scheduling…' : 'Schedule change'}
+          </Button>
         </>
       }
     >
-      <div>
-        <Label>New plan</Label>
-        <Select value={plan} onChange={(e) => setPlan(e.target.value)} autoFocus>
-          <option value="">Select a plan…</option>
-          {(plans ?? []).map((p) => (
-            <option key={p.name} value={p.name}>{p.name} — {ksh(p.price)}</option>
-          ))}
-        </Select>
+      <div className="space-y-3">
+        <div>
+          <Label>New plan</Label>
+          <Select value={plan} onChange={(e) => setPlan(e.target.value)} autoFocus>
+            <option value="">Select a plan…</option>
+            {options.map((p) => (
+              <option key={p.name} value={p.name}>{p.name} — {ksh(p.price)}</option>
+            ))}
+          </Select>
+        </div>
+        {options.length === 0 ? (
+          <p className="text-small text-neutral-500">
+            No other membership plans are available to change to.
+          </p>
+        ) : (
+          <p className="text-small text-neutral-500">
+            {currentEnd
+              ? `The current plan stays active until it ends on ${fullDate(currentEnd)}; the new plan begins the next day.`
+              : 'The new plan begins today.'}
+          </p>
+        )}
       </div>
     </Dialog>
   )

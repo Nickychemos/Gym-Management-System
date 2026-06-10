@@ -194,7 +194,12 @@ export function useUpgradeSubscription(member?: string) {
   const invalidate = useMemberInvalidation(member)
   return useMutation({
     mutationFn: (vars: { subscription: string; new_plan: string }) =>
-      api.callMethod('gym_management.members.upgrade_subscription', vars),
+      api.callMethod<{
+        ok: boolean
+        subscription: string
+        status: string
+        start_date: string
+      }>('gym_management.members.upgrade_subscription', vars),
     onSuccess: invalidate,
   })
 }

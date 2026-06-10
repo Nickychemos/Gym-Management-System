@@ -1025,16 +1025,32 @@ def renew_subscription(subscription: str) -> dict:
 @frappe.whitelist()
 @requires(FRONTDESK)
 def upgrade_subscription(subscription: str, new_plan: str) -> dict:
-	"""Upgrade/downgrade: cancel the current subscription, then start a new one
-	on `new_plan` today. (Cancel first — the controller blocks overlapping
-	active subscriptions.)"""
-	cur = frappe.get_doc("Member Subscription", subscription)
-	customer, branch = cur.customer, cur.branch
-	if cur.docstatus == 1 and cur.status in ("Active", "Frozen"):
-		cur.cancel()
-	new_doc = _new_subscription(customer, new_plan, branch, today())
+	"""Change a member's plan, effective at next renewal.
+
+	The current subscription runs to its end date (so no paid days are
+	forfeited); a new subscription on `new_plan` is scheduled to start the day
+	after. If the current subscription has already ended, the new plan starts
+	today. Same mechanics as renew, just onto a different plan — and because the
+	new period starts after the current one ends, the no-overlap check passes."""
+	cur = frappe.db.get_value(
+		"Member Subscription",
+		subscription,
+		["customer", "branch", "end_date"],
+		as_dict=True,
+	)
+	if not cur:
+		frappe.throw(frappe._("Subscription not found"))
+	start = getdate(today())
+	if cur.end_date and getdate(cur.end_date) >= start:
+		start = add_days(getdate(cur.end_date), 1)
+	doc = _new_subscription(cur.customer, new_plan, cur.branch, start)
 	frappe.db.commit()
-	return {"ok": True, "subscription": new_doc.name, "status": new_doc.status}
+	return {
+		"ok": True,
+		"subscription": doc.name,
+		"status": doc.status,
+		"start_date": str(doc.start_date),
+	}
 
 
 @frappe.whitelist()
