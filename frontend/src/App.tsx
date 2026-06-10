@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
@@ -28,6 +29,9 @@ import RefundsPage from '@/pages/refunds/Refunds'
 import SettingsPage from '@/pages/settings/Settings'
 import SurveysPage from '@/pages/surveys/Surveys'
 import SchedulePage from '@/pages/schedule/Schedule'
+
+// Reports pulls in Recharts; lazy-load so it stays out of the main bundle.
+const ReportsPage = lazy(() => import('@/pages/reports/Reports'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -73,6 +77,14 @@ function App() {
               <Route path="pt/:id" element={<PtPackageDetailPage />} />
               <Route path="payments" element={<PaymentsPage />} />
               <Route path="refunds" element={<RefundsPage />} />
+              <Route
+                path="reports"
+                element={
+                  <Suspense fallback={null}>
+                    <ReportsPage />
+                  </Suspense>
+                }
+              />
               <Route path="equipment" element={<EquipmentPage />} />
               <Route path="equipment/:id" element={<EquipmentDetailPage />} />
               <Route path="compliance" element={<CompliancePage />} />

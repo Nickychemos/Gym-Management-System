@@ -270,6 +270,68 @@ export interface ActivityItem {
   ref_name: string
 }
 
+// ---- Reports (gym_management.reports.*) ----
+
+export type ReportValueFormat = 'ksh' | 'number' | 'percent' | 'text' | 'date'
+
+export interface ReportListItem {
+  key: string
+  title: string
+  category: string
+  description: string
+  financial: boolean
+}
+
+export interface ReportKpi {
+  key: string
+  label: string
+  value: number | string | null
+  format: ReportValueFormat
+  hint: string | null
+  delta: number | null
+}
+
+export interface ReportChart {
+  key: string
+  type: 'area' | 'bar'
+  title: string
+  format: ReportValueFormat
+  data: { label: string; value: number }[]
+}
+
+export interface ReportColumn {
+  key: string
+  label: string
+  format: ReportValueFormat
+}
+
+export interface ReportTable {
+  key: string
+  title: string
+  columns: ReportColumn[]
+  rows: Record<string, unknown>[]
+}
+
+export interface ReportPeriod {
+  start: string
+  end: string
+  label: string
+  prev_start: string
+  prev_end: string
+}
+
+export interface ReportEnvelope {
+  key: string
+  title: string
+  category: string
+  period: ReportPeriod
+  branch: string | null
+  generated_on: string
+  kpis: ReportKpi[]
+  charts: ReportChart[]
+  tables: ReportTable[]
+}
+
 // ---- Schedule + bookings (gym_management.schedule.*) ----
 
 export type SessionStatus =

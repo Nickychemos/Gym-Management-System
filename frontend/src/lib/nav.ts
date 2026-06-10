@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   Calendar,
   ClipboardList,
   Dumbbell,
@@ -57,6 +58,10 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: '/coaching', label: 'Coaching', icon: HeartHandshake },
       { to: '/surveys', label: 'Surveys & NPS', icon: Smile },
     ],
+  },
+  {
+    label: 'Insights',
+    items: [{ to: '/reports', label: 'Reports', icon: BarChart3 }],
   },
   {
     label: 'Admin',

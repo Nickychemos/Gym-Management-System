@@ -17,6 +17,7 @@ export type NavKey =
   | 'pt'
   | 'payments'
   | 'refunds'
+  | 'reports'
   | 'equipment'
   | 'compliance'
   | 'marketing'
@@ -55,6 +56,7 @@ export const ROUTE_KEY: Record<string, NavKey> = {
   '/pt': 'pt',
   '/payments': 'payments',
   '/refunds': 'refunds',
+  '/reports': 'reports',
   '/equipment': 'equipment',
   '/compliance': 'compliance',
   '/marketing': 'marketing',

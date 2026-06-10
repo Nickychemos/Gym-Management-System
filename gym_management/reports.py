@@ -1,0 +1,508 @@
+"""Aggregated, cross-module reports for owners and managers.
+
+Each report is a code-defined builder that returns a generic envelope
+(kpis / charts / tables, each keyed) so a single frontend viewer can render any
+report and section/column toggles are trivial. Aggregation reuses the SQL
+patterns from dashboard.py / payments.py / surveys.py and the branch helper
+resolve_branch_filter(). All endpoints are Manager-tier; within a gym a manager
+sees every branch (branch is an optional filter/breakdown, default = all).
+
+v1 reports: revenue_summary, membership_mrr, class_attendance, nps, owner_snapshot.
+"""
+
+from __future__ import annotations
+
+import frappe
+from frappe.utils import (
+    add_days,
+    add_to_date,
+    flt,
+    formatdate,
+    get_first_day,
+    getdate,
+    today,
+)
+
+from gym_management.branches import resolve_branch_filter
+from gym_management.rbac import MANAGER, requires
+
+# Value formats the frontend understands when rendering a cell/KPI.
+KSH, NUM, PCT, TEXT, DATE = "ksh", "number", "percent", "text", "date"
+
+
+# ---------------------------------------------------------------------------
+# Registry
+# ---------------------------------------------------------------------------
+
+REPORTS: dict[str, dict] = {
+    "revenue_summary": {
+        "title": "Revenue Summary",
+        "category": "Financial",
+        "description": "M-Pesa income by period, branch and method, with trend.",
+        "financial": True,
+    },
+    "membership_mrr": {
+        "title": "Membership & MRR",
+        "category": "Financial",
+        "description": "Active members, new vs churned, MRR by plan and branch.",
+        "financial": True,
+    },
+    "class_attendance": {
+        "title": "Class Attendance & Fill",
+        "category": "Operations",
+        "description": "Sessions, capacity fill, attendance and no-shows.",
+        "financial": False,
+    },
+    "nps": {
+        "title": "NPS & Survey",
+        "category": "Experience",
+        "description": "NPS trend, promoter/detractor mix and recent comments.",
+        "financial": False,
+    },
+    "owner_snapshot": {
+        "title": "Owner Monthly Snapshot",
+        "category": "Executive",
+        "description": "One-page cross-module health: revenue, members, fill, NPS.",
+        "financial": True,
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Period resolution
+# ---------------------------------------------------------------------------
+
+
+def _resolve_period(period: str = "this_month", start=None, end=None) -> dict:
+    """Return {start, end, label, prev_start, prev_end} for a period selector."""
+    t = getdate(today())
+    if period == "custom" and start and end:
+        s, e = getdate(start), getdate(end)
+        label = f"{formatdate(s)} to {formatdate(e)}"
+    elif period == "last_month":
+        e = add_days(get_first_day(t), -1)
+        s = get_first_day(e)
+        label = formatdate(s, "MMMM yyyy")
+    elif period == "this_quarter":
+        q = (t.month - 1) // 3
+        s = getdate(f"{t.year}-{q * 3 + 1:02d}-01")
+        e = t
+        label = f"Q{q + 1} {t.year}"
+    elif period == "this_year":
+        s = getdate(f"{t.year}-01-01")
+        e = t
+        label = str(t.year)
+    elif period == "last_30_days":
+        s, e = add_days(t, -29), t
+        label = "Last 30 days"
+    else:  # this_month
+        s, e = get_first_day(t), t
+        label = formatdate(s, "MMMM yyyy")
+    span = (getdate(e) - getdate(s)).days
+    prev_e = add_days(getdate(s), -1)
+    prev_s = add_days(prev_e, -span)
+    return {
+        "start": str(s),
+        "end": str(e),
+        "label": label,
+        "prev_start": str(prev_s),
+        "prev_end": str(prev_e),
+    }
+
+
+def _kpi(key, label, value, fmt=NUM, hint=None, delta=None) -> dict:
+    return {"key": key, "label": label, "value": value, "format": fmt,
+            "hint": hint, "delta": delta}
+
+
+def _delta_pct(curr, prev):
+    if not prev:
+        return None
+    return round((curr - prev) / prev * 100, 1)
+
+
+# ---------------------------------------------------------------------------
+# Shared aggregation helpers
+# ---------------------------------------------------------------------------
+
+
+def _revenue_total(s, e, branch):
+    """(sum, count) of successful inbound M-Pesa in [s,e], optionally per branch."""
+    cond = (
+        "t.status='Success' AND t.direction='Inbound' "
+        "AND DATE(COALESCE(t.mpesa_timestamp, t.creation)) BETWEEN %(s)s AND %(e)s"
+    )
+    params = {"s": s, "e": e}
+    if branch:
+        cond += (
+            " AND EXISTS (SELECT 1 FROM `tabMember Profile` mp "
+            "WHERE mp.customer = t.customer AND mp.home_branch = %(b)s)"
+        )
+        params["b"] = branch
+    row = frappe.db.sql(
+        f"SELECT COALESCE(SUM(t.amount),0), COUNT(*) FROM `tabM-Pesa Transaction` t WHERE {cond}",
+        params,
+    )[0]
+    return flt(row[0]), int(row[1])
+
+
+def _daily_revenue(s, e, branch):
+    cond = (
+        "t.status='Success' AND t.direction='Inbound' "
+        "AND DATE(COALESCE(t.mpesa_timestamp, t.creation)) BETWEEN %(s)s AND %(e)s"
+    )
+    params = {"s": s, "e": e}
+    if branch:
+        cond += (
+            " AND EXISTS (SELECT 1 FROM `tabMember Profile` mp "
+            "WHERE mp.customer = t.customer AND mp.home_branch = %(b)s)"
+        )
+        params["b"] = branch
+    rows = frappe.db.sql(
+        f"""SELECT DATE(COALESCE(t.mpesa_timestamp, t.creation)) d, COALESCE(SUM(t.amount),0)
+            FROM `tabM-Pesa Transaction` t WHERE {cond} GROUP BY d ORDER BY d""",
+        params,
+    )
+    by_day = {str(d): flt(a) for d, a in rows}
+    out, cur = [], getdate(s)
+    while cur <= getdate(e):
+        out.append({"label": formatdate(cur, "d MMM"), "value": by_day.get(str(cur), 0.0)})
+        cur = add_days(cur, 1)
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Report builders
+# ---------------------------------------------------------------------------
+
+
+def _revenue_summary(p, branch):
+    s, e = p["start"], p["end"]
+    total, count = _revenue_total(s, e, branch)
+    prev_total, _ = _revenue_total(p["prev_start"], p["prev_end"], branch)
+    avg = round(total / count, 0) if count else 0
+
+    by_branch = frappe.db.sql(
+        """SELECT COALESCE(mp.home_branch,'Unassigned') br, COALESCE(SUM(t.amount),0) rev, COUNT(*) n
+           FROM `tabM-Pesa Transaction` t
+           LEFT JOIN `tabMember Profile` mp ON mp.customer = t.customer
+           WHERE t.status='Success' AND t.direction='Inbound'
+             AND DATE(COALESCE(t.mpesa_timestamp,t.creation)) BETWEEN %(s)s AND %(e)s
+           GROUP BY br ORDER BY rev DESC""",
+        {"s": s, "e": e},
+        as_dict=True,
+    )
+    by_method = frappe.db.sql(
+        """SELECT COALESCE(transaction_type,'Other') method, COALESCE(SUM(amount),0) rev, COUNT(*) n
+           FROM `tabM-Pesa Transaction`
+           WHERE status='Success' AND direction='Inbound'
+             AND DATE(COALESCE(mpesa_timestamp,creation)) BETWEEN %(s)s AND %(e)s
+           GROUP BY method ORDER BY rev DESC""",
+        {"s": s, "e": e},
+        as_dict=True,
+    )
+    return {
+        "kpis": [
+            _kpi("total", "Total revenue", total, KSH, delta=_delta_pct(total, prev_total)),
+            _kpi("count", "Transactions", count, NUM),
+            _kpi("avg", "Avg transaction", avg, KSH),
+            _kpi("prev", "Previous period", prev_total, KSH, hint="same length, prior"),
+        ],
+        "charts": [
+            {"key": "trend", "type": "area", "title": "Daily revenue",
+             "format": KSH, "data": _daily_revenue(s, e, branch)},
+        ],
+        "tables": [
+            {"key": "by_branch", "title": "By branch",
+             "columns": [{"key": "br", "label": "Branch", "format": TEXT},
+                         {"key": "rev", "label": "Revenue", "format": KSH},
+                         {"key": "n", "label": "Txns", "format": NUM}],
+             "rows": [{"br": r.br, "rev": flt(r.rev), "n": int(r.n)} for r in by_branch]},
+            {"key": "by_method", "title": "By payment type",
+             "columns": [{"key": "method", "label": "Type", "format": TEXT},
+                         {"key": "rev", "label": "Revenue", "format": KSH},
+                         {"key": "n", "label": "Txns", "format": NUM}],
+             "rows": [{"method": r.method, "rev": flt(r.rev), "n": int(r.n)} for r in by_method]},
+        ],
+    }
+
+
+def _active_members(branch):
+    cond = "status IN ('Active','Frozen') AND docstatus=1"
+    params = {}
+    if branch:
+        cond += " AND branch=%(b)s"
+        params["b"] = branch
+    return int(frappe.db.sql(
+        f"SELECT COUNT(DISTINCT customer) FROM `tabMember Subscription` WHERE {cond}", params
+    )[0][0])
+
+
+def _membership_mrr(p, branch):
+    s, e = p["start"], p["end"]
+    active = _active_members(branch)
+
+    bcond = " AND branch=%(b)s" if branch else ""
+    params = {"s": s, "e": e}
+    if branch:
+        params["b"] = branch
+
+    new = int(frappe.db.sql(
+        f"""SELECT COUNT(*) FROM `tabMember Subscription`
+            WHERE docstatus=1 AND DATE(creation) BETWEEN %(s)s AND %(e)s{bcond}""",
+        params,
+    )[0][0])
+    churned = int(frappe.db.sql(
+        f"""SELECT COUNT(*) FROM `tabMember Subscription`
+            WHERE status IN ('Lapsed','Cancelled')
+              AND DATE(modified) BETWEEN %(s)s AND %(e)s{bcond}""",
+        params,
+    )[0][0])
+
+    # MRR: sum of active subs' price normalised to a 30-day month.
+    mrr_rows = frappe.db.sql(
+        f"""SELECT COALESCE(SUM(price * 30.0 / GREATEST(duration_days,1)),0)
+            FROM `tabMember Subscription`
+            WHERE status IN ('Active','Frozen') AND docstatus=1{bcond}""",
+        params,
+    )
+    mrr = flt(mrr_rows[0][0])
+
+    by_plan = frappe.db.sql(
+        f"""SELECT membership_plan plan, COUNT(DISTINCT customer) members,
+                   COALESCE(SUM(price*30.0/GREATEST(duration_days,1)),0) mrr
+            FROM `tabMember Subscription`
+            WHERE status IN ('Active','Frozen') AND docstatus=1{bcond}
+            GROUP BY plan ORDER BY mrr DESC""",
+        params,
+        as_dict=True,
+    )
+    by_branch = frappe.db.sql(
+        """SELECT COALESCE(branch,'Unassigned') br, COUNT(DISTINCT customer) members
+           FROM `tabMember Subscription`
+           WHERE status IN ('Active','Frozen') AND docstatus=1
+           GROUP BY br ORDER BY members DESC""",
+        as_dict=True,
+    )
+    return {
+        "kpis": [
+            _kpi("active", "Active members", active, NUM),
+            _kpi("new", "New (period)", new, NUM),
+            _kpi("churned", "Churned (period)", churned, NUM),
+            _kpi("net", "Net change", new - churned, NUM),
+            _kpi("mrr", "MRR", mrr, KSH, hint="monthly recurring"),
+        ],
+        "charts": [
+            {"key": "by_plan", "type": "bar", "title": "Members by plan", "format": NUM,
+             "data": [{"label": r.plan or "—", "value": int(r.members)} for r in by_plan]},
+        ],
+        "tables": [
+            {"key": "plans", "title": "By plan",
+             "columns": [{"key": "plan", "label": "Plan", "format": TEXT},
+                         {"key": "members", "label": "Members", "format": NUM},
+                         {"key": "mrr", "label": "MRR", "format": KSH}],
+             "rows": [{"plan": r.plan, "members": int(r.members), "mrr": flt(r.mrr)} for r in by_plan]},
+            {"key": "branches", "title": "By branch",
+             "columns": [{"key": "br", "label": "Branch", "format": TEXT},
+                         {"key": "members", "label": "Members", "format": NUM}],
+             "rows": [{"br": r.br, "members": int(r.members)} for r in by_branch]},
+        ],
+    }
+
+
+def _class_attendance(p, branch):
+    s, e = p["start"], p["end"]
+    bcond = " AND cs.branch=%(b)s" if branch else ""
+    params = {"s": s, "e": e}
+    if branch:
+        params["b"] = branch
+
+    sess = frappe.db.sql(
+        f"""SELECT COUNT(*) sessions, COALESCE(SUM(capacity),0) cap,
+                   COALESCE(SUM(bookings_count),0) booked
+            FROM `tabClass Session` cs
+            WHERE cs.docstatus=1 AND DATE(cs.start_time) BETWEEN %(s)s AND %(e)s{bcond}""",
+        params,
+        as_dict=True,
+    )[0]
+    bk = frappe.db.sql(
+        f"""SELECT cb.status st, COUNT(*) n
+            FROM `tabClass Booking` cb JOIN `tabClass Session` cs ON cs.name=cb.class_session
+            WHERE cb.docstatus=1 AND DATE(cs.start_time) BETWEEN %(s)s AND %(e)s{bcond}
+            GROUP BY cb.status""",
+        params,
+    )
+    bs = {st: int(n) for st, n in bk}
+    attended = bs.get("Checked-In", 0)
+    no_show = bs.get("No-Show", 0)
+    cancelled = bs.get("Cancelled", 0)
+    seen = attended + no_show
+    att_rate = round(100 * attended / seen, 1) if seen else None
+    fill = round(100 * int(sess.booked) / int(sess.cap), 1) if sess.cap else None
+
+    by_type = frappe.db.sql(
+        f"""SELECT cs.class_type ct, COUNT(DISTINCT cs.name) sessions, COUNT(cb.name) bookings,
+                   SUM(CASE WHEN cb.status='Checked-In' THEN 1 ELSE 0 END) attended
+            FROM `tabClass Session` cs
+            LEFT JOIN `tabClass Booking` cb ON cb.class_session=cs.name AND cb.docstatus=1
+            WHERE cs.docstatus=1 AND DATE(cs.start_time) BETWEEN %(s)s AND %(e)s{bcond}
+            GROUP BY cs.class_type ORDER BY bookings DESC""",
+        params,
+        as_dict=True,
+    )
+    return {
+        "kpis": [
+            _kpi("sessions", "Sessions held", int(sess.sessions), NUM),
+            _kpi("bookings", "Bookings", attended + no_show + cancelled + bs.get("Booked", 0), NUM),
+            _kpi("att_rate", "Attendance rate", att_rate, PCT),
+            _kpi("no_shows", "No-shows", no_show, NUM),
+            _kpi("fill", "Avg fill", fill, PCT, hint="booked vs capacity"),
+        ],
+        "charts": [
+            {"key": "by_type", "type": "bar", "title": "Bookings by class type", "format": NUM,
+             "data": [{"label": r.ct or "—", "value": int(r.bookings)} for r in by_type]},
+        ],
+        "tables": [
+            {"key": "types", "title": "By class type",
+             "columns": [{"key": "ct", "label": "Class", "format": TEXT},
+                         {"key": "sessions", "label": "Sessions", "format": NUM},
+                         {"key": "bookings", "label": "Bookings", "format": NUM},
+                         {"key": "attended", "label": "Attended", "format": NUM}],
+             "rows": [{"ct": r.ct, "sessions": int(r.sessions), "bookings": int(r.bookings),
+                       "attended": int(r.attended or 0)} for r in by_type]},
+        ],
+    }
+
+
+def _nps(p, branch):
+    s, e = p["start"], p["end"]
+    # Branch scoping for surveys goes through the member's home branch.
+    join = ""
+    bcond = ""
+    params = {"s": s, "e": e}
+    if branch:
+        join = "JOIN `tabMember Profile` mp ON mp.customer = sr.member"
+        bcond = " AND mp.home_branch=%(b)s"
+        params["b"] = branch
+
+    rows = frappe.db.sql(
+        f"""SELECT sr.nps_category cat, COUNT(*) n
+            FROM `tabSurvey Response` sr {join}
+            WHERE sr.nps_score IS NOT NULL
+              AND DATE(sr.submitted_on) BETWEEN %(s)s AND %(e)s{bcond}
+            GROUP BY sr.nps_category""",
+        params,
+    )
+    counts = {c: int(n) for c, n in rows}
+    promoters = counts.get("Promoter", 0)
+    passives = counts.get("Passive", 0)
+    detractors = counts.get("Detractor", 0)
+    total = promoters + passives + detractors
+    nps = round((promoters - detractors) / total * 100) if total else None
+
+    comments = frappe.db.sql(
+        f"""SELECT sr.member, sr.nps_score sc, sr.nps_category cat, sr.comment cmt, sr.submitted_on dt
+            FROM `tabSurvey Response` sr {join}
+            WHERE sr.nps_score IS NOT NULL AND COALESCE(sr.comment,'')<>''
+              AND DATE(sr.submitted_on) BETWEEN %(s)s AND %(e)s{bcond}
+            ORDER BY sr.submitted_on DESC LIMIT 10""",
+        params,
+        as_dict=True,
+    )
+    return {
+        "kpis": [
+            _kpi("nps", "NPS", nps, NUM, hint="promoters minus detractors"),
+            _kpi("responses", "Responses", total, NUM),
+            _kpi("promoters", "Promoters", promoters, NUM),
+            _kpi("detractors", "Detractors", detractors, NUM),
+        ],
+        "charts": [
+            {"key": "mix", "type": "bar", "title": "Promoter / Passive / Detractor", "format": NUM,
+             "data": [{"label": "Promoters", "value": promoters},
+                      {"label": "Passives", "value": passives},
+                      {"label": "Detractors", "value": detractors}]},
+        ],
+        "tables": [
+            {"key": "comments", "title": "Recent comments",
+             "columns": [{"key": "cat", "label": "Type", "format": TEXT},
+                         {"key": "sc", "label": "Score", "format": NUM},
+                         {"key": "cmt", "label": "Comment", "format": TEXT},
+                         {"key": "dt", "label": "When", "format": DATE}],
+             "rows": [{"cat": r.cat, "sc": int(r.sc), "cmt": r.cmt, "dt": str(r.dt)} for r in comments]},
+        ],
+    }
+
+
+def _owner_snapshot(p, branch):
+    rev = _revenue_summary(p, branch)
+    mem = _membership_mrr(p, branch)
+    cls = _class_attendance(p, branch)
+    nps = _nps(p, branch)
+
+    def find(sections, key):
+        for k in sections["kpis"]:
+            if k["key"] == key:
+                return k["value"]
+        return None
+
+    return {
+        "kpis": [
+            _kpi("revenue", "Revenue", find(rev, "total"), KSH),
+            _kpi("active", "Active members", find(mem, "active"), NUM),
+            _kpi("net", "Net member change", find(mem, "net"), NUM),
+            _kpi("mrr", "MRR", find(mem, "mrr"), KSH),
+            _kpi("fill", "Avg class fill", find(cls, "fill"), PCT),
+            _kpi("nps", "NPS", find(nps, "nps"), NUM),
+        ],
+        "charts": rev["charts"],
+        "tables": [mem["tables"][1], rev["tables"][0]],  # members by branch, revenue by branch
+    }
+
+
+_BUILDERS = {
+    "revenue_summary": _revenue_summary,
+    "membership_mrr": _membership_mrr,
+    "class_attendance": _class_attendance,
+    "nps": _nps,
+    "owner_snapshot": _owner_snapshot,
+}
+
+
+# ---------------------------------------------------------------------------
+# Whitelisted API
+# ---------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+@requires(MANAGER)
+def list_reports() -> list[dict]:
+    """The catalogue of available reports (for the Reports home)."""
+    return [
+        {"key": k, "title": v["title"], "category": v["category"],
+         "description": v["description"], "financial": v["financial"]}
+        for k, v in REPORTS.items()
+    ]
+
+
+@frappe.whitelist()
+@requires(MANAGER)
+def run_report(report: str, period: str = "this_month", start=None, end=None,
+               branch: str | None = None) -> dict:
+    """Run a report and return its generic envelope (kpis/charts/tables)."""
+    if report not in _BUILDERS:
+        frappe.throw(frappe._("Unknown report: {0}").format(report))
+    branch = resolve_branch_filter(branch)  # managers: requested branch or all
+    p = _resolve_period(period, start, end)
+    sections = _BUILDERS[report](p, branch)
+    meta = REPORTS[report]
+    return {
+        "key": report,
+        "title": meta["title"],
+        "category": meta["category"],
+        "period": p,
+        "branch": branch,
+        "generated_on": str(frappe.utils.now_datetime()),
+        "kpis": sections.get("kpis", []),
+        "charts": sections.get("charts", []),
+        "tables": sections.get("tables", []),
+    }
