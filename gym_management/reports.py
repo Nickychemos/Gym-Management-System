@@ -480,15 +480,65 @@ _BUILDERS = {
 # ---------------------------------------------------------------------------
 
 
+def _catalogue_config() -> dict:
+    """Per-site enable/order config: {report_key: {enabled, order}}."""
+    raw = frappe.db.get_single_value("Report Settings", "catalogue")
+    cfg = frappe.parse_json(raw) if raw else {}
+    return cfg if isinstance(cfg, dict) else {}
+
+
 @frappe.whitelist()
 @requires(MANAGER)
 def list_reports() -> list[dict]:
-    """The catalogue of available reports (for the Reports home)."""
-    return [
-        {"key": k, "title": v["title"], "category": v["category"],
-         "description": v["description"], "financial": v["financial"]}
-        for k, v in REPORTS.items()
-    ]
+    """The catalogue of enabled reports (for the Reports home), in saved order."""
+    cfg = _catalogue_config()
+    items = []
+    for i, (k, v) in enumerate(REPORTS.items()):
+        c = cfg.get(k, {})
+        if c.get("enabled", True) is False:
+            continue
+        items.append({
+            "key": k, "title": v["title"], "category": v["category"],
+            "description": v["description"], "financial": v["financial"],
+            "_order": c.get("order", i),
+        })
+    items.sort(key=lambda x: x["_order"])
+    for it in items:
+        it.pop("_order", None)
+    return items
+
+
+@frappe.whitelist()
+@requires(MANAGER)
+def report_settings() -> list[dict]:
+    """Every report with its enabled/order, for the catalogue manager."""
+    cfg = _catalogue_config()
+    out = []
+    for i, (k, v) in enumerate(REPORTS.items()):
+        c = cfg.get(k, {})
+        out.append({
+            "key": k, "title": v["title"], "category": v["category"],
+            "enabled": c.get("enabled", True) is not False,
+            "order": c.get("order", i),
+        })
+    out.sort(key=lambda x: x["order"])
+    return out
+
+
+@frappe.whitelist()
+@requires(MANAGER)
+def save_report_settings(items) -> dict:
+    """Persist enable/order. `items` is an ordered list of {key, enabled}."""
+    items = frappe.parse_json(items) if isinstance(items, str) else items
+    cfg = {}
+    for i, it in enumerate(items or []):
+        if it.get("key") in REPORTS:
+            cfg[it["key"]] = {"enabled": bool(it.get("enabled", True)), "order": i}
+    doc = frappe.get_single("Report Settings")
+    doc.catalogue = frappe.as_json(cfg)
+    doc.save(ignore_permissions=True)
+    frappe.db.commit()
+    return {"ok": True}
 
 
 def _envelope(report, period, start, end, branch) -> dict:

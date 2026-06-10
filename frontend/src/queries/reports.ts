@@ -6,6 +6,7 @@ import {
   type ReportEnvelope,
   type ReportListItem,
   type ReportSchedule,
+  type ReportSettingItem,
   type ReportVisibility,
   type SavedReport,
   type ScheduleOptions,
@@ -203,5 +204,27 @@ export function useDeleteSavedReport() {
     mutationFn: (name: string) =>
       api.callMethod('gym_management.reports.delete_saved_report', { name }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['reports', 'saved'] }),
+  })
+}
+
+// ---- Catalogue settings (per-site enable/order) ----
+
+export function useReportSettings() {
+  return useQuery({
+    queryKey: ['reports', 'settings'],
+    queryFn: () =>
+      api.callMethodGet<ReportSettingItem[]>('gym_management.reports.report_settings'),
+  })
+}
+
+export function useSaveReportSettings() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (items: { key: string; enabled: boolean }[]) =>
+      api.callMethod('gym_management.reports.save_report_settings', { items }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['reports', 'settings'] })
+      qc.invalidateQueries({ queryKey: ['reports', 'list'] })
+    },
   })
 }

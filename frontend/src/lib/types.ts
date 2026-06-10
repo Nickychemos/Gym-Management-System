@@ -387,6 +387,14 @@ export interface SavedReport {
   report_title: string
 }
 
+export interface ReportSettingItem {
+  key: string
+  title: string
+  category: string
+  enabled: boolean
+  order: number
+}
+
 // ---- Schedule + bookings (gym_management.schedule.*) ----
 
 export type SessionStatus =

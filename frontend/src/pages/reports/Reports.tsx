@@ -1,18 +1,23 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
   ArrowDownRight,
+  ArrowRight,
   ArrowUpRight,
   BarChart3,
   CalendarClock,
+  ChevronDown,
+  ChevronUp,
   Download,
   Save,
+  Settings2,
   SlidersHorizontal,
   Star,
   Trash2,
 } from 'lucide-react'
 
+import { Badge, type BadgeProps } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog } from '@/components/ui/dialog'
@@ -41,7 +46,9 @@ import {
   downloadReport,
   useDeleteSavedReport,
   useReportList,
+  useReportSettings,
   useRunReport,
+  useSaveReportSettings,
   useSaveSavedReport,
   useSavedReports,
 } from '@/queries/reports'
@@ -205,6 +212,14 @@ function ToggleBtn({
   )
 }
 
+const CAT_VARIANT: Record<string, BadgeProps['variant']> = {
+  Financial: 'success',
+  Membership: 'info',
+  Operations: 'info',
+  Experience: 'brand',
+  Executive: 'warning',
+}
+
 function Catalogue({
   onOpen,
   onOpenSaved,
@@ -214,79 +229,192 @@ function Catalogue({
 }) {
   const { data, isLoading } = useReportList()
   const { data: saved } = useSavedReports()
-
-  const grouped = useMemo(() => {
-    const g: Record<string, typeof data> = {}
-    for (const r of data ?? []) (g[r.category] ??= []).push(r)
-    return g
-  }, [data])
+  const [managing, setManaging] = useState(false)
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-28 w-full rounded-lg" />
+          <Skeleton key={i} className="h-36 w-full rounded-xl" />
         ))}
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {saved && saved.length > 0 && (
-        <div>
-          <h2 className="mb-2.5 text-tiny font-semibold uppercase tracking-wide text-neutral-400">
+        <section>
+          <h2 className="mb-3 text-tiny font-semibold uppercase tracking-wide text-neutral-400">
             Saved reports
           </h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {saved.map((s) => (
               <button
                 key={s.name}
                 type="button"
                 onClick={() => onOpenSaved(s.name)}
-                className="group flex flex-col rounded-lg border border-neutral-200 bg-white p-4 text-left shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-card-hover)]"
+                className="group flex flex-col rounded-xl border border-neutral-200 bg-white p-5 text-left shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-[var(--shadow-card-hover)]"
               >
-                <div className="flex items-center gap-2">
-                  <span className="grid size-8 place-items-center rounded-md bg-accent-500 text-white">
+                <div className="flex items-start justify-between">
+                  <span className="grid size-9 place-items-center rounded-lg bg-accent-500 text-white">
                     <Star className="size-4" strokeWidth={2} />
                   </span>
-                  <span className="text-body font-medium text-neutral-900">{s.title}</span>
+                  <Badge variant="brand">Saved</Badge>
                 </div>
-                <p className="mt-2 text-small text-neutral-500">
-                  {s.report_title} · {PERIODS.find((p) => p.value === s.period)?.label ?? s.period}
+                <div className="mt-3 text-body font-semibold text-neutral-900">
+                  {s.title}
+                </div>
+                <p className="mt-1 text-small text-neutral-500">
+                  {s.report_title} ·{' '}
+                  {PERIODS.find((p) => p.value === s.period)?.label ?? s.period}
                 </p>
               </button>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      {Object.entries(grouped).map(([category, reports]) => (
-        <div key={category}>
-          <h2 className="mb-2.5 text-tiny font-semibold uppercase tracking-wide text-neutral-400">
-            {category}
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-tiny font-semibold uppercase tracking-wide text-neutral-400">
+            All reports
           </h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {(reports ?? []).map((r) => (
-              <button
-                key={r.key}
-                type="button"
-                onClick={() => onOpen(r.key)}
-                className="group flex flex-col rounded-lg border border-neutral-200 bg-white p-4 text-left shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-card-hover)]"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="grid size-8 place-items-center rounded-md bg-neutral-900 text-white">
-                    <BarChart3 className="size-4" strokeWidth={2} />
-                  </span>
-                  <span className="text-body font-medium text-neutral-900">{r.title}</span>
-                </div>
-                <p className="mt-2 text-small text-neutral-500">{r.description}</p>
-              </button>
-            ))}
-          </div>
+          <Button variant="ghost" size="sm" onClick={() => setManaging(true)}>
+            <Settings2 className="size-3.5" strokeWidth={2} />
+            Manage catalogue
+          </Button>
         </div>
-      ))}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {(data ?? []).map((r) => (
+            <button
+              key={r.key}
+              type="button"
+              onClick={() => onOpen(r.key)}
+              className="group flex h-full flex-col rounded-xl border border-neutral-200 bg-white p-5 text-left shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-[var(--shadow-card-hover)]"
+            >
+              <div className="flex items-start justify-between">
+                <span className="grid size-9 place-items-center rounded-lg bg-neutral-900 text-white">
+                  <BarChart3 className="size-4" strokeWidth={2} />
+                </span>
+                <Badge variant={CAT_VARIANT[r.category] ?? 'neutral'}>
+                  {r.category}
+                </Badge>
+              </div>
+              <div className="mt-3 text-body font-semibold text-neutral-900">
+                {r.title}
+              </div>
+              <p className="mt-1 flex-1 text-small leading-relaxed text-neutral-500">
+                {r.description}
+              </p>
+              <span className="mt-3 inline-flex items-center gap-1 text-small font-medium text-neutral-400 transition-colors group-hover:text-neutral-900">
+                View report
+                <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={2} />
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {managing && <ManageCatalogueDialog onClose={() => setManaging(false)} />}
     </div>
+  )
+}
+
+function ManageCatalogueDialog({ onClose }: { onClose: () => void }) {
+  const { data } = useReportSettings()
+  const save = useSaveReportSettings()
+  const { toast } = useToast()
+  // Draft holds edits; until the user touches it we render the loaded data.
+  const [draft, setDraft] = useState<typeof data>(undefined)
+  const list = draft ?? data ?? []
+
+  function move(i: number, dir: -1 | 1) {
+    const j = i + dir
+    if (j < 0 || j >= list.length) return
+    const next = [...list]
+    ;[next[i], next[j]] = [next[j], next[i]]
+    setDraft(next)
+  }
+  function toggle(i: number) {
+    const next = [...list]
+    next[i] = { ...next[i], enabled: !next[i].enabled }
+    setDraft(next)
+  }
+
+  function submit() {
+    save.mutate(
+      list.map((it) => ({ key: it.key, enabled: it.enabled })),
+      {
+        onSuccess: () => {
+          toast({ variant: 'success', title: 'Catalogue updated' })
+          onClose()
+        },
+        onError: (e) =>
+          toast({ variant: 'error', title: 'Could not save', description: e instanceof ApiError ? e.message : undefined }),
+      },
+    )
+  }
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title="Manage report catalogue"
+      description="Choose which reports your gym sees and in what order."
+      widthClassName="max-w-lg"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
+            Cancel
+          </Button>
+          <Button onClick={submit} disabled={save.isPending}>
+            {save.isPending ? 'Saving…' : 'Save'}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-2">
+        {list.map((it, i) => (
+          <div
+            key={it.key}
+            className="flex items-center gap-3 rounded-lg border border-neutral-200 px-3 py-2"
+          >
+            <div className="flex flex-col">
+              <button
+                type="button"
+                disabled={i === 0}
+                onClick={() => move(i, -1)}
+                className="text-neutral-400 hover:text-neutral-900 disabled:opacity-30"
+              >
+                <ChevronUp className="size-3.5" strokeWidth={2.5} />
+              </button>
+              <button
+                type="button"
+                disabled={i === list.length - 1}
+                onClick={() => move(i, 1)}
+                className="text-neutral-400 hover:text-neutral-900 disabled:opacity-30"
+              >
+                <ChevronDown className="size-3.5" strokeWidth={2.5} />
+              </button>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-small font-medium text-neutral-900">{it.title}</div>
+              <div className="text-tiny text-neutral-400">{it.category}</div>
+            </div>
+            <label className="inline-flex cursor-pointer items-center gap-1.5 text-small text-neutral-600">
+              <input
+                type="checkbox"
+                checked={it.enabled}
+                onChange={() => toggle(i)}
+                className="size-4 rounded border-neutral-300 accent-neutral-900"
+              />
+              {it.enabled ? 'On' : 'Off'}
+            </label>
+          </div>
+        ))}
+      </div>
+    </Dialog>
   )
 }
 
