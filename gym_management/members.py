@@ -18,7 +18,7 @@ that once and fan out from there.
 from __future__ import annotations
 
 import frappe
-from frappe.utils import add_days, flt, get_first_day, getdate, today
+from frappe.utils import add_days, flt, formatdate, get_first_day, getdate, today
 
 from gym_management.branches import resolve_branch_filter
 from gym_management.rbac import ANY_STAFF, FRONTDESK, MANAGER, has_tier, requires
@@ -1027,23 +1027,65 @@ def renew_subscription(subscription: str) -> dict:
 def upgrade_subscription(subscription: str, new_plan: str) -> dict:
 	"""Change a member's plan, effective at next renewal.
 
-	The current subscription runs to its end date (so no paid days are
-	forfeited); a new subscription on `new_plan` is scheduled to start the day
-	after. If the current subscription has already ended, the new plan starts
-	today. Same mechanics as renew, just onto a different plan — and because the
-	new period starts after the current one ends, the no-overlap check passes."""
+	The member's currently-active membership runs to its end date (so no paid
+	days are forfeited); a new subscription on `new_plan` is scheduled to start
+	the day after. If nothing is active today, the new plan starts today.
+
+	The change is always anchored to the membership covering *today*, not to
+	whichever row was clicked, and a second change is refused while one is
+	already scheduled — together these stop repeated clicks from stacking a
+	chain of future subscriptions."""
 	cur = frappe.db.get_value(
-		"Member Subscription",
-		subscription,
-		["customer", "branch", "end_date"],
-		as_dict=True,
+		"Member Subscription", subscription, ["customer", "branch"], as_dict=True
 	)
 	if not cur:
 		frappe.throw(frappe._("Subscription not found"))
-	start = getdate(today())
-	if cur.end_date and getdate(cur.end_date) >= start:
-		start = add_days(getdate(cur.end_date), 1)
-	doc = _new_subscription(cur.customer, new_plan, cur.branch, start)
+	customer = cur.customer
+	today_d = getdate(today())
+
+	# Refuse to stack: if a plan change is already scheduled in the future, it
+	# must be cleared (Remove) before scheduling a different one.
+	pending = frappe.get_all(
+		"Member Subscription",
+		filters={
+			"customer": customer,
+			"docstatus": 1,
+			"status": ["in", ["Active", "Frozen"]],
+			"start_date": [">", today_d],
+		},
+		fields=["membership_plan", "start_date"],
+		order_by="start_date asc",
+		limit=1,
+	)
+	if pending:
+		frappe.throw(
+			frappe._(
+				"A plan change to {0} is already scheduled for {1}. "
+				"Remove it first to schedule a different change."
+			).format(pending[0].membership_plan, formatdate(pending[0].start_date))
+		)
+
+	# Anchor to the membership covering today so the new plan starts the day
+	# after it ends, regardless of which subscription row triggered the change.
+	active_now = frappe.get_all(
+		"Member Subscription",
+		filters={
+			"customer": customer,
+			"docstatus": 1,
+			"status": ["in", ["Active", "Frozen"]],
+			"start_date": ["<=", today_d],
+			"end_date": [">=", today_d],
+		},
+		fields=["end_date"],
+		order_by="end_date desc",
+		limit=1,
+	)
+	start = (
+		add_days(getdate(active_now[0].end_date), 1)
+		if active_now and active_now[0].end_date
+		else today_d
+	)
+	doc = _new_subscription(customer, new_plan, cur.branch, start)
 	frappe.db.commit()
 	return {
 		"ok": True,
@@ -1051,6 +1093,58 @@ def upgrade_subscription(subscription: str, new_plan: str) -> dict:
 		"status": doc.status,
 		"start_date": str(doc.start_date),
 	}
+
+
+@frappe.whitelist()
+@requires(MANAGER)
+def remove_subscription(subscription: str) -> dict:
+	"""Permanently delete a subscription added in error. Manager/owner only.
+
+	Refuses if anything financial or operational is attached (a linked invoice,
+	a recorded payment, an M-Pesa transaction, class bookings, a freeze, or
+	recorded visits): those make it a real subscription to cancel/refund, not an
+	erroneous entry to erase. A submitted subscription is cancelled first, then
+	the record is deleted outright so it leaves no trace in history/reports."""
+	sub = frappe.db.get_value(
+		"Member Subscription",
+		subscription,
+		["name", "docstatus", "linked_invoice", "payment_status"],
+		as_dict=True,
+	)
+	if not sub:
+		# Already gone (a stale list or a double-click): treat as success so the
+		# UI just refreshes and the phantom row disappears, rather than erroring.
+		return {"ok": True, "removed": subscription, "already_gone": True}
+
+	blockers = []
+	if sub.linked_invoice:
+		blockers.append("a linked invoice")
+	if sub.payment_status in ("Paid", "Partially Paid", "Refunded"):
+		blockers.append("a recorded payment")
+	if frappe.db.exists("M-Pesa Transaction", {"linked_subscription": subscription}):
+		blockers.append("an M-Pesa transaction")
+	if frappe.db.exists("Class Booking", {"linked_subscription": subscription}):
+		blockers.append("class bookings")
+	if frappe.db.exists("Subscription Freeze", {"member_subscription": subscription}):
+		blockers.append("a freeze record")
+	if frappe.db.exists("Visit Log", {"active_subscription": subscription}):
+		blockers.append("recorded visits")
+	if blockers:
+		frappe.throw(
+			frappe._(
+				"Can't delete this subscription because it has {0}. "
+				"Cancel or refund it instead."
+			).format(", ".join(blockers))
+		)
+
+	doc = frappe.get_doc("Member Subscription", subscription)
+	if doc.docstatus == 1:
+		doc.cancel()
+	frappe.delete_doc(
+		"Member Subscription", subscription, ignore_permissions=True, force=True
+	)
+	frappe.db.commit()
+	return {"ok": True, "removed": subscription}
 
 
 @frappe.whitelist()

@@ -67,6 +67,13 @@ function hasFullAccess(roles: string[], isAdmin: boolean): boolean {
   return isAdmin || roles.some((r) => FULL_ACCESS_ROLES.includes(r))
 }
 
+/** Manager tier (owner/manager/admin) — mirrors rbac.MANAGER. Use to gate
+ *  destructive or financial actions in the UI; the backend @requires(MANAGER)
+ *  guard is the real boundary. */
+export function isManager(roles: string[], isAdmin: boolean): boolean {
+  return hasFullAccess(roles, isAdmin)
+}
+
 /** The NavKeys a user may access, or `null` meaning "everything". */
 export function allowedKeys(
   roles: string[],

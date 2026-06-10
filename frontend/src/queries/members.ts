@@ -204,6 +204,20 @@ export function useUpgradeSubscription(member?: string) {
   })
 }
 
+/** Delete a subscription added in error (manager/owner only; backend refuses
+ *  if anything financial/operational is attached). */
+export function useRemoveSubscription(member?: string) {
+  const invalidate = useMemberInvalidation(member)
+  return useMutation({
+    mutationFn: (subscription: string) =>
+      api.callMethod<{ ok: boolean; removed: string }>(
+        'gym_management.members.remove_subscription',
+        { subscription },
+      ),
+    onSuccess: invalidate,
+  })
+}
+
 export function useCreateSubscription(member?: string) {
   const invalidate = useMemberInvalidation(member)
   return useMutation({

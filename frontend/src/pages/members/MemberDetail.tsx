@@ -215,6 +215,7 @@ function OverviewTab({
                     member={member}
                     currentPlan={sub.membership_plan}
                     currentEnd={sub.end_date}
+                    currentPrice={sub.price}
                   />
                 </div>
               </div>
@@ -428,6 +429,7 @@ function SubscriptionsTab({ member }: { member: string }) {
                         member={member}
                         currentPlan={s.membership_plan}
                         currentEnd={s.end_date}
+                        currentPrice={s.price}
                       />
                     )}
                   </div>

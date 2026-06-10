@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
@@ -7,13 +7,17 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
 import { ApiError } from '@/lib/api'
 import { fullDate, ksh } from '@/lib/format'
+import { isManager } from '@/lib/roles'
+import { type MembershipPlanOption } from '@/lib/types'
 import {
   useCreateSubscription,
   useFreezeSubscription,
   useMembershipPlans,
+  useRemoveSubscription,
   useRenewSubscription,
   useUnfreezeSubscription,
   useUpgradeSubscription,
@@ -32,6 +36,7 @@ export function SubscriptionLifecycle({
   member,
   currentPlan,
   currentEnd,
+  currentPrice,
   size = 'sm',
 }: {
   subscription: string
@@ -39,15 +44,45 @@ export function SubscriptionLifecycle({
   member: string
   currentPlan?: string
   currentEnd?: string | null
+  currentPrice?: number
   size?: 'sm' | 'md'
 }) {
   const { toast } = useToast()
+  const { state } = useAuth()
   const [freezeOpen, setFreezeOpen] = useState(false)
-  const [changeOpen, setChangeOpen] = useState(false)
+  const [changeDir, setChangeDir] = useState<'up' | 'down' | null>(null)
+  const [removeOpen, setRemoveOpen] = useState(false)
   const renew = useRenewSubscription(member)
   const unfreeze = useUnfreezeSubscription(member)
+  const { data: plans } = useMembershipPlans()
+
+  const canRemove =
+    state.status === 'authenticated' &&
+    isManager(state.roles, state.isAdmin)
 
   const busy = renew.isPending || unfreeze.isPending
+
+  // Tier direction is by catalog price (the current plan's listed price, falling
+  // back to what this member paid if the plan has since been deactivated). Day
+  // Pass and the current plan itself are never change targets.
+  const basePrice =
+    plans?.find((p) => p.name === currentPlan)?.price ?? currentPrice ?? null
+  const targets = (plans ?? []).filter(
+    (p) => p.name !== currentPlan && p.plan_type !== 'Day Pass',
+  )
+  const higher =
+    basePrice == null
+      ? []
+      : targets
+          .filter((p) => p.price > basePrice)
+          .sort((a, b) => a.price - b.price)
+  const lower =
+    basePrice == null
+      ? []
+      : targets
+          .filter((p) => p.price < basePrice)
+          .sort((a, b) => b.price - a.price)
+  const canChange = status === 'Active' || status === 'Frozen'
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -84,22 +119,47 @@ export function SubscriptionLifecycle({
       >
         Renew
       </Button>
-      {(status === 'Active' || status === 'Frozen') && (
-        <Button variant="secondary" size={size} disabled={busy} onClick={() => setChangeOpen(true)}>
-          Change plan
+      {canChange && higher.length > 0 && (
+        <Button variant="secondary" size={size} disabled={busy} onClick={() => setChangeDir('up')}>
+          Upgrade
+        </Button>
+      )}
+      {canChange && lower.length > 0 && (
+        <Button variant="secondary" size={size} disabled={busy} onClick={() => setChangeDir('down')}>
+          Downgrade
+        </Button>
+      )}
+      {canRemove && (
+        <Button
+          variant="ghost"
+          size={size}
+          disabled={busy}
+          onClick={() => setRemoveOpen(true)}
+          className="text-danger-700 hover:bg-danger-50 hover:text-danger-700"
+        >
+          <Trash2 className="size-4" strokeWidth={2} />
+          Remove
         </Button>
       )}
 
       {freezeOpen && (
         <FreezeDialog subscription={subscription} member={member} onClose={() => setFreezeOpen(false)} />
       )}
-      {changeOpen && (
+      {removeOpen && (
+        <RemoveSubscriptionDialog
+          subscription={subscription}
+          member={member}
+          onClose={() => setRemoveOpen(false)}
+        />
+      )}
+      {changeDir && (
         <ChangePlanDialog
           subscription={subscription}
           member={member}
-          currentPlan={currentPlan}
+          direction={changeDir}
+          options={changeDir === 'up' ? higher : lower}
           currentEnd={currentEnd}
-          onClose={() => setChangeOpen(false)}
+          onClose={() => setChangeDir(null)}
         />
       )}
     </div>
@@ -172,30 +232,73 @@ function FreezeDialog({
   )
 }
 
+function RemoveSubscriptionDialog({
+  subscription,
+  member,
+  onClose,
+}: {
+  subscription: string
+  member: string
+  onClose: () => void
+}) {
+  const { toast } = useToast()
+  const remove = useRemoveSubscription(member)
+
+  function submit() {
+    remove.mutate(subscription, {
+      onSuccess: () => {
+        toast({ variant: 'success', title: 'Subscription removed' })
+        onClose()
+      },
+      onError: errToast(toast, 'Could not remove'),
+    })
+  }
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title="Remove subscription"
+      widthClassName="max-w-md"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={remove.isPending}>Cancel</Button>
+          <Button variant="danger" onClick={submit} disabled={remove.isPending}>
+            {remove.isPending ? 'Removing…' : 'Remove'}
+          </Button>
+        </>
+      }
+    >
+      <p className="text-small text-neutral-600">
+        This permanently deletes the subscription and leaves no trace in history.
+        Use it only for entries added by mistake. If a payment, invoice, booking
+        or visit is attached, the system will block this so you refund or cancel
+        instead.
+      </p>
+    </Dialog>
+  )
+}
+
 function ChangePlanDialog({
   subscription,
   member,
-  currentPlan,
+  direction,
+  options,
   currentEnd,
   onClose,
 }: {
   subscription: string
   member: string
-  currentPlan?: string
+  direction: 'up' | 'down'
+  options: MembershipPlanOption[]
   currentEnd?: string | null
   onClose: () => void
 }) {
   const { toast } = useToast()
   const upgrade = useUpgradeSubscription(member)
-  const { data: plans } = useMembershipPlans()
   const [plan, setPlan] = useState('')
 
-  // Only other recurring membership tiers are valid change targets: drop the
-  // current plan (changing to itself is a no-op) and Day Pass (a drop-in, not a
-  // membership a member moves onto).
-  const options = (plans ?? []).filter(
-    (p) => p.name !== currentPlan && p.plan_type !== 'Day Pass',
-  )
+  const verb = direction === 'up' ? 'Upgrade' : 'Downgrade'
 
   function submit() {
     if (!plan) return toast({ variant: 'error', title: 'Pick a plan' })
@@ -205,12 +308,12 @@ function ChangePlanDialog({
         onSuccess: (r) => {
           toast({
             variant: 'success',
-            title: 'Plan change scheduled',
+            title: `${verb} scheduled`,
             description: `${plan} starts ${fullDate(r.start_date)}`,
           })
           onClose()
         },
-        onError: errToast(toast, 'Could not change plan'),
+        onError: errToast(toast, `Could not ${verb.toLowerCase()}`),
       },
     )
   }
@@ -219,21 +322,21 @@ function ChangePlanDialog({
     <Dialog
       open
       onClose={onClose}
-      title="Change plan"
+      title={`${verb} plan`}
       description="The new plan takes effect at the next renewal, so no paid days are lost."
       widthClassName="max-w-md"
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={upgrade.isPending}>Cancel</Button>
           <Button onClick={submit} disabled={upgrade.isPending || options.length === 0}>
-            {upgrade.isPending ? 'Scheduling…' : 'Schedule change'}
+            {upgrade.isPending ? 'Scheduling…' : `Schedule ${verb.toLowerCase()}`}
           </Button>
         </>
       }
     >
       <div className="space-y-3">
         <div>
-          <Label>New plan</Label>
+          <Label>{direction === 'up' ? 'Upgrade to' : 'Downgrade to'}</Label>
           <Select value={plan} onChange={(e) => setPlan(e.target.value)} autoFocus>
             <option value="">Select a plan…</option>
             {options.map((p) => (
@@ -241,17 +344,11 @@ function ChangePlanDialog({
             ))}
           </Select>
         </div>
-        {options.length === 0 ? (
-          <p className="text-small text-neutral-500">
-            No other membership plans are available to change to.
-          </p>
-        ) : (
-          <p className="text-small text-neutral-500">
-            {currentEnd
-              ? `The current plan stays active until it ends on ${fullDate(currentEnd)}; the new plan begins the next day.`
-              : 'The new plan begins today.'}
-          </p>
-        )}
+        <p className="text-small text-neutral-500">
+          {currentEnd
+            ? `The current plan stays active until it ends on ${fullDate(currentEnd)}; the new plan begins the next day.`
+            : 'The new plan begins today.'}
+        </p>
       </div>
     </Dialog>
   )
