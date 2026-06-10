@@ -117,12 +117,17 @@ export default function ReportsPage() {
     ? savedList?.find((s) => s.name === savedName)
     : undefined
 
-  function setParam(key: string, value: string | null) {
+  // Apply several param changes in ONE update — react-router computes each
+  // setSearchParams call from the current URL, so separate calls in the same
+  // tick clobber each other (only the last wins).
+  function patchParams(updates: Record<string, string | null>) {
     setParams(
       (prev) => {
         const next = new URLSearchParams(prev)
-        if (value) next.set(key, value)
-        else next.delete(key)
+        for (const [k, v] of Object.entries(updates)) {
+          if (v) next.set(k, v)
+          else next.delete(k)
+        }
         return next
       },
       { replace: true },
@@ -145,12 +150,12 @@ export default function ReportsPage() {
         </div>
         {!inViewer && (
           <div className="inline-flex shrink-0 rounded-md border border-neutral-200 p-0.5">
-            <ToggleBtn active={view !== 'schedules'} onClick={() => setParam('view', null)}>
+            <ToggleBtn active={view !== 'schedules'} onClick={() => patchParams({ view: null })}>
               Reports
             </ToggleBtn>
             <ToggleBtn
               active={view === 'schedules'}
-              onClick={() => setParam('view', 'schedules')}
+              onClick={() => patchParams({ view: 'schedules' })}
             >
               Scheduled
             </ToggleBtn>
@@ -166,23 +171,16 @@ export default function ReportsPage() {
           reportKey={reportKey}
           savedMeta={savedMeta}
           period={params.get('period') ?? savedMeta?.period ?? 'this_month'}
-          onPeriod={(p) => setParam('period', p)}
-          onBack={() => {
-            setParam('report', null)
-            setParam('saved', null)
-            setParam('period', null)
-          }}
-          onSaved={(name) => {
-            setParam('report', null)
-            setParam('saved', name)
-          }}
+          onPeriod={(p) => patchParams({ period: p })}
+          onBack={() => patchParams({ report: null, saved: null, period: null })}
+          onSaved={(name) => patchParams({ report: null, saved: name, period: null })}
         />
       ) : inViewer ? (
         <Skeleton className="h-64 w-full rounded-lg" />
       ) : (
         <Catalogue
-          onOpen={(key) => setParam('report', key)}
-          onOpenSaved={(name) => setParam('saved', name)}
+          onOpen={(key) => patchParams({ report: key })}
+          onOpenSaved={(name) => patchParams({ saved: name })}
         />
       )}
     </div>
