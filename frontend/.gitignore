@@ -18,6 +18,12 @@ dist-ssr
 .env.*.local
 .env.production
 
+# Cypress — local creds + run artefacts
+cypress.env.json
+cypress/screenshots
+cypress/videos
+cypress/downloads
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

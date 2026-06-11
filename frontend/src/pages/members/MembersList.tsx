@@ -206,6 +206,7 @@ export default function MembersListPage() {
               {rows.map((m) => (
                 <TR
                   key={m.member}
+                  data-testid="member-row"
                   clickable
                   onClick={() => navigate(`/members/${encodeURIComponent(m.member)}`)}
                 >
