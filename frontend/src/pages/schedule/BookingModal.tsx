@@ -248,6 +248,7 @@ function AddBooking({ session, full }: { session: string; full: boolean }) {
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search members by name, phone or ID…"
           className="pl-9"
+          data-testid="booking-member-search"
         />
       </div>
 
@@ -259,6 +260,7 @@ function AddBooking({ session, full }: { session: string; full: boolean }) {
                 type="button"
                 disabled={book.isPending}
                 onClick={() => bookMember(m.customer, m.full_name)}
+                data-testid="booking-member-result"
                 className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-neutral-50 transition-colors disabled:opacity-50"
               >
                 <Avatar name={m.full_name} size="size-7" />

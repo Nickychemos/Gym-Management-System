@@ -103,7 +103,7 @@ export default function MembersListPage() {
             {isFetching && !isLoading ? ' · refreshing…' : ''}
           </p>
         </div>
-        <Button onClick={() => setAddOpen(true)}>
+        <Button onClick={() => setAddOpen(true)} data-testid="add-member-button">
           <Plus className="size-4" strokeWidth={2} />
           Add Member
         </Button>

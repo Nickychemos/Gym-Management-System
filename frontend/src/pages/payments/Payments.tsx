@@ -88,7 +88,7 @@ export default function PaymentsPage() {
           </p>
         </div>
         {view === 'mpesa' && (
-          <Button onClick={() => setStkOpen(true)}>
+          <Button onClick={() => setStkOpen(true)} data-testid="payments-stk-trigger">
             <Smartphone className="size-4" strokeWidth={2} />
             STK Push
           </Button>
@@ -200,7 +200,7 @@ export default function PaymentsPage() {
             </THead>
             <TBody>
               {rows.map((p) => (
-                <TR key={p.name}>
+                <TR key={p.name} data-testid="payment-row">
                   <TD>
                     <Badge variant={paymentVariant(p.status)}>{p.status}</Badge>
                   </TD>

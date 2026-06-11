@@ -86,7 +86,7 @@ export function StkPushModal({ open, onClose }: Props) {
           <Button variant="secondary" onClick={close} disabled={send.isPending}>
             Cancel
           </Button>
-          <Button onClick={submit} disabled={send.isPending || !picked}>
+          <Button onClick={submit} disabled={send.isPending || !picked} data-testid="stk-submit">
             {send.isPending ? 'Sending…' : 'Send STK Push'}
           </Button>
         </>
@@ -158,6 +158,7 @@ function MemberPicker({ onPick }: { onPick: (m: MemberRow) => void }) {
           placeholder="Search members by name, phone or ID…"
           className="pl-9"
           autoFocus
+          data-testid="member-picker-search"
         />
       </div>
       {results.length > 0 && (
@@ -167,6 +168,7 @@ function MemberPicker({ onPick }: { onPick: (m: MemberRow) => void }) {
               <button
                 type="button"
                 onClick={() => onPick(m)}
+                data-testid="member-picker-result"
                 className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-neutral-50 transition-colors"
               >
                 <Avatar name={m.full_name} size="size-7" />

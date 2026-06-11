@@ -38,5 +38,9 @@ export default defineConfig([
         assert: 'readonly',
       },
     },
+    rules: {
+      // chai assertions (expect(x).to.be.ok) are intentional expressions.
+      '@typescript-eslint/no-unused-expressions': 'off',
+    },
   },
 ])

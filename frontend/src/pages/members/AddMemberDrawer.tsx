@@ -127,7 +127,7 @@ export function AddMemberDrawer({ open, onClose, onCreated }: Props) {
           <Button variant="secondary" onClick={close} disabled={createMember.isPending}>
             Cancel
           </Button>
-          <Button onClick={onSubmit} disabled={createMember.isPending}>
+          <Button onClick={onSubmit} disabled={createMember.isPending} data-testid="add-member-submit">
             {createMember.isPending ? 'Adding…' : 'Add Member'}
           </Button>
         </>

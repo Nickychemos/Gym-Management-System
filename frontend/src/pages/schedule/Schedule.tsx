@@ -205,6 +205,7 @@ function SessionChip({
     <button
       type="button"
       onClick={onClick}
+      data-testid="session-chip"
       style={{ borderLeftColor: session.color }}
       className={cn(
         'w-full text-left rounded-md border border-neutral-200 border-l-[3px]',

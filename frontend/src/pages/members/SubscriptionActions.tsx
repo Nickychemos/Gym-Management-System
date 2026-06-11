@@ -430,7 +430,7 @@ export function SubscribeButton({ member, size = 'sm' }: { member: string; size?
 
   return (
     <>
-      <Button size={size} onClick={() => setOpen(true)}>
+      <Button size={size} onClick={() => setOpen(true)} data-testid="sub-add-trigger">
         <Plus className="size-4" strokeWidth={2} />
         Add subscription
       </Button>
@@ -443,13 +443,13 @@ export function SubscribeButton({ member, size = 'sm' }: { member: string; size?
           footer={
             <>
               <Button variant="secondary" onClick={() => setOpen(false)} disabled={create.isPending}>Cancel</Button>
-              <Button onClick={submit} disabled={create.isPending}>{create.isPending ? 'Starting…' : 'Start'}</Button>
+              <Button onClick={submit} disabled={create.isPending} data-testid="sub-start-submit">{create.isPending ? 'Starting…' : 'Start'}</Button>
             </>
           }
         >
           <div>
             <Label>Plan</Label>
-            <Select value={plan} onChange={(e) => setPlan(e.target.value)} autoFocus>
+            <Select value={plan} onChange={(e) => setPlan(e.target.value)} autoFocus data-testid="sub-plan-select">
               <option value="">Select a plan…</option>
               {(plans ?? []).map((p) => (
                 <option key={p.name} value={p.name}>{p.name} — {ksh(p.price)}</option>
