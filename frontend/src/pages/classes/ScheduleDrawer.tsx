@@ -81,7 +81,7 @@ export function ScheduleDrawer({ edit, onClose }: Props) {
       <div className="space-y-5">
         <div>
           <Label>Class type</Label>
-          <Select value={classType} onChange={(e) => setClassType(e.target.value)} disabled={!!edit}>
+          <Select value={classType} onChange={(e) => setClassType(e.target.value)} disabled={!!edit} data-testid="sched-class-type">
             <option value="">Select…</option>
             {(options?.class_types ?? []).map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
           </Select>
@@ -89,14 +89,14 @@ export function ScheduleDrawer({ edit, onClose }: Props) {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Trainer</Label>
-            <Select value={trainer} onChange={(e) => setTrainer(e.target.value)}>
+            <Select value={trainer} onChange={(e) => setTrainer(e.target.value)} data-testid="sched-trainer">
               <option value="">Select…</option>
               {(options?.trainers ?? []).map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
             </Select>
           </div>
           <div>
             <Label>Branch</Label>
-            <Select value={branch} onChange={(e) => setBranch(e.target.value)}>
+            <Select value={branch} onChange={(e) => setBranch(e.target.value)} data-testid="sched-branch">
               <option value="">Select…</option>
               {(options?.branches ?? []).map((b) => <option key={b} value={b}>{b}</option>)}
             </Select>
@@ -115,6 +115,7 @@ export function ScheduleDrawer({ edit, onClose }: Props) {
                 <button
                   key={d}
                   type="button"
+                  data-testid="schedule-day"
                   onClick={() => toggleDay(d)}
                   className={cn(
                     'flex-1 rounded-md border py-1.5 text-tiny font-medium transition-colors',
